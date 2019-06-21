@@ -3,7 +3,7 @@ branches:
     except:
         - /^\\d+\\.\\d+\\.\\d+/
 jdk:
-    - oraclejdk8
+    - oraclejdk9
 cache:
     directories:
     - "$HOME/.m2"
@@ -11,8 +11,8 @@ cache:
     - "$HOME/.gradle/caches/"
     - "$HOME/.gradle/wrapper/"
 before_install:
-    - git config --global user.email "erwan@saagie.com"
-    - git config --global user.name "erwan"
+    - git config --global user.email "contact@saagie.com"
+    - git config --global user.name "contact"
     - git remote set-url origin git@github.com:saagie/gradle-saagie-plugin.git
     - git config remote.origin.fetch refs/heads/*:refs/remotes/origin/*
     - openssl aes-256-cbc -K $encrypted_837e0722fe3d_key -iv $encrypted_837e0722fe3d_iv -in keys.tar.enc -out keys.tar -d
@@ -44,6 +44,6 @@ env:
         - secure: Fp1tmexIPJ9GJQzXh4qiJRaku3+rhGNi23/9Nk3h8Dp1o23exjV6rGWWWDneD9U60JD6HCbjpSLWdNJyvt89VTXksDk8MHLbjzzKE1/EimxeN76Rjp4ilQHiH8eCX0JCzNyJbFFkeMGiWIaYsv2SEOHAZtdQFXnlFDJ9rsReZsU6IO6y83V8DugcLp6xmHNh0UvqE81fg89WT+Hd//TjvH5TJQMIkj4BI6AzNiMlUoro/NqI8yZfzQtOWl/vtRheqbN9BZWXUG4nBTXDAByzby5YIttJ34HrXA8WPPTJfEHt8Wm+xlU45kVeOfuZIg1bvfW3jG5clGfXdT1RkeLqHDEpmQkbsYoWxARozapqEFhDQ+XhhrkU6WwUsCF/T/ICvHvMWX+24Sb9FNkRavZnt5Awz5SaYMRc+WMhaPD2F/nUxwMvaTToAIgRyrhFawE9CwqF4MwDgRo8UAJ5Zkk2O+tnRMqfJm/hNRgDPzRn5dw7D5NIpZUolMVyzZOQsuu1SEg1xfWC3mU7j2YkQHWYWz3v545xX1UkrAWA/rEDFM34Wx5F9DLjF50eXEvsT31hwNTI8oba4IiM5grAeqh5kL49/FNrvd2HVhdbs+v+o/3sdFgaUSU85+T+CModmDBD4bVWVi2SW+97+UoluqwRZwR20An2YqM3oK9B/yOwH5k=
         - secure: Q8hcPeXayx5Y5FEkL+GN0RDlvmOArjTN/CMmoB1prhQFDXslWT1cqj7f97V/9e8A0l1dLyu9YFd5Z+ktzlCP1drTMXS781XinupU0cHiCE74HjdK7VqEtWVs6Rb4Ldk7ci+IbBFlZ4WUJxeqSJ/inPegrx3jhJfAwHtlbm9zImV7Ja8I2iptL2/vntiw9iaiD2WmqcawwiJg+O6+Tprg2+sJ3DKjtYTq6GvzQmENUuMpFmfXB66bngAbGj81RJH6DRxI5GUDthgxpABX7STDLdcteBKtaoc1o6sM6uNkEfL5wMg1WCwLFDeDdH0KdwcGx0ZT+xHu+S0vk2R/ATgf47Jy4sS5x8GUGnLQ0noQ9+CZTvIhEzxgHNDxtPuZYhPLYvUCW/poBX8XVFvHTnrkveIyZ9JX1Px1DN2tFnn93D+tFpuMxAe1Jo1CcL96WVJqbj84y+CMsRyYDgsXMDtM9nXXVW806np7F7LOD4s4fbAXPwAa/A8Y+KQRNrmc/tJ+QqJxxbeCGcvtqpqX1qIo+Wsg5GQLgeNrywnIMWx1o590Y4WKqrL9VXDlx/HHY08KtXh43wjsJS08K8Ku9Fd6Vy1oU79zMKEOLtLCY1orere6yMCkrcbQ03aVjBoRq44WsxlU8Z3+8C7AVd/25YU2U/vl0wpCs05Due709nJbGgo=
         - secure: e78stHjZipaZgQMkDa3xGXI8XRYeqaOk1Xnh3X2A9y/muERZC2o5lbzrnvu5P0+cKtrZd0yr+TUpSQsTwqrHVGY5aEi+mgZ0jDGqVaikP7Y9C0GjPFG2oo4R/AD5tNzPSqJSeq+mCaQEaiyL8KJajddTaPPy8b2/LJqsErrGRJQzpn6QCO/0eETCKSE8HDMiYB8fklMxze6B9gdMIlPKTL7o31sDKX47cYcjmD4ItnRB6uiCYCiezDL/p1DhEV2HvaiJIDWXg8hPaaQTjrA46VCrxVv+PKfhacTN0XRanCQUzyeZy3iomebvYadSjuy+bjywOU4p6V6LSHByMiNOj/r4GttlJvKPBV558CiUyVyPOArscqJKdXSNDA2qg6PRlLBZiWk4t/TnA3yaiQ+iqPF/Q9CKEhv8Pn5Sqr2QhEZUAkTsR7J+43NQN9cW4u4syN2ejw77sPLD9UW6/xzxsRGGm+szKzxf+e7KMyvUj/IR8v/j5mEfuUh5tI/HzgpMUkkuiS5Zpy2gAHQwGD9Sm5DiUWFoqaw0Ijx+CRaa3VedwTbJ/WSOg90Cbhk6aG0o1reCyeUb/FGIR/cL1BLB2HXfkWA8ekCBfuchJy4DiQlhRmMi6+KXTj3Y6F6JKKgKbgs0bYCtnLNM893f31uHG/tHtJW4rw2Sz9+roHCGwbo=
-    after_failure:
-        - git status
-        - git diff
+after_failure:
+    - git status
+    - git diff
