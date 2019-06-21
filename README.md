@@ -11,12 +11,47 @@ This plugin is only compatible with gradle 3.0+
 
 The following tasks are available:
 
-| Tasks              | Description                                               |
-|--------------------|-----------------------------------------------------------|
-| projectsList       | Lists all projects on the platform.                       |
-| projectsListJobs   | Lists all jobs on the project.                            |
-| projectsCreateJob  | Creates a new job in a project                            |
-| projectsUpdateJob  | Updates an existing job.                                  |
+| Tasks                             | Description                                                             | Availability |
+|-----------------------------------|-------------------------------------------------------------------------|--------------|
+| projectsList                      | Lists all projects on the platform                                      | In progress  |
+| projectsCreate                    | Creates a project                                                       | To Do        |
+| projectsUpdate                    | Update an existing project                                              | To Do        |
+| projectsArchive                   | Archive an existing project                                             | To Do        |
+| projectsListJobs                  | Lists all jobs on the project                                           | To Do        |
+| projectsCreateJob                 | Creates a new job in a project                                          | To Do        |
+| projectsUpdateJob                 | Updates an existing job                                                 | To Do        |
+| projectsRunJob                    | Run an existing job                                                     | To Do        |
+| projectsStopJob                   | Stops an existing job                                                   | To Do        |
+| projectsListJobInstances          | List instances of a job                                                 | To Do        |
+| projectsGetJobInstanceLog         | Get log of a job instance                                               | To Do        |
+| projectsExportJob                 | Exports an existing job                                                 | To Do        |
+| projectsExportAllJobs             | Export all jobs of project                                              | To Do        |
+| projectsImportJob                 | Import a job                                                            | To Do        |
+| projectsImportAllJobs             | Impact a set of jobs in a project                                       | To Do        |
+| projectsArchiveJob                | Archive an existing job                                                 | To Do        |
+| projectsListPipelines             | Lists all pipelines on the project                                      | To Do        |
+| projectsCreatePipeline            | Creates a new pipeline in a project                                     | To Do        |
+| projectsUpdatePipeline            | Updates an existing pipeline                                            | To Do        |
+| projectsRunPipeline               | Run an existing pipeline                                                | To Do        |
+| projectsStopPipeline              | Stops an existing pipeline                                              | To Do        |
+| projectsExportPipeline            | Exports an existing pipeline                                            | To Do        |
+| projectsExportAllPipelines        | Export all pipelines of project                                         | To Do        |
+| projectsImportPipeline            | Import a pipeline                                                       | To Do        |
+| projectsImportAllPipelines        | Impact a set of pipelines in a project                                  | To Do        |
+| projectsArchivePipeline           | Archive an existing pipeline                                            | To Do        |
+| projectsListGlobalVariables       | List all global variables                                               | To Do        |
+| projectsListProjectVariables      | List project variables                                                  | To Do        |
+| projectsCreateVariable            | Creates a variable                                                      | To Do        |
+| projectsUpdateVariable            | Updates a variable                                                      | To Do        |
+| projectsDeleteVariable            | Delete a variable                                                       | To Do        |
+| projectsExportAllVariable         | Export variable into a local file (global only, project only, both)     | To Do        |
+| projectsImportAllVariable         | Import variable from a local file specifying target global or project   | To Do        |
+| governanceListDomains             | List all domains                                                        | To Do        |
+| governanceCreateDomain            | Create a new domain                                                     | To Do        |
+| governanceListDatasets            | List datasets based on search criterias                                 | To Do        |
+| governanceGetDataset              | Get meta data details of dataset                                        | To Do        |
+| governanceUpdateDataset           | Update meta data of a dataset                                           | To Do        |
+
 
 ## Documentation
 Full documentation is available on the [wiki](https://github.com/saagie/gradle-saagie-dataops-plugin/wiki)
