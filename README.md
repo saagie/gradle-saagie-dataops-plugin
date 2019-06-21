@@ -38,7 +38,7 @@ The following tasks are available:
 | projectsExportAllPipelines        | Export all pipelines of project                                         | To Do        |
 | projectsImportPipeline            | Import a pipeline                                                       | To Do        |
 | projectsImportAllPipelines        | Impact a set of pipelines in a project                                  | To Do        |
-| projectsArchivePipeline           | Archive an existing pipeline                                            | To Do        |
+| projectsDeletePipeline            | Delete an existing pipeline                                             | To Do        |
 | projectsListGlobalVariables       | List all global variables                                               | To Do        |
 | projectsListProjectVariables      | List project variables                                                  | To Do        |
 | projectsCreateVariable            | Creates a variable                                                      | To Do        |
