@@ -11,6 +11,7 @@ class DataOpsPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         def extension = project.extensions.create('saagie', DataOpsPluginExtension)
+
         project.task('hello') {
             doLast {
                 println "Hello ${extension.name}"
