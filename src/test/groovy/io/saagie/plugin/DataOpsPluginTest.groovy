@@ -14,6 +14,12 @@ class DataOpsPluginTest extends Specification {
 
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
+        buildFile << """
+            plugins {
+                id 'io.saagie.plugin.DataOpsPluginTest'
+            }
+        """
+
         pluginClasspath = getClass().classLoader
             .findResource('plugin-classpath.txt')
             .readLines()
@@ -23,16 +29,14 @@ class DataOpsPluginTest extends Specification {
     }
 
     def "hello task should print 'Hello World'"() {
-        given:
+        when:
             buildFile << """
             """
             Project project = ProjectBuilder.builder().build()
             project.pluginManager.apply(DataOpsPlugin.class)
 
-        when:
-            def taskResult = project.tasks.getByName('hello')
-
         then:
-            println(taskResult)
+            println(project.tasks.getByName('hello'))
+
     }
 }
