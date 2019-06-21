@@ -37,6 +37,5 @@ class DataOpsPluginTest extends Specification {
 
         then:
             println(project.tasks.getByName('hello'))
-
     }
 }
