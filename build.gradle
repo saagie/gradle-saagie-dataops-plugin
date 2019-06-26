@@ -149,9 +149,9 @@ uploadArchives {
 
                 developers {
                     developer {
-                        id "erwan-koffi"
-                        name "Erwan Koffi"
-                        url "https://github.com/erwan-koffi"
+                        id "decampsrenan"
+                        name "Renan Decamps"
+                        url "https://github.com/decampsrenan"
                     }
                 }
             }
