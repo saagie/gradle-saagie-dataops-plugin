@@ -3,6 +3,8 @@ package io.saagie.plugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+import io.saagie.plugin.tasks.ProjectList
+
 class DataOpsPluginExtension {
     String name = 'World'
 }
@@ -18,5 +20,9 @@ class DataOpsPlugin implements Plugin<Project> {
                 "Hello ${extension.name}"
             }
         }
+
+        project.task projectList(type: ProjectList)
     }
 }
+
+//

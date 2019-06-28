@@ -15,7 +15,7 @@ class DataOpsPluginTest extends Specification {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
-                id 'io.saagie.plugin.DataOpsPluginTest'
+                id 'io.saagie.plugin.DataOpsPlugin'
             }
         """
 
@@ -36,5 +36,16 @@ class DataOpsPluginTest extends Specification {
 
         then:
             println(project.tasks.getByName('hello'))
+    }
+
+    def "projectList task should print 'Project List'"() {
+        when:
+            buildFile << """
+            """
+            Project project = ProjectBuilder.builder().build()
+            project.pluginManager.apply(DataOpsPlugin.class)
+
+        then:
+            println(project.tasks.getByName('projectList'))
     }
 }
