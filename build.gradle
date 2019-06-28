@@ -129,14 +129,14 @@ uploadArchives {
 
             pom.project {
                 name project.name
-                url 'https://github.com/saagie/gradle-saagie-plugin'
+                url 'https://github.com/saagie/gradle-saagie-dataops-plugin'
                 packaging 'jar'
                 description project.description
 
                 scm {
-                    url 'scm:git@github.com:saagie/gradle-saagie-plugin.git'
-                    connection 'scm:git@github.com:saagie/gradle-saagie-plugin.git'
-                    developerConnection 'scm:git@github.com:saagie/gradle-saagie-plugin.git'
+                    url 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    connection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    developerConnection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
                 }
 
                 licenses {
