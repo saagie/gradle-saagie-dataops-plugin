@@ -17,7 +17,7 @@ The following tasks are available:
 | projectsCreate                    | Creates a project                                                       | To Do        |
 | projectsUpdate                    | Update an existing project                                              | To Do        |
 | projectsArchive                   | Archive an existing project                                             | To Do        |
-| projectsListJobs                  | Lists all technologies of a project                                     | To Do        |
+| projectsListTechnologies          | Lists all technologies of a project                                     | To Do        |
 | projectsListJobs                  | Lists all jobs of a project                                             | To Do        |
 | projectsCreateJob                 | Creates a new job in a project                                          | To Do        |
 | projectsUpdateJob                 | Updates an existing job                                                 | To Do        |
