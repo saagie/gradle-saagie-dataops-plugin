@@ -24,5 +24,3 @@ class DataOpsPlugin implements Plugin<Project> {
         project.task projectList(type: ProjectList)
     }
 }
-
-//

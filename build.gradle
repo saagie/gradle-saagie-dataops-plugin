@@ -5,9 +5,9 @@ plugins {
     id 'org.sonarqube' version '2.6.2'
     id 'com.adarshr.test-logger' version '1.1.2'
     id 'java-gradle-plugin'
+    id 'groovy'
 }
 
-apply plugin: 'groovy'
 apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'jacoco'
@@ -31,11 +31,14 @@ configurations {
 }
 
 dependencies {
+
+
     compile gradleApi()
     compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp
     compile group: 'org.apache.httpcomponents', name: 'httpclient', version: httpclient
 
     testCompile gradleTestKit()
+    testCompile 'junit:junit:4+'
     testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: mockwebserver
     testCompile group: 'org.spockframework', name: 'spock-core', version: spockCore
     testRuntime group: 'org.objenesis', name: 'objenesis', version: objenesis
@@ -167,6 +170,18 @@ nexusStaging {
     password = project.findProperty('nexusPassword')
     delayBetweenRetriesInMillis = 10000
 }
+
+gradlePlugin {
+    plugins {
+        saagiePlugin {
+            id = 'io.saagie.gradle-saagie-plugin'
+            implementationClass = 'io.saagie.plugin.DataOpsPlugin'
+        }
+    }
+}
+
+// ===============
+// Publishing
 
 pluginBundle {
     website = 'http://saagie.com'

@@ -1,11 +1,11 @@
 package io.saagie.plugin.dataops.tasks
 
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import io.saagie.plugin.dataops.DataOpsExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
-class ProjectList extends DefaultTask {
+class ProjectListTask extends DefaultTask {
+    DataOpsExtension configuration
 
     @TaskAction
     def projectList() {
