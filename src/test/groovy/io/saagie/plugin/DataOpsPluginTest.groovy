@@ -17,7 +17,7 @@ class DataOpsPluginTest extends Specification {
 
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << 'plugins { id "io.saagie.gradle-saagie-plugin" }\n'
+        buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
     }
 
     private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
