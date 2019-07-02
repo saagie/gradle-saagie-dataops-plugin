@@ -173,7 +173,6 @@ pluginBundle {
             id = 'io.saagie.gradle-saagie-dataops-plugin'
             displayName = 'Graadle Saagie plugin'
             description = project.description
-            implementationClass = 'io.saagie.plugin.DataOpsPlugin'
         }
     }
 }
