@@ -9,17 +9,17 @@ class DataOpsModule {
         project.ext.DataOpsExtension = DataOpsExtension;
 
         project.task('hello') {
-            group = "Saagie"
+            group = 'Saagie'
             description = "Greets the world. Greeting configured in the 'saagie' extension."
 
             doLast {
-                String greeting = project.extensions.saagie.alternativeGreeting ?: "Hello"
+                String greeting = project.extensions.saagie.alternativeGreeting ?: 'Hello'
                 println "$greeting, world!"
             }
         }
 
         project.task('projectList', type: ProjectListTask) {
-            group = "Saagie"
+            group = 'Saagie'
             configuration = project.saagie
         }
     }

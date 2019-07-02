@@ -6,11 +6,10 @@ plugins {
     id 'com.adarshr.test-logger' version '1.1.2'
     id 'java-gradle-plugin'
     id 'groovy'
+    id 'maven'
+    id 'signing'
+    id 'jacoco'
 }
-
-apply plugin: 'maven'
-apply plugin: 'signing'
-apply plugin: 'jacoco'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -21,6 +20,7 @@ description "Gradle plugin to manage Saagie's DataFabric jobs with gradle."
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 configurations {
@@ -31,18 +31,12 @@ configurations {
 }
 
 dependencies {
-
-
     compile gradleApi()
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version: okhttp
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: httpclient
+    compile 'com.squareup.okhttp3:okhttp:4.0.0'
 
     testCompile gradleTestKit()
     testCompile 'junit:junit:4+'
-    testCompile group: 'com.squareup.okhttp3', name: 'mockwebserver', version: mockwebserver
-    testCompile group: 'org.spockframework', name: 'spock-core', version: spockCore
-    testRuntime group: 'org.objenesis', name: 'objenesis', version: objenesis
-    testRuntime group: 'net.bytebuddy', name: 'byte-buddy', version: bytebuddy
+    testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-2'
 }
 
 test {

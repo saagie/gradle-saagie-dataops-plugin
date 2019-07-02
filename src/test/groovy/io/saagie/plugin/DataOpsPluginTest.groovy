@@ -1,22 +1,21 @@
 package io.saagie.plugin
 
+import org.gradle.api.InvalidUserDataException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.junit.Before
 import org.junit.Rule
-import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import spock.lang.*
 
 import static org.gradle.testkit.runner.TaskOutcome.*
 
-class DataOpsPluginTest {
+class DataOpsPluginTest extends Specification {
     @Rule
-    public final TemporaryFolder testProjectDir = new TemporaryFolder()
+    TemporaryFolder testProjectDir = new TemporaryFolder()
 
     File buildFile
 
-    @Before
-    void setup() {
+    def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << 'plugins { id "io.saagie.gradle-saagie-plugin" }\n'
     }
@@ -36,38 +35,45 @@ class DataOpsPluginTest {
         gradle(true, arguments)
     }
 
-    @Test
-    void "hello task should print 'Hello World'"() {
+    def "hello task should print 'Hello World'"() {
+        given:
         def result = gradle('hello')
-        assert result.task(":hello").outcome == SUCCESS
-        assert result.output.contains('Hello, world!')
+
+        expect:
+        result.task(":hello").outcome == SUCCESS
+        result.output.contains('Hello, world!')
     }
 
-    @Test
-    void "hello task with params must return the appropriate value"() {
+    def "hello task with params must return the appropriate value"() {
+        given:
         buildFile << 'saagie.alternativeGreeting = "Howdy"'
 
+        when:
         def result = gradle('hello')
 
-        assert result.task(":hello").outcome == SUCCESS
-        assert result.output.contains("Howdy, world!")
+        then:
+        result.task(":hello").outcome == SUCCESS
+        result.output.contains("Howdy, world!")
     }
 
-    @Test
-    void "projectList task must return the appropriate value"() {
+    def "projectList task with bad config should fail"() {
+        given:
         buildFile << """
             saagie {
                 server {
                     url = 'https://saagie-beta.prod.saagie.io/'
-                    login = 'my-login'
-                    password = 'my-password'
-                    environment = 4
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
                 }
             }
         """
 
+        when:
         def result = gradle('projectList')
-        assert result.task(":projectList").outcome == SUCCESS
-        assert result.output.contains("Project list")
+        println result.output
+
+        then:
+        thrown(Exception)
     }
 }
