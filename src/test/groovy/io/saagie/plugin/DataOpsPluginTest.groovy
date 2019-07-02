@@ -1,13 +1,10 @@
 package io.saagie.plugin
 
-import org.gradle.api.InvalidUserDataException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
-
-import static org.gradle.testkit.runner.TaskOutcome.*
 
 class DataOpsPluginTest extends Specification {
     @Rule
@@ -33,27 +30,6 @@ class DataOpsPluginTest extends Specification {
 
     private BuildResult gradle(String[] arguments = ['tasks']) {
         gradle(true, arguments)
-    }
-
-    def "hello task should print 'Hello World'"() {
-        given:
-        def result = gradle('hello')
-
-        expect:
-        result.task(":hello").outcome == SUCCESS
-        result.output.contains('Hello, world!')
-    }
-
-    def "hello task with params must return the appropriate value"() {
-        given:
-        buildFile << 'saagie.alternativeGreeting = "Howdy"'
-
-        when:
-        def result = gradle('hello')
-
-        then:
-        result.task(":hello").outcome == SUCCESS
-        result.output.contains("Howdy, world!")
     }
 
     def "projectList task with bad config should fail"() {
