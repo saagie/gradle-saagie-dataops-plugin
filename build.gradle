@@ -2,7 +2,6 @@ plugins {
     id 'net.researchgate.release' version '2.6.0'
     id 'io.codearte.nexus-staging' version '0.11.0'
     id 'com.gradle.plugin-publish' version '0.9.7'
-    id 'org.sonarqube' version '2.6.2'
     id 'com.adarshr.test-logger' version '1.1.2'
     id 'java-gradle-plugin'
     id 'groovy'
@@ -41,21 +40,7 @@ dependencies {
 
 test {
     testLogging {
-        // Make sure output from
-        // standard out or error is shown
-        // in Gradle output.
         showStandardStreams = true
-
-        // Or we use events method:
-        // events 'standard_out', 'standard_error'
-
-        // Or set property events:
-        // events = ['standard_out', 'standard_error']
-
-        // Instead of string values we can
-        // use enum values:
-        // events org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_OUT,
-        //        org.gradle.api.tasks.testing.logging.TestLogEvent.STANDARD_ERROR,
     }
 }
 
@@ -126,7 +111,7 @@ uploadArchives {
 
             pom.project {
                 name project.name
-                url 'https://github.com/saagie/gradle-saagie-dataops-plugin'
+                url 'https://github.com/saagie/gradle-saagie-plugin'
                 packaging 'jar'
                 description project.description
 
@@ -190,9 +175,6 @@ pluginBundle {
         }
     }
 }
-
-jacocoTestReport.dependsOn(test)
-tasks.getByName('sonarqube').dependsOn(jacocoTestReport)
 
 task createPluginClasspath {
     def outputDir = file("${buildDir}/resources/test")
