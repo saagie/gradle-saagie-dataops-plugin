@@ -4,11 +4,12 @@ plugins {
     id 'com.gradle.plugin-publish' version '0.9.7'
     id 'com.adarshr.test-logger' version '1.1.2'
     id 'java-gradle-plugin'
-    id 'groovy'
-    id 'maven'
-    id 'signing'
-    id 'jacoco'
 }
+
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'jacoco'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
