@@ -153,7 +153,6 @@ afterReleaseBuild.dependsOn publishPlugins
 
 signing {
     required signatory != null
-    sign configurations.archives
     sign publishing.publications.mavenJava
 }
 
