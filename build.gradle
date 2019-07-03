@@ -6,11 +6,11 @@ plugins {
 }
 
 apply plugin: 'groovy'
-apply plugin: 'signing'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'maven'
 apply plugin: 'jacoco'
 apply plugin: 'com.gradle.plugin-publish'
+apply plugin: 'signing'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -147,7 +147,6 @@ afterReleaseBuild.dependsOn publishPlugins
 signing {
     required signatory != null
     sign configurations.archives
-    sign jar
 }
 
 nexusStaging {
