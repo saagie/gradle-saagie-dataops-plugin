@@ -147,11 +147,6 @@ publishing {
 publishPlugins.dependsOn publishing
 afterReleaseBuild.dependsOn publishPlugins
 
-signing {
-    required signatory != null
-    sign configurations.archives
-    sign publishing.publications.mavenJava
-}
 
 nexusStaging {
     username = project.findProperty('nexusName')
