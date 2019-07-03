@@ -62,11 +62,6 @@ artifacts {
     archives sourceJar, javadocJar
 }
 
-signing {
-    required signatory != null
-    sign configurations.archives
-}
-
 release {
     preTagCommitMessage = '[ci skip] pre tag commit:'
     newVersionCommitMessage = '[ci skip] new version commit:'
@@ -147,6 +142,14 @@ uploadArchives {
 
 publishPlugins.dependsOn uploadArchives
 afterReleaseBuild.dependsOn publishPlugins
+
+signing {
+    required signatory != null
+    sign configurations.archives
+    sign jar
+    sign javadocJar
+    sign sourcesJar
+}
 
 nexusStaging {
     username = project.findProperty('nexusName')
