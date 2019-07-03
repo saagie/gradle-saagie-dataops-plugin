@@ -7,8 +7,9 @@ plugins {
 }
 
 apply plugin: 'groovy'
-apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'java-gradle-plugin'
+apply plugin: 'maven'
 apply plugin: 'jacoco'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
