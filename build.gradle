@@ -98,17 +98,12 @@ mergeToDevelop.dependsOn switchToDevelop
 updateVersion.dependsOn commitVersion
 
 publishing {
-    repositories {
-        maven {
-            url = "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}"
-            credentials {
-                username = project.findProperty('nexusName')
-                password = project.findProperty('nexusPassword')
-            }
-        }
-    }
     publications {
         mavenJava(MavenPublication) {
+            groupId 'io.saagie.gradle-saagie-dataops-plugin'
+            artifactId 'saagie-dataops'
+            version project.version
+
             from components.java
 
             artifact javadocJar
@@ -139,6 +134,15 @@ publishing {
                         url = "https://github.com/decampsrenan"
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url = "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}"
+            credentials {
+                username = project.findProperty('nexusName')
+                password = project.findProperty('nexusPassword')
             }
         }
     }
