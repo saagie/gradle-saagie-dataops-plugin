@@ -1,9 +1,9 @@
 plugins {
-    id 'signing'
     id 'com.gradle.plugin-publish' version '0.10.1'
     id 'java-gradle-plugin'
-    id 'groovy'
     id 'maven-publish'
+    id 'signing'
+    id 'groovy'
     id 'jacoco'
     id 'net.researchgate.release' version '2.6.0'
     id 'io.codearte.nexus-staging' version '0.21.0'
