@@ -41,9 +41,7 @@ configurations {
 }
 
 test {
-    testLogging {
-        showStandardStreams = true
-    }
+    testLogging.showStandardStreams = true
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
