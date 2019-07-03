@@ -73,7 +73,7 @@ task sourceJar(type: Jar, dependsOn: classes) {
 }
 
 artifacts {
-    archives jar, sourceJar, javadocJar
+    archives sourceJar, javadocJar
 }
 
 signing {
