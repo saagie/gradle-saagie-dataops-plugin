@@ -102,10 +102,7 @@ publishing {
     repositories {
         maven {
             url = "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}"
-            authentication {
-                basic(BasicAuthentication)
-            }
-            credentials(PasswordCredentials) {
+            credentials {
                 username = project.findProperty('nexusName')
                 password = project.findProperty('nexusPassword')
             }
@@ -153,6 +150,7 @@ afterReleaseBuild.dependsOn publishPlugins
 
 signing {
     required signatory != null
+    sign configurations.archives
     sign publishing.publications.mavenJava
 }
 
