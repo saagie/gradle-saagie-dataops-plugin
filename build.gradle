@@ -7,7 +7,6 @@ plugins {
     id 'net.researchgate.release' version '2.6.0'
     id 'io.codearte.nexus-staging' version '0.21.0'
     id 'com.adarshr.test-logger' version '1.7.0'
-    id 'signing'
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
