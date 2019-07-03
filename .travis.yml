@@ -17,7 +17,6 @@ before_install:
     - git config remote.origin.fetch refs/heads/*:refs/remotes/origin/*
     - openssl aes-256-cbc -K $encrypted_837e0722fe3d_key -iv $encrypted_837e0722fe3d_iv -in keys.tar.enc -out keys.tar -d
     - tar xvf keys.tar
-    - ls -al
     - mv id_rsa_travis ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
     - cp -fv config ~/.ssh/config
