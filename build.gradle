@@ -148,7 +148,6 @@ signing {
     sign configurations.archives
     sign jar
     sign javadocJar
-    sign sourcesJar
 }
 
 nexusStaging {
