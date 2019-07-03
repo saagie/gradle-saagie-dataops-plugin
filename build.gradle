@@ -10,6 +10,7 @@ apply plugin: 'signing'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'maven'
 apply plugin: 'jacoco'
+apply plugin: 'com.gradle.plugin-publish'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -147,7 +148,6 @@ signing {
     required signatory != null
     sign configurations.archives
     sign jar
-    sign javadocJar
 }
 
 nexusStaging {
@@ -158,7 +158,7 @@ nexusStaging {
 
 gradlePlugin {
     plugins {
-        saagiePlugin {
+        saagieDataopsPlugin {
             id = 'io.saagie.gradle-saagie-dataops-plugin'
             implementationClass = 'io.saagie.plugin.DataOpsPlugin'
         }
@@ -175,7 +175,7 @@ pluginBundle {
     tags = ['saagie', 'data fabric']
 
     plugins {
-        saagiePlugin {
+        saagieDataopsPlugin {
             id = 'io.saagie.gradle-saagie-dataops-plugin'
             displayName = 'Graadle Saagie plugin'
             description = project.description
