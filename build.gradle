@@ -1,16 +1,14 @@
 plugins {
+    id 'groovy'
+    id 'maven'
+    id 'jacoco'
+    id 'signing'
     id 'net.researchgate.release' version '2.6.0'
     id 'io.codearte.nexus-staging' version '0.11.0'
-    id 'com.gradle.plugin-publish' version '0.9.7'
     id 'com.adarshr.test-logger' version '1.1.2'
+    id 'java-gradle-plugin'
+    id 'com.gradle.plugin-publish' version '0.10.1'
 }
-
-apply plugin: 'groovy'
-apply plugin: 'java-gradle-plugin'
-apply plugin: 'maven'
-apply plugin: 'jacoco'
-apply plugin: 'com.gradle.plugin-publish'
-apply plugin: 'signing'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
