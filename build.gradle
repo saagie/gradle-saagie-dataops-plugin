@@ -25,6 +25,7 @@ configurations {
     compile.exclude module: 'slf4j-impl'
     testCompile.exclude module: 'groovy-all'
     testCompile.exclude module: 'slf4j-impl'
+    pom
 }
 
 dependencies {
@@ -34,10 +35,7 @@ dependencies {
     testCompile gradleTestKit()
     testCompile 'junit:junit:4+'
     testCompile 'org.spockframework:spock-core:1.1-groovy-2.4-rc-2'
-}
-
-configurations {
-    pom
+    testCompile 'com.squareup.okhttp3:mockwebserver:4.0.0'
 }
 
 test {
