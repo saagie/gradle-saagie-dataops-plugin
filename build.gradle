@@ -96,6 +96,20 @@ task commitVersion(type: Exec, dependsOn: prepareDocCommit) {
     commandLine 'git', 'commit', '-m', '[ci skip] replace readme version.'
 }
 
+task increment(type: Task) {
+    doLast {
+        def minor = previousVersion.substring(previousVersion.lastIndexOf('.') + 1)
+        def m = minor.toInteger() + 1
+        def major = previousVersion.substring(0, previousVersion.length() - 1)
+        //println m
+        def s = buildFile.getText().replaceFirst("version='$version'", "version='${major}${m}'")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace(previousVersion, version.toString().replace('-SNAPSHOT', '')))
+        //println s
+        buildFile.setText(s) //replace the build file's text
+    }
+}
+
 mergeToDevelop.dependsOn switchToDevelop
 updateVersion.dependsOn commitVersion
 
