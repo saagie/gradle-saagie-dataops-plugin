@@ -15,6 +15,7 @@ import org.gradle.api.tasks.StopActionException
 import org.gradle.api.tasks.TaskExecutionException
 
 class SaagieClient {
+    static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
     DataOpsExtension configuration
 
     SaagieUtils saagieUtils
@@ -33,21 +34,43 @@ class SaagieClient {
         try {
             client.newCall(request).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string();
+                    def responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
-                    List<Project> projects = parsedResult.data.projects
+                    List projects = parsedResult.data.projects
                     if (parsedResult.hasProperty('error')) {
                         throw new StopActionException('Something went wrong when getting projectList.')
                     } else {
                         return JsonOutput.toJson(projects)
                     }
                 } else {
-                    throw new InvalidUserDataException('Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
-        } catch (Error error) {
+        } catch (Exception error) {
             println error
-            throw new InvalidUserDataException('Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
+
+    def getProjectJobs() {
+        Request request = saagieUtils.getProjectJobsRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    List jobs = parsedResult.data.jobs
+                    if (parsedResult.hasProperty('error')) {
+                        throw new StopActionException('Something went wrong when getting project jobs.')
+                    } else {
+                        return JsonOutput.toJson(jobs)
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
 }

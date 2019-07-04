@@ -1,0 +1,72 @@
+package io.saagie.plugin.dataops.clients
+
+import io.saagie.plugin.dataops.DataOpsExtension
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import spock.lang.*
+
+class SaagieClientTest extends Specification {
+    @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared DataOpsExtension configuration
+    SaagieClient client
+
+    def setupSpec() {
+        mockWebServer.start(9000)
+    }
+
+    def cleanupSpec() {
+        mockWebServer.shutdown()
+    }
+
+    def setup() {
+        configuration = new DataOpsExtension()
+        configuration.server {
+            url = 'http://localhost:9000'
+            login = 'login'
+            password = 'password'
+            environment = 4
+        }
+        configuration.project {
+            id = 3
+        }
+        client = new SaagieClient(configuration)
+    }
+
+    def "getProjects should return a list of projects"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def projects = client.getProjects()
+
+        then:
+        projects instanceof String
+        projects.startsWith('[{"id":"8321e13c')
+        projects.contains('id')
+        projects.contains('name')
+    }
+
+    def "getProjectJobs should return a list of project job"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":{"jobs":[{"name":"test2","description":"","countJobInstance":1,"versions":[{"number":1}],"category":"Processing","technology":{"id":"djeuzhduze-c18b-4ecd-b61f-dezdezdddez","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-15T14:06:49.053Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true},{"name":"test 2.4","description":"","countJobInstance":3,"versions":[{"number":2},{"number":1}],"category":"Processing","technology":{"id":"dezddedz-26bd-4f7d-a3a5-d5dcba3935c8","label":"Spark","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-11T09:32:46.424Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}]}}
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def projects = client.getProjectJobs()
+
+        then:
+        projects instanceof String
+        projects.startsWith('[{"name":"test2"')
+        projects.contains('countJobInstance')
+        projects.contains('category')
+    }
+}

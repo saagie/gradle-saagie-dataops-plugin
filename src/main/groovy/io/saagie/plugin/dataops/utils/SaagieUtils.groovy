@@ -18,7 +18,7 @@ class SaagieUtils {
         """{ "query": "$inlinedRequest" }"""
     }
 
-    static final MediaType JSON = MediaType.parse("application/json; charset=utf-8")
+    static final MediaType JSON = MediaType.parse 'application/json; charset=utf-8'
 
     Request getProjectsRequest() {
         def listProjectsRequest = gq('''
@@ -34,15 +34,52 @@ class SaagieUtils {
             }
         ''')
 
-        RequestBody body = RequestBody.create(JSON, listProjectsRequest);
-        def request = new Request.Builder()
+        buildRequestFromQuery listProjectsRequest
+    }
+
+    Request getProjectJobsRequest() {
+        def listProjectJobs = gq("""
+            {
+                jobs(projectId: ${configuration.project.id}) {
+                    name
+                    description
+                    countJobInstance
+                    versions {
+                        number
+                    }
+                    category
+                    technology {
+                        id
+                        label
+                        isAvailable
+                    }
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        emails
+                        statusList
+                    }
+                    isStreaming
+                    creationDate
+                    migrationStatus
+                    migrationProjectId
+                    isDeletable
+                }
+            }
+        """)
+        buildRequestFromQuery listProjectJobs
+    }
+
+    private Request buildRequestFromQuery(String query) {
+        RequestBody body = RequestBody.create(JSON, query)
+        new Request.Builder()
             .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
             .addHeader(
                 'Authorization',
                 Credentials.basic(configuration.server.login, configuration.server.password)
             )
             .post(body)
-            .build();
-        return request
+            .build()
     }
 }
