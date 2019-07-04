@@ -1,13 +1,16 @@
 plugins {
-    id 'com.gradle.plugin-publish' version '0.10.1'
-    id 'java-gradle-plugin'
-    id 'maven-publish'
-    id 'groovy'
-    id 'jacoco'
     id 'net.researchgate.release' version '2.6.0'
-    id 'io.codearte.nexus-staging' version '0.21.0'
-    id 'com.adarshr.test-logger' version '1.7.0'
+    id 'io.codearte.nexus-staging' version '0.11.0'
+    id 'com.gradle.plugin-publish' version '0.9.7'
+    id 'org.sonarqube' version '2.6.2'
+    id 'com.adarshr.test-logger' version '1.1.2'
+    id 'java-gradle-plugin'
 }
+
+apply plugin: 'groovy'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'jacoco'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -38,9 +41,7 @@ dependencies {
     testCompile 'com.squareup.okhttp3:mockwebserver:4.0.0'
 }
 
-test {
-    testLogging.showStandardStreams = true
-}
+test.testLogging.showStandardStreams = true
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier 'javadoc'
@@ -54,6 +55,11 @@ task sourceJar(type: Jar, dependsOn: classes) {
 
 artifacts {
     archives sourceJar, javadocJar
+}
+
+signing {
+    required signatory != null
+    sign configurations.archives
 }
 
 release {
@@ -93,60 +99,49 @@ task commitVersion(type: Exec, dependsOn: prepareDocCommit) {
 mergeToDevelop.dependsOn switchToDevelop
 updateVersion.dependsOn commitVersion
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId 'io.saagie.gradle-saagie-dataops-plugin'
-            artifactId 'saagie-dataops'
-            version project.version
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            from components.java
+            repository(url: "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}") {
+                authentication(userName: project.findProperty('nexusName') ?: '', password: project.findProperty('nexusPassword') ?: '')
+            }
 
-            artifact javadocJar
-
-            pom {
-                name = project.name
-                url = 'https://github.com/saagie/gradle-saagie-dataops-plugin'
-                description = project.description
+            pom.project {
+                name project.name
+                url 'https://github.com/saagie/gradle-saagie-dataops-plugin'
+                packaging 'jar'
+                description project.description
 
                 scm {
-                    url = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
-                    connection = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
-                    developerConnection = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    url 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    connection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    developerConnection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
                 }
 
                 licenses {
                     license {
-                        name = 'The Apache Software License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution = 'repo'
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
                     }
                 }
 
                 developers {
                     developer {
-                        id = "decampsrenan"
-                        name = "Renan Decamps"
-                        url = "https://github.com/decampsrenan"
+                        id "decampsrenan"
+                        name "Renan Decamps"
+                        url "https://github.com/decampsrenan"
                     }
                 }
             }
         }
     }
-    repositories {
-        maven {
-            url = "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}"
-            credentials {
-                username = project.findProperty('nexusName')
-                password = project.findProperty('nexusPassword')
-            }
-        }
-    }
 }
 
-publishPlugins.dependsOn publishing
+publishPlugins.dependsOn uploadArchives
 afterReleaseBuild.dependsOn publishPlugins
-
 
 nexusStaging {
     username = project.findProperty('nexusName')
@@ -156,7 +151,7 @@ nexusStaging {
 
 gradlePlugin {
     plugins {
-        saagieDataopsPlugin {
+        saagiePlugin {
             id = 'io.saagie.gradle-saagie-dataops-plugin'
             implementationClass = 'io.saagie.plugin.DataOpsPlugin'
         }
@@ -165,7 +160,6 @@ gradlePlugin {
 
 // ===============
 // Publishing
-
 pluginBundle {
     website = 'https://www.saagie.com/'
     vcsUrl = 'https://github.com/saagie/gradle-saagie-dataops-plugin'
@@ -173,13 +167,15 @@ pluginBundle {
     tags = ['saagie', 'data fabric']
 
     plugins {
-        saagieDataopsPlugin {
+        saagiePlugin {
             id = 'io.saagie.gradle-saagie-dataops-plugin'
-            displayName = 'Graadle Saagie plugin'
-            description = project.description
+            displayName = 'Gradle Saagie plugin'
         }
     }
 }
+
+jacocoTestReport.dependsOn(test)
+tasks.getByName('sonarqube').dependsOn(jacocoTestReport)
 
 task createPluginClasspath {
     def outputDir = file("${buildDir}/resources/test")
