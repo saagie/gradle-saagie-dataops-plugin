@@ -2,6 +2,7 @@ package io.saagie.plugin
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.gradle.api.tasks.TaskExecutionException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
@@ -125,11 +126,63 @@ class DataOpsPluginTest extends Specification {
     }
 
     def "projectListJobs task should fail if no project config is provided"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}
+        """
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    
+                }
+            }
+        """
+        mockWebServer.enqueue(mockedResponse)
 
+        when:
+        def result = gradle 'projectListJobs'
+
+        then:
+        thrown(Exception)
     }
 
     def "projectListJobs task should fail if a wrong project id is provided"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}
+        """
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'wrong id'
+                }
+            }
+        """
+        mockWebServer.enqueue(mockedResponse)
 
+        when:
+        gradle 'projectListJobs'
+
+        then:
+        thrown(Exception)
     }
 
 }

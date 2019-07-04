@@ -16,6 +16,8 @@ import org.gradle.api.tasks.TaskExecutionException
 
 class SaagieClient {
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
+    static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs'
+
     DataOpsExtension configuration
 
     SaagieUtils saagieUtils
@@ -47,12 +49,15 @@ class SaagieClient {
                 }
             }
         } catch (Exception error) {
-            println error
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
 
     def getProjectJobs() {
+        if (!configuration.project || !configuration.project.id) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
         Request request = saagieUtils.getProjectJobsRequest()
         try {
             client.newCall(request).execute().withCloseable { response ->
