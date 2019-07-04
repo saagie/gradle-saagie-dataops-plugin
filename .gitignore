@@ -2,7 +2,11 @@
 .gradle
 
 # Ignore Gradle build output directory
-build
+build/
+bin/
+secring.gpg
+id_rsa_travis
+keys.tar
 
 # IntelliJ
 *.iml
