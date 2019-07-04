@@ -66,7 +66,6 @@ class DataOpsPluginTest extends Specification {
 
         when:
         def result = gradle 'projectList'
-        println result.output
 
         then:
         !result.output.contains('"data"')
@@ -110,7 +109,7 @@ class DataOpsPluginTest extends Specification {
                 }
                 
                 project {
-                    id = '21345e13c-892a-2342-8552-5be4b6de5df4'
+                    id = 'dezdezjiodjei-892a-2342-8552-5be4b6de5df4'
                 }
             }
         """
