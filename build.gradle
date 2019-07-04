@@ -130,9 +130,9 @@ uploadArchives {
 
                 developers {
                     developer {
-                        id "decampsrenan"
-                        name "Renan Decamps"
-                        url "https://github.com/decampsrenan"
+                        id 'decampsrenan'
+                        name 'Renan Decamps'
+                        url 'https://github.com/decampsrenan'
                     }
                 }
             }
@@ -149,12 +149,10 @@ nexusStaging {
     delayBetweenRetriesInMillis = 10000
 }
 
-gradlePlugin {
-    plugins {
-        saagiePlugin {
-            id = 'io.saagie.gradle-saagie-dataops-plugin'
-            implementationClass = 'io.saagie.plugin.DataOpsPlugin'
-        }
+gradlePlugin.plugins {
+    saagiePlugin {
+        id = 'io.saagie.gradle-saagie-dataops-plugin'
+        implementationClass = 'io.saagie.plugin.DataOpsPlugin'
     }
 }
 
