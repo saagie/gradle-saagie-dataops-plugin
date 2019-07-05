@@ -54,7 +54,6 @@ class SaagieClient {
     }
 
     def getProjectJobs() {
-        println configuration
         if (configuration.project == null ||
             configuration.project.id == null ||
             !configuration.project.id instanceof  String
@@ -79,13 +78,15 @@ class SaagieClient {
                 }
             }
         } catch (Exception error) {
-            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
 
     def getProjectTechnologies() {
-        if (!configuration.project || !configuration.project.id) {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof  String
+        ) {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
         }
 
@@ -106,7 +107,6 @@ class SaagieClient {
                 }
             }
         } catch (Exception error) {
-            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
