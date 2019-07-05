@@ -84,7 +84,7 @@ task switchToDevelop(type: Exec) {
 //    }
 //}
 
-task prepareDocCommit(type: Exec, dependsOn: replaceVersionInFiles) {
+task prepareDocCommit(type: Exec) {
     description 'Replace version number in documentation'
     commandLine 'git', 'add', 'README.md', 'gradle.properties'
 }
