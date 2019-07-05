@@ -136,6 +136,19 @@ task major(type: Task) {
     }
 }
 
+task updateBuildNumber(type: Task) {
+    doLast {
+        def previousBuildNumber = version.substring(version.indexOf('-'))
+        def artifactVersion = version.substring(0, version.lastIndexOf('-'))
+        println "$artifactVersion$previousBuildNumber"
+        def updatedVersion = "${artifactVersion}-${buildNumber}"
+        logger.quiet("Update build number from $version to $updatedVersion")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
+        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
+    }
+}
+
 mergeToDevelop.dependsOn switchToDevelop
 updateVersion.dependsOn commitVersion
 
