@@ -77,12 +77,12 @@ task switchToDevelop(type: Exec) {
     commandLine 'git', 'checkout', 'develop'
 }
 
-task replaceVersionInFiles(type: Task) {
-    doLast {
-        def readMe = new File('README.md')
-        readMe.write(readMe.text.replace(previousVersion, version.toString()))
-    }
-}
+//task replaceVersionInFiles(type: Task) {
+//    doLast {
+//        def readMe = new File('README.md')
+//        readMe.write(readMe.text.replace(previousVersion, version.toString()))
+//    }
+//}
 
 task prepareDocCommit(type: Exec, dependsOn: replaceVersionInFiles) {
     description 'Replace version number in documentation'
