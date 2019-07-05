@@ -32,6 +32,7 @@ script:
             ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace;
             ./gradlew closeAndReleaseRepository;
         elif [ ${TRAVIS_BRANCH} = "develop" ]; then
+            ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
             ./gradlew publish --stacktrace;
         else
             ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
