@@ -31,8 +31,11 @@ script:
             git checkout master;
             ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace;
             ./gradlew closeAndReleaseRepository;
-        else
+        elif [ ${TRAVIS_BRANCH} = "develop" ]; then
             ./gradlew publish --stacktrace;
+        else
+            ./gradlew patch commitVersion;
+            ./gradlew test assemble;
         fi
 env:
     global:
