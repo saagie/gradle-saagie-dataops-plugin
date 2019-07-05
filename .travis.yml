@@ -27,15 +27,13 @@ before_install:
     - echo gradle.publish.secret=$GRADLE_PUBLISH_SECRET >> ~/.gradle/gradle.properties
 script:
     - ./gradlew test --stacktrace
-    - ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
     -   if [ ${TRAVIS_BRANCH} = "master" ]; then
             git checkout master;
             ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace;
             ./gradlew closeAndReleaseRepository;
-        elif [ ${TRAVIS_BRANCH} = "develop" ]; then
-            ./gradlew publish --stacktrace;
         else
-            ./gradlew assemble;
+            ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
+            ./gradlew uploadArchive --stacktrace;
         fi
 env:
     global:
