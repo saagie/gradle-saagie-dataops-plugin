@@ -101,14 +101,12 @@ task patch(type: Task) {
         logger.quiet("Patch update from $version to $updatedVersion")
         def properties = new File('gradle.properties')
         properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
-        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
     }
 }
 
 task minor(type: Task) {
     doLast {
         def minor = version.substring(version.lastIndexOf('.') + -1, version.lastIndexOf('.'))
-        logger.quiet("Minor $minor")
         def m = minor.toInteger() + 1
         def major = version.substring(0, version.indexOf('.'))
         def patch = version.substring(version.lastIndexOf('.'))
@@ -116,7 +114,6 @@ task minor(type: Task) {
         logger.quiet("Minor update from $version to $updatedVersion")
         def properties = new File('gradle.properties')
         properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
-        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
     }
 }
 
@@ -130,19 +127,6 @@ task major(type: Task) {
         logger.quiet("Major update from $version to $updatedVersion")
         def properties = new File('gradle.properties')
         properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
-        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
-    }
-}
-
-task updateBuildNumber(type: Task) {
-    doLast {
-        def previousBuildNumber = version.substring(version.indexOf('-'))
-        def artifactVersion = version.substring(0, version.lastIndexOf('-'))
-        def updatedVersion = "${artifactVersion}-${buildNumber}"
-        logger.quiet("Update build number from $version to $updatedVersion")
-        def properties = new File('gradle.properties')
-        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
-        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
     }
 }
 
