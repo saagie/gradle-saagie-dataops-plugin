@@ -15,6 +15,9 @@ import org.gradle.api.tasks.StopActionException
 import org.gradle.api.tasks.TaskExecutionException
 
 class SaagieClient {
+    static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
+    static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs'
+
     DataOpsExtension configuration
 
     SaagieUtils saagieUtils
@@ -33,21 +36,78 @@ class SaagieClient {
         try {
             client.newCall(request).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string();
+                    def responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
-                    List<Project> projects = parsedResult.data.projects
-                    if (parsedResult.hasProperty('error')) {
+                    if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting projectList.')
                     } else {
+                        List projects = parsedResult.data.projects
                         return JsonOutput.toJson(projects)
                     }
                 } else {
-                    throw new InvalidUserDataException('Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
-        } catch (Error error) {
-            println error
-            throw new InvalidUserDataException('Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
+
+    def getProjectJobs() {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof  String
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
+        Request request = saagieUtils.getProjectJobsRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when getting project jobs.')
+                    } else {
+                        List jobs = parsedResult.data.jobs
+                        return JsonOutput.toJson(jobs)
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
+
+    def getProjectTechnologies() {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof  String
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
+        Request request = saagieUtils.getProjectTechnologiesRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when getting project technologies.')
+                    } else {
+                        List technologies = parsedResult.data.technologies
+                        return JsonOutput.toJson(technologies)
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
 }

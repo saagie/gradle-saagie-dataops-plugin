@@ -80,9 +80,7 @@ task switchToDevelop(type: Exec) {
 task replaceVersionInFiles(type: Task) {
     doLast {
         def readMe = new File('README.md')
-        readMe.write(readMe.text.replace(previousVersion, version.toString().replace('-SNAPSHOT', '')))
-        def properties = new File('gradle.properties')
-        properties.write(properties.text.replace(previousVersion, version.toString().replace('-SNAPSHOT', '')))
+        readMe.write(readMe.text.replace(previousVersion, version.toString()))
     }
 }
 
@@ -94,6 +92,58 @@ task prepareDocCommit(type: Exec, dependsOn: replaceVersionInFiles) {
 task commitVersion(type: Exec, dependsOn: prepareDocCommit) {
     description 'Commit version'
     commandLine 'git', 'commit', '-m', '[ci skip] replace readme version.'
+}
+
+task patch(type: Task) {
+    doLast {
+        def major = version.substring(0, version.lastIndexOf('.') + 1)
+        def updatedVersion = "${major}${buildNumber}"
+        logger.quiet("Patch update from $version to $updatedVersion")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
+        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
+    }
+}
+
+task minor(type: Task) {
+    doLast {
+        def minor = version.substring(version.lastIndexOf('.') + -1, version.lastIndexOf('.'))
+        logger.quiet("Minor $minor")
+        def m = minor.toInteger() + 1
+        def major = version.substring(0, version.indexOf('.'))
+        def patch = version.substring(version.lastIndexOf('.'))
+        def updatedVersion = "${major}.${m}${patch}"
+        logger.quiet("Minor update from $version to $updatedVersion")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
+        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
+    }
+}
+
+task major(type: Task) {
+    doLast {
+        def major = version.substring(0, version.indexOf('.'))
+        def m = major.toInteger() + 1
+        def minor = version.substring(version.lastIndexOf('.') + -1, version.lastIndexOf('.'))
+        def patch = version.substring(version.lastIndexOf('.'))
+        def updatedVersion = "${m}.${minor}${patch}"
+        logger.quiet("Major update from $version to $updatedVersion")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
+        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
+    }
+}
+
+task updateBuildNumber(type: Task) {
+    doLast {
+        def previousBuildNumber = version.substring(version.indexOf('-'))
+        def artifactVersion = version.substring(0, version.lastIndexOf('-'))
+        def updatedVersion = "${artifactVersion}-${buildNumber}"
+        logger.quiet("Update build number from $version to $updatedVersion")
+        def properties = new File('gradle.properties')
+        properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
+        properties.write(properties.text.replace("previousVersion=$previousVersion", "previousVersion=$version"))
+    }
 }
 
 mergeToDevelop.dependsOn switchToDevelop

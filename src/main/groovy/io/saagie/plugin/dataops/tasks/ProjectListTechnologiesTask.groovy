@@ -5,13 +5,13 @@ import io.saagie.plugin.dataops.clients.SaagieClient
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
-class ProjectListTask extends DefaultTask {
+class ProjectListTechnologiesTask extends DefaultTask {
     DataOpsExtension configuration
     SaagieClient saagieClient
 
     @TaskAction
-    def projectList() {
+    def getProjectTechnologies() {
         saagieClient = new SaagieClient(configuration)
-        logger.quiet(saagieClient.getProjects())
+        logger.quiet(saagieClient.getProjectTechnologies())
     }
 }
