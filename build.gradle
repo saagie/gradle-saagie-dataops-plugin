@@ -77,13 +77,6 @@ task switchToDevelop(type: Exec) {
     commandLine 'git', 'checkout', 'develop'
 }
 
-//task replaceVersionInFiles(type: Task) {
-//    doLast {
-//        def readMe = new File('README.md')
-//        readMe.write(readMe.text.replace(previousVersion, version.toString()))
-//    }
-//}
-
 task prepareDocCommit(type: Exec) {
     description 'Replace version number in documentation'
     commandLine 'git', 'add', 'README.md', 'gradle.properties'
@@ -131,7 +124,6 @@ task major(type: Task) {
 }
 
 mergeToDevelop.dependsOn switchToDevelop
-updateVersion.dependsOn commitVersion
 
 uploadArchives {
     repositories {
