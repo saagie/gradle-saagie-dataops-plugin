@@ -96,10 +96,8 @@ task commitVersion(type: Exec, dependsOn: prepareDocCommit) {
 
 task patch(type: Task) {
     doLast {
-        def patch = version.substring(version.lastIndexOf('.') + 1)
-        def m = patch.toInteger() + 1
-        def major = version.substring(0, version.length() - 1)
-        def updatedVersion = "${major}$m"
+        def major = version.substring(0, version.lastIndexOf('.') + 1)
+        def updatedVersion = "${major}${buildNumber}"
         logger.quiet("Patch update from $version to $updatedVersion")
         def properties = new File('gradle.properties')
         properties.write(properties.text.replace("version=$version", "version=$updatedVersion"))
@@ -140,7 +138,6 @@ task updateBuildNumber(type: Task) {
     doLast {
         def previousBuildNumber = version.substring(version.indexOf('-'))
         def artifactVersion = version.substring(0, version.lastIndexOf('-'))
-        println "$artifactVersion$previousBuildNumber"
         def updatedVersion = "${artifactVersion}-${buildNumber}"
         logger.quiet("Update build number from $version to $updatedVersion")
         def properties = new File('gradle.properties')
