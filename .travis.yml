@@ -35,7 +35,7 @@ script:
             ./gradlew publish --stacktrace;
         else
             ./gradlew patch commitVersion;
-            ./gradlew test assemble;
+            ./gradlew assemble;
         fi
 env:
     global:
