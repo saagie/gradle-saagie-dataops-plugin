@@ -34,8 +34,8 @@ script:
         elif [ ${TRAVIS_BRANCH} = "develop" ]; then
             ./gradlew publish --stacktrace;
         else
-            ./gradlew patch commitVersion;
-            ./gradlew test assemble;
+            ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
+            ./gradlew assemble;
         fi
 env:
     global:

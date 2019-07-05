@@ -38,10 +38,10 @@ class SaagieClient {
                 if (response.isSuccessful()) {
                     def responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
-                    List projects = parsedResult.data.projects
-                    if (parsedResult.hasProperty('error')) {
+                    if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting projectList.')
                     } else {
+                        List projects = parsedResult.data.projects
                         return JsonOutput.toJson(projects)
                     }
                 } else {
@@ -54,7 +54,10 @@ class SaagieClient {
     }
 
     def getProjectJobs() {
-        if (!configuration.project || !configuration.project.id) {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof  String
+        ) {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
         }
 
@@ -64,11 +67,40 @@ class SaagieClient {
                 if (response.isSuccessful()) {
                     def responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
-                    List jobs = parsedResult.data.jobs
-                    if (parsedResult.hasProperty('error')) {
+                    if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting project jobs.')
                     } else {
+                        List jobs = parsedResult.data.jobs
                         return JsonOutput.toJson(jobs)
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
+
+    def getProjectTechnologies() {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof  String
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
+        Request request = saagieUtils.getProjectTechnologiesRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when getting project technologies.')
+                    } else {
+                        List technologies = parsedResult.data.technologies
+                        return JsonOutput.toJson(technologies)
                     }
                 } else {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)

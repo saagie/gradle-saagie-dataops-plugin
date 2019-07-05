@@ -32,6 +32,10 @@ class SaagieClientTest extends Specification {
         client = new SaagieClient(configuration)
     }
 
+    def cleanup() {
+        mockWebServer.dispatcher.peek()
+    }
+
     def "getProjects should return a list of projects"() {
         given:
         def mockedResponse = new MockResponse()
@@ -61,12 +65,31 @@ class SaagieClientTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def projects = client.getProjectJobs()
+        def jobs = client.getProjectJobs()
 
         then:
-        projects instanceof String
-        projects.startsWith('[{"name":"test2"')
-        projects.contains('countJobInstance')
-        projects.contains('category')
+        jobs instanceof String
+        jobs.startsWith('[{"name":"test2"')
+        jobs.contains('countJobInstance')
+        jobs.contains('category')
+    }
+
+    def "getProjectTechnologies should return a list of project technologies"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def technologies = client.getProjectTechnologies()
+
+        then:
+        technologies instanceof String
+        technologies.startsWith('[{"id":"c3cadcad')
+        technologies.contains('features')
+        technologies.contains('isAvailable')
     }
 }

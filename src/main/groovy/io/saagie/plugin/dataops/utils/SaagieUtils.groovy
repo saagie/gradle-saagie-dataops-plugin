@@ -40,7 +40,7 @@ class SaagieUtils {
     Request getProjectJobsRequest() {
         def listProjectJobs = gq("""
             {
-                jobs(projectId: ${configuration.project.id}) {
+                jobs(projectId: "${configuration.project.id}") {
                     name
                     description
                     countJobInstance
@@ -69,6 +69,27 @@ class SaagieUtils {
             }
         """)
         buildRequestFromQuery listProjectJobs
+    }
+
+    Request getProjectTechnologiesRequest() {
+        def listProjectTechnologies = gq("""
+            {
+                technologies(projectId: "${configuration.project.id}") {
+                    id
+                    label
+                    isAvailable
+                    icon
+                    features {
+                        field
+                        label
+                        isMandatory
+                        comment
+                        defaultValue
+                    }
+                }
+            }
+        """)
+        buildRequestFromQuery listProjectTechnologies
     }
 
     private Request buildRequestFromQuery(String query) {

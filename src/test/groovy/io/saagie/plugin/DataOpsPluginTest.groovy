@@ -9,6 +9,8 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
+import java.util.concurrent.TimeUnit
+
 class DataOpsPluginTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
@@ -28,6 +30,10 @@ class DataOpsPluginTest extends Specification {
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
     }
 
+    def cleanup() {
+        mockWebServer.dispatcher.peek()
+    }
+
     private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
         arguments += '--stacktrace'
         def runner = GradleRunner.create()
@@ -42,7 +48,6 @@ class DataOpsPluginTest extends Specification {
     private BuildResult gradle(String[] arguments = ['tasks']) {
         gradle(true, arguments)
     }
-
 
     // ===========================
     // TESTS =====================
@@ -127,11 +132,6 @@ class DataOpsPluginTest extends Specification {
 
     def "projectListJobs task should fail if no project config is provided"() {
         given:
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}
-        """
         buildFile << """
             saagie {
                 server {
@@ -146,7 +146,6 @@ class DataOpsPluginTest extends Specification {
                 }
             }
         """
-        mockWebServer.enqueue(mockedResponse)
 
         when:
         def result = gradle 'projectListJobs'
@@ -180,9 +179,41 @@ class DataOpsPluginTest extends Specification {
 
         when:
         gradle 'projectListJobs'
+        mockWebServer.takeRequest(2, TimeUnit.SECONDS)
 
         then:
         thrown(Exception)
     }
 
+    def "projectListTechnologies task should list technologies of a project"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            {"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}
+        """
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'dezdezjiodjei-892a-2342-8552-5be4b6de5df4'
+                }
+            }
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def result = gradle 'projectListTechnologies'
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"label"')
+        result.output.contains('"features"')
+    }
 }
