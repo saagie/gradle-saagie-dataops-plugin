@@ -29,14 +29,14 @@ script:
     -   ./gradlew test --stacktrace
     -   if [ ${TRAVIS_PULL_REQUEST} != "false" ]; then
             exit 0;
-        fi;
-        if [ ${TRAVIS_BRANCH} = "master" ]; then
+        fi
+
+    -   if [ ${TRAVIS_BRANCH} = "master" ]; then
             git checkout master;
             ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace;
             ./gradlew closeAndReleaseRepository;
         else
-            ./gradlew patch commitVersion -PbuildNumber=$TRAVIS_BUILD_NUMBER;
-            ./gradlew uploadArchive --stacktrace;
+            ./gradlew patch commitVersion uploadArchive --stacktrace -PbuildNumber=$TRAVIS_BUILD_NUMBER;
         fi
 env:
     global:
