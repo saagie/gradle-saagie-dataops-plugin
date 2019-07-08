@@ -92,6 +92,13 @@ class SaagieUtils {
         buildRequestFromQuery listProjectTechnologies
     }
 
+    Request createProjectJobRequest() {
+        def createProjectJob = gq("""
+            
+        """)
+        buildRequestFromQuery createProjectJob
+    }
+
     private Request buildRequestFromQuery(String query) {
         RequestBody body = RequestBody.create(JSON, query)
         new Request.Builder()
