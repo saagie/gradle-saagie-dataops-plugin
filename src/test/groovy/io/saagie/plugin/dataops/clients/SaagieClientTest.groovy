@@ -92,4 +92,24 @@ class SaagieClientTest extends Specification {
         technologies.contains('features')
         technologies.contains('isAvailable')
     }
+
+    def "createProjectJob should create a job and return the created job"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """
+            // TODO: get a fake body response 
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def createdJobConfig = client.getProjectTechnologies()
+
+        then:
+        createdJobConfig instanceof String
+        createdJobConfig.startsWith('[{"id":"c3cadcad')
+        createdJobConfig.contains('name')
+        createdJobConfig.contains('versions')
+    }
+
 }
