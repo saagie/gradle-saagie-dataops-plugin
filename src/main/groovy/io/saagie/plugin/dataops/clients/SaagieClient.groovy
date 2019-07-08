@@ -207,4 +207,35 @@ class SaagieClient {
             )
         }
     }
+
+    def updateProjectJob() {
+        if (configuration.project == null ||
+            configuration.project.id == null ||
+            !configuration.project.id instanceof String ||
+            !configuration.job ||
+            !configuration.jobVersion
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
+        Request request = saagieUtils.getProjectUpdateJobRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when updating project job.')
+                    } else {
+                        Map updatedJob = parsedResult.data.job
+                        return JsonOutput.toJson(updatedJob)
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
 }

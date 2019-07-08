@@ -161,6 +161,13 @@ class SaagieUtils {
         buildRequestFromQuery createProjectJob
     }
 
+    Request getProjectUpdateJobRequest() {
+        def updateProjectJob = gq("""
+            // TODO: get the request
+        """)
+        buildRequestFromQuery updateProjectJob
+    }
+
     Request getUploadFileToJobRequest(String jobId) {
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileType = MediaType.parse("text/text")
