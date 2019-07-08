@@ -29,8 +29,8 @@ script:
     -   if [ ${TRAVIS_PULL_REQUEST} != "false" ]; then
             exit 0;
         fi
-    -   ./gradlew test --stacktrace
-    -   if [ ${TRAVIS_BRANCH} = "master" ]; then
+        ./gradlew test --stacktrace
+        if [ ${TRAVIS_BRANCH} = "master" ]; then
             git checkout master;
             ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace;
             ./gradlew closeAndReleaseRepository;
