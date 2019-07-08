@@ -6,7 +6,7 @@ class JobVersion {
     String runtimeVersion
     PackageInfo packageInfo = new PackageInfo()
 
-    PackageInfo packageInfos(Closure closure) {
+    Object packageInfos(Closure closure) {
         packageInfos.with(closure)
     }
 }

@@ -11,19 +11,19 @@ class DataOpsExtension {
     Job job = new Job()
     JobVersion jobVersion = new JobVersion()
 
-    Server server(Closure closure) {
+    Object server(Closure closure) {
         server.with(closure)
     }
 
-    Project project(Closure closure) {
+    Object project(Closure closure) {
         project.with(closure)
     }
 
-    Job job(Closure closure) {
+    Object job(Closure closure) {
         job.with(closure)
     }
 
-    JobVersion jobVersion(Closure closure) {
+    Object jobVersion(Closure closure) {
         jobVersion.with(closure)
     }
 }
