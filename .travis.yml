@@ -25,6 +25,10 @@ before_install:
     - echo nexusPassword=$SONATYPE_PASSWORD >> ~/.gradle/gradle.properties
     - echo gradle.publish.key=$GRADLE_PUBLISH_KEY >> ~/.gradle/gradle.properties
     - echo gradle.publish.secret=$GRADLE_PUBLISH_SECRET >> ~/.gradle/gradle.properties
+    - wget https://services.gradle.org/distributions/gradle-5.4.1-bin.zip
+    - unzip gradle-5.4.1-bin.zip
+    - export GRADLE_HOME=$PWD/gradle-5.4.1
+    - export PATH=$GRADLE_HOME/bin:$PATH
 script:
   - gradle test --stacktrace
   - if [ ${TRAVIS_BRANCH} = "master" ]; then
