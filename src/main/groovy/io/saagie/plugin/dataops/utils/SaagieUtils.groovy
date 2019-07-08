@@ -92,9 +92,9 @@ class SaagieUtils {
         buildRequestFromQuery listProjectTechnologies
     }
 
-    Request createProjectJobRequest() {
+    Request getProjectCreateJobRequest() {
         def createProjectJob = gq("""
-            
+            // TODO: add create task query
         """)
         buildRequestFromQuery createProjectJob
     }
