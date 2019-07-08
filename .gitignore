@@ -16,3 +16,6 @@ keys.tar
 # VSCode
 .history
 .vscode
+
+.idea
+.settings
