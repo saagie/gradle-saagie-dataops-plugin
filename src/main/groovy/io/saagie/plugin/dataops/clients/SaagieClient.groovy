@@ -3,20 +3,17 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.Project
-import io.saagie.plugin.dataops.tasks.ProjectListTask
+import io.saagie.plugin.dataops.models.Resources
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.gradle.api.GradleException
-import org.gradle.api.GradleScriptException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.tasks.StopActionException
-import org.gradle.api.tasks.TaskExecutionException
 
 class SaagieClient {
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
     static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs'
+    static NO_FILE_MSG = "Check that there is a file in '%FILE%'"
 
     DataOpsExtension configuration
 
@@ -28,6 +25,14 @@ class SaagieClient {
 
     SaagieClient(DataOpsExtension configuration) {
         this.configuration = configuration
+
+        // TODO: remember to parameterize that once it will be available
+        this.configuration.jobVersion.resources {
+            disk = 512
+            memory = 512
+            cpu = 0.3
+        }
+
         saagieUtils = new SaagieUtils(configuration)
     }
 
@@ -74,10 +79,12 @@ class SaagieClient {
                         return JsonOutput.toJson(jobs)
                     }
                 } else {
+                    println response.body().string()
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
         } catch (Exception error) {
+            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
@@ -106,6 +113,49 @@ class SaagieClient {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
+        } catch (Exception error) {
+            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+        }
+    }
+
+    def createProjectJob() {
+        if (configuration?.project?.id == null ||
+            !configuration?.project?.id instanceof String ||
+            configuration?.job?.name == null ||
+            configuration?.job?.technology == null ||
+            configuration?.job?.category == null ||
+            configuration?.jobVersion?.runtimeVersion == null ||
+            configuration?.jobVersion?.resources == null
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+        }
+
+        Request request = saagieUtils.getProjectCreateJobRequest()
+        try {
+            client.newCall(request).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    def responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when creating project job.')
+                    } else {
+                        Map createdJob = parsedResult.data.createJob
+                        String jobId = createdJob.id
+                        Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
+                        client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                            if (uploadResponse.isSuccessful()) {
+                                return JsonOutput.toJson(createdJob)
+                            } else {
+                                throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                            }
+                        }
+                    }
+                } else {
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                }
+            }
+        } catch (FileNotFoundException error) {
+            throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
         } catch (Exception error) {
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }

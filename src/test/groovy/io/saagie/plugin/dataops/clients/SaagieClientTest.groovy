@@ -3,11 +3,17 @@ package io.saagie.plugin.dataops.clients
 import io.saagie.plugin.dataops.DataOpsExtension
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.gradle.api.InvalidUserDataException
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
 class SaagieClientTest extends Specification {
     @Shared MockWebServer mockWebServer = new MockWebServer()
     @Shared DataOpsExtension configuration
+    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+    File tempFile
+
     SaagieClient client
 
     def setupSpec() {
@@ -20,6 +26,7 @@ class SaagieClientTest extends Specification {
 
     def setup() {
         configuration = new DataOpsExtension()
+        tempFile = testProjectDir.newFile('hello-world.py')
         configuration.server {
             url = 'http://localhost:9000'
             login = 'login'
@@ -27,8 +34,22 @@ class SaagieClientTest extends Specification {
             environment = 4
         }
         configuration.project {
-            id = 3
+            id = 'projectId'
         }
+        configuration.job {
+            name = "My custom job 2"
+            category = "Extraction"
+            technology = "technologyId"
+        }
+        configuration.jobVersion {
+            runtimeVersion = "3.6"
+            commandLine = "python {file} arg1 arg2"
+            releaseNote = "First job version"
+            packageInfo {
+                name = tempFile.absolutePath
+            }
+        }
+
         client = new SaagieClient(configuration)
     }
 
@@ -50,7 +71,7 @@ class SaagieClientTest extends Specification {
 
         then:
         projects instanceof String
-        projects.startsWith('[{"id":"8321e13c')
+        projects.startsWith('[{"id"')
         projects.contains('id')
         projects.contains('name')
     }
@@ -69,7 +90,7 @@ class SaagieClientTest extends Specification {
 
         then:
         jobs instanceof String
-        jobs.startsWith('[{"name":"test2"')
+        jobs.startsWith('[{"name"')
         jobs.contains('countJobInstance')
         jobs.contains('category')
     }
@@ -88,8 +109,48 @@ class SaagieClientTest extends Specification {
 
         then:
         technologies instanceof String
-        technologies.startsWith('[{"id":"c3cadcad')
+        technologies.startsWith('[{"id":')
         technologies.contains('features')
         technologies.contains('isAvailable')
+    }
+
+    def "createProjectJob should create a job and return the created job"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedFileUploadResponse = new MockResponse()
+        mockedFileUploadResponse.responseCode = 200
+        mockedFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedFileUploadResponse)
+
+        when:
+        def createdJobConfig = client.createProjectJob()
+
+        then:
+        createdJobConfig instanceof String
+        createdJobConfig.startsWith('{"id"')
+    }
+
+    def "createProjectJob should fail if the package file is missing"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedFileUploadResponse = new MockResponse()
+        mockedFileUploadResponse.responseCode = 500
+        mockedFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedFileUploadResponse)
+
+        when:
+        def createdJobConfig = client.createProjectJob()
+
+        then:
+        thrown(InvalidUserDataException)
+        createdJobConfig == null
     }
 }

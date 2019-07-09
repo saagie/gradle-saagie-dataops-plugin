@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops
 
+import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
 import io.saagie.plugin.dataops.tasks.ProjectListTask
 import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
@@ -21,6 +22,11 @@ class DataOpsModule {
         }
 
         project.task('projectListTechnologies', type: ProjectListTechnologiesTask) {
+            group: 'Saagie'
+            configuration = project.saagie
+        }
+
+        project.task('projectsCreateJob', type: ProjectCreateJobTask) {
             group: 'Saagie'
             configuration = project.saagie
         }
