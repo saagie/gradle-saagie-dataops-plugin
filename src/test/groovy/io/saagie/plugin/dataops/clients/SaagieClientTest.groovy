@@ -20,50 +20,29 @@ class SaagieClientTest extends Specification {
 
     def setup() {
         configuration = new DataOpsExtension()
-//        configuration.server {
-//            url = 'http://localhost:9000'
-//            login = 'login'
-//            password = 'password'
-//            environment = 4
-//        }
-//        configuration.project {
-//            id = 3
-//        }
-//        configuration.job {
-//            name = "My custom job 2"
-//            category = "Extraction"
-//            technology = "technologyId"
-//        }
-//        configuration.jobVersion {
-//            runtimeVersion = "3.6"
-//            commandLine = "python {file} arg1 arg2"
-//            releaseNote = "First job version"
-//            packageInfo {
-//                name = "hello-world.py"
-//            }
-//        }
         configuration.server {
-            url = 'https://saagie-beta.prod.saagie.io'
-            login = 'renan.decamps'
-            password = 'McVities$76%!1994'
+            url = 'http://localhost:9000'
+            login = 'login'
+            password = 'password'
             environment = 4
         }
         configuration.project {
-            id = "ec8c5cea-3dfd-4496-87a0-89f69101dccd"
+            id = 3
         }
         configuration.job {
-            name = "Job created from gradle 3"
+            name = "My custom job 2"
             category = "Extraction"
-            technology = "13522063-c18b-4ecd-b61f-3bae1e0ad93c"
+            technology = "technologyId"
         }
         configuration.jobVersion {
             runtimeVersion = "3.6"
             commandLine = "python {file} arg1 arg2"
             releaseNote = "First job version"
             packageInfo {
-                name = "/Users/orangina/Desktop/hello-world.py"
+                name = "hello-world.py"
             }
         }
+
         client = new SaagieClient(configuration)
     }
 
@@ -130,12 +109,15 @@ class SaagieClientTest extends Specification {
 
     def "createProjectJob should create a job and return the created job"() {
         given:
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            // TODO: get a fake body response
-        """
-        mockWebServer.enqueue(mockedResponse)
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedFileUploadResponse = new MockResponse()
+        mockedFileUploadResponse.responseCode = 200
+        mockedFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedFileUploadResponse)
 
         when:
         def createdJobConfig = client.createProjectJob()
@@ -144,5 +126,4 @@ class SaagieClientTest extends Specification {
         createdJobConfig instanceof String
         createdJobConfig.startsWith('{"id"')
     }
-
 }
