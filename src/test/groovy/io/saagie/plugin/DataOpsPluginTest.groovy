@@ -394,4 +394,39 @@ class DataOpsPluginTest extends Specification {
         thrown(Exception)
         result == null
     }
+
+    def "projectUpdateJob should update the specified job"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                job {
+                    name = "My custom job"
+                    category = "Extraction"
+                    technology = "technologyId"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectUpdateJob'
+
+        then:
+        result.output.contains('"id"')
+    }
 }

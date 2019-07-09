@@ -209,11 +209,9 @@ class SaagieClient {
     }
 
     def updateProjectJob() {
-        if (configuration.project == null ||
-            configuration.project.id == null ||
-            !configuration.project.id instanceof String ||
-            !configuration.job ||
-            !configuration.jobVersion
+        if (configuration?.project?.id == null ||
+            !configuration?.project?.id instanceof String ||
+            configuration?.job?.id == null
         ) {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
         }
@@ -227,7 +225,7 @@ class SaagieClient {
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when updating project job.')
                     } else {
-                        Map updatedJob = parsedResult.data.job
+                        Map updatedJob = parsedResult.data.editJob
                         return JsonOutput.toJson(updatedJob)
                     }
                 } else {

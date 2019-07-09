@@ -12,6 +12,6 @@ class ProjectUpdateJob extends DefaultTask {
     @TaskAction
     def getProjectJobs() {
         saagieClient = new SaagieClient(configuration)
-        logger.quiet(saagieClient.getProjectJobs())
+        logger.quiet(saagieClient.updateProjectJob())
     }
 }

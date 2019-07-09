@@ -162,9 +162,27 @@ class SaagieUtils {
     }
 
     Request getProjectUpdateJobRequest() {
-        def updateProjectJob = gq("""
-            // TODO: get the request
-        """)
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+
+        job.projectId = configuration.project.id
+        def file = new File(jobVersion.packageInfo.name)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            job: job,
+        ])
+
+        def updateProjectJob = gq('''
+            mutation editJobMutation($job: JobEditionInput!) {
+                editJob(job: $job) {
+                    id
+                }
+            }
+        ''', gqVariables)
         buildRequestFromQuery updateProjectJob
     }
 
