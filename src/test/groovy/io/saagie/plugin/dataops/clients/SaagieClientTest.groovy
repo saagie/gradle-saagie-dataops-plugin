@@ -3,11 +3,17 @@ package io.saagie.plugin.dataops.clients
 import io.saagie.plugin.dataops.DataOpsExtension
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.gradle.api.InvalidUserDataException
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
 class SaagieClientTest extends Specification {
     @Shared MockWebServer mockWebServer = new MockWebServer()
     @Shared DataOpsExtension configuration
+    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+    File tempFile
+
     SaagieClient client
 
     def setupSpec() {
@@ -20,6 +26,8 @@ class SaagieClientTest extends Specification {
 
     def setup() {
         configuration = new DataOpsExtension()
+        tempFile = testProjectDir.newFile('hello-world.py')
+        println tempFile.absolutePath
         configuration.server {
             url = 'http://localhost:9000'
             login = 'login'
@@ -39,7 +47,7 @@ class SaagieClientTest extends Specification {
             commandLine = "python {file} arg1 arg2"
             releaseNote = "First job version"
             packageInfo {
-                name = "hello-world.py"
+                name = tempFile.absolutePath
             }
         }
 
@@ -123,7 +131,28 @@ class SaagieClientTest extends Specification {
         def createdJobConfig = client.createProjectJob()
 
         then:
+        mockWebServer.requestCount == 5
         createdJobConfig instanceof String
         createdJobConfig.startsWith('{"id"')
+    }
+
+    def "createProjectJob should fail if the package file is missing"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedFileUploadResponse = new MockResponse()
+        mockedFileUploadResponse.responseCode = 500
+        mockedFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedFileUploadResponse)
+
+        when:
+        def createdJobConfig = client.createProjectJob()
+
+        then:
+        thrown(InvalidUserDataException)
+        createdJobConfig == null
     }
 }
