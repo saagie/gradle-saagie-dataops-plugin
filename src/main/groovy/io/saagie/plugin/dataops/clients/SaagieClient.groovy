@@ -13,6 +13,7 @@ import org.gradle.api.tasks.StopActionException
 class SaagieClient {
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
     static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs'
+    static NO_FILE_MSG = "Check that there is a file in '%FILE%'"
 
     DataOpsExtension configuration
 
@@ -137,14 +138,23 @@ class SaagieClient {
                         throw new StopActionException('Something went wrong when creating project job.')
                     } else {
                         Map createdJob = parsedResult.data.createJob
-                        return JsonOutput.toJson(createdJob)
+                        String jobId = createdJob.id
+                        Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
+                        client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                            if (uploadResponse.isSuccessful()) {
+                                return JsonOutput.toJson(createdJob)
+                            } else {
+                                throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                            }
+                        }
                     }
                 } else {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
+        } catch (FileNotFoundException error) {
+            throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
         } catch (Exception error) {
-            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }

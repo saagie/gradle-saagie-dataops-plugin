@@ -1,10 +1,12 @@
 package io.saagie.plugin.dataops
 
+import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
 
+@TypeChecked
 class DataOpsExtension {
     Server server = new Server()
     Project project = new Project()
