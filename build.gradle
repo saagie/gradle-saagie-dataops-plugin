@@ -150,6 +150,10 @@ nexusStaging {
 }
 
 nexusPublishing {
+    packageGroup = rootProject.nexusStaging.packageGroup
+    stagingProfileId = rootProject.nexusStaging.stagingProfileId
+    username = project.findProperty('nexusName')
+    password = project.findProperty('nexusPassword')
 }
 
 gradlePlugin.plugins {
