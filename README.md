@@ -13,14 +13,14 @@ The following tasks are available:
 
 | Tasks                             | Description                                                             | Availability |
 |-----------------------------------|-------------------------------------------------------------------------|--------------|
-| projectsList                      | Lists all projects of a platform                                        | In progress  |
+| projectsList                      | Lists all projects of a platform                                        | Available    |
 | projectsCreate                    | Creates a project                                                       | To Do        |
 | projectsUpdate                    | Update an existing project                                              | To Do        |
 | projectsArchive                   | Archive an existing project                                             | To Do        |
-| projectsListTechnologies          | Lists all technologies of a project                                     | To Do        |
-| projectsListJobs                  | Lists all jobs of a project                                             | To Do        |
-| projectsCreateJob                 | Creates a new job in a project                                          | To Do        |
-| projectsUpdateJob                 | Updates an existing job                                                 | To Do        |
+| projectsListTechnologies          | Lists all technologies of a project                                     | Available    |
+| projectsListJobs                  | Lists all jobs of a project                                             | Available    |
+| projectsCreateJob                 | Creates a new job in a project                                          | In Progress  |
+| projectsUpdateJob                 | Updates an existing job                                                 | In Progress  |
 | projectsRunJob                    | Run an existing job                                                     | To Do        |
 | projectsStopJob                   | Stops an existing job                                                   | To Do        |
 | projectsListJobInstances          | List instances of a job                                                 | To Do        |
