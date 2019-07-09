@@ -79,10 +79,12 @@ class SaagieClient {
                         return JsonOutput.toJson(jobs)
                     }
                 } else {
+                    println response.body().string()
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
         } catch (Exception error) {
+            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
