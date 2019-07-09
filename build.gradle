@@ -136,7 +136,7 @@ publishing {
     }
 }
 
-publishPlugins.dependsOn publish
+publishPlugins.dependsOn uploadArchives
 afterReleaseBuild.dependsOn publishPlugins
 closeAndReleaseRepository.dependsOn afterReleaseBuild
 
