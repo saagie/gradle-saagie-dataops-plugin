@@ -65,6 +65,9 @@ signing {
 }
 
 release {
+    failOnCommitNeeded = false
+    failOnPublishNeeded = false
+
     preTagCommitMessage = '[ci skip] pre tag commit:'
     newVersionCommitMessage = '[ci skip] new version commit:'
 }
