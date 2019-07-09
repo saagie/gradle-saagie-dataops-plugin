@@ -3,6 +3,7 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.Resources
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,6 +24,14 @@ class SaagieClient {
 
     SaagieClient(DataOpsExtension configuration) {
         this.configuration = configuration
+
+        // TODO: remember to parameterize that once it will be available
+        this.configuration.jobVersion.resources {
+            disk = 512
+            memory = 512
+            cpu = 0.3
+        }
+
         saagieUtils = new SaagieUtils(configuration)
     }
 
@@ -107,11 +116,13 @@ class SaagieClient {
     }
 
     def createProjectJob() {
-        if (configuration.project == null ||
-            configuration.project.id == null ||
-            !configuration.project.id instanceof String ||
-            configuration.job == null ||
-            configuration.jobVersion == null
+        if (configuration?.project?.id == null ||
+            !configuration?.project?.id instanceof String ||
+            configuration?.job?.name == null ||
+            configuration?.job?.technology == null ||
+            configuration?.job?.category == null ||
+            configuration?.jobVersion?.runtimeVersion == null ||
+            configuration?.jobVersion?.resources == null
         ) {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
         }
@@ -123,16 +134,17 @@ class SaagieClient {
                     def responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when getting project technologies.')
+                        throw new StopActionException('Something went wrong when creating project job.')
                     } else {
-                        Map createdProject = parsedResult.data.technologies
-                        return JsonOutput.toJson(createdProject)
+                        Map createdJob = parsedResult.data.createJob
+                        return JsonOutput.toJson(createdJob)
                     }
                 } else {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG)
                 }
             }
         } catch (Exception error) {
+            error.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG)
         }
     }
