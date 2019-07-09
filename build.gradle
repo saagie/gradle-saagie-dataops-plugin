@@ -6,6 +6,7 @@ plugins {
     id 'org.sonarqube' version '2.6.2'
     id 'com.adarshr.test-logger' version '1.1.2'
     id 'java-gradle-plugin'
+    id 'maven-publish'
 }
 
 apply plugin: 'groovy'
@@ -100,40 +101,34 @@ task commitVersion(type: Exec, dependsOn: prepareDocCommit) {
 mergeToDevelop.dependsOn switchToDevelop
 updateVersion.dependsOn commitVersion
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/${project.version.endsWith('-SNAPSHOT') ? 'content/repositories/snapshots' : 'service/local/staging/deploy/maven2'}") {
-                authentication(userName: project.findProperty('nexusName') ?: '', password: project.findProperty('nexusPassword') ?: '')
-            }
-
-            pom.project {
-                name project.name
-                url 'https://github.com/saagie/gradle-saagie-dataops-plugin'
-                packaging 'jar'
-                description project.description
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            pom {
+                name = project.name
+                url = 'https://github.com/saagie/gradle-saagie-dataops-plugin'
+                packaging = 'jar'
+                description = project.description
 
                 scm {
-                    url 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
-                    connection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
-                    developerConnection 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    url = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    connection = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
+                    developerConnection = 'scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git'
                 }
 
                 licenses {
                     license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
+                        name = 'The Apache Software License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution = 'repo'
                     }
                 }
 
                 developers {
                     developer {
-                        id 'decampsrenan'
-                        name 'Renan Decamps'
-                        url 'https://github.com/decampsrenan'
+                        id = 'decampsrenan'
+                        name = 'Renan Decamps'
+                        url = 'https://github.com/decampsrenan'
                     }
                 }
             }
@@ -141,8 +136,9 @@ uploadArchives {
     }
 }
 
-publishPlugins.dependsOn uploadArchives
+publishPlugins.dependsOn publish
 afterReleaseBuild.dependsOn publishPlugins
+closeAndReleaseRepository.dependsOn afterReleaseBuild
 
 nexusStaging {
     username = project.findProperty('nexusName')
