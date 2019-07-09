@@ -27,7 +27,6 @@ class SaagieClientTest extends Specification {
     def setup() {
         configuration = new DataOpsExtension()
         tempFile = testProjectDir.newFile('hello-world.py')
-        println tempFile.absolutePath
         configuration.server {
             url = 'http://localhost:9000'
             login = 'login'
@@ -35,7 +34,7 @@ class SaagieClientTest extends Specification {
             environment = 4
         }
         configuration.project {
-            id = 3
+            id = 'projectId'
         }
         configuration.job {
             name = "My custom job 2"
@@ -72,7 +71,7 @@ class SaagieClientTest extends Specification {
 
         then:
         projects instanceof String
-        projects.startsWith('[{"id":"8321e13c')
+        projects.startsWith('[{"id"')
         projects.contains('id')
         projects.contains('name')
     }
@@ -91,7 +90,7 @@ class SaagieClientTest extends Specification {
 
         then:
         jobs instanceof String
-        jobs.startsWith('[{"name":"test2"')
+        jobs.startsWith('[{"name"')
         jobs.contains('countJobInstance')
         jobs.contains('category')
     }
@@ -110,7 +109,7 @@ class SaagieClientTest extends Specification {
 
         then:
         technologies instanceof String
-        technologies.startsWith('[{"id":"c3cadcad')
+        technologies.startsWith('[{"id":')
         technologies.contains('features')
         technologies.contains('isAvailable')
     }
@@ -131,7 +130,6 @@ class SaagieClientTest extends Specification {
         def createdJobConfig = client.createProjectJob()
 
         then:
-        mockWebServer.requestCount == 5
         createdJobConfig instanceof String
         createdJobConfig.startsWith('{"id"')
     }

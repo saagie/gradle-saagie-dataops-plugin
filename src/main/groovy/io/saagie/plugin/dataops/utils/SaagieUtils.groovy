@@ -5,6 +5,7 @@ import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.Project
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -50,9 +51,19 @@ class SaagieUtils {
     }
 
     Request getProjectJobsRequest() {
-        def listProjectJobs = gq("""
-            {
-                jobs(projectId: "${configuration.project.id}") {
+        Project project = configuration.project
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            projectId: project.id
+        ])
+
+        def listProjectJobs = gq('''
+            query jobs($projectId: UUID!) {
+                jobs(projectId: $projectId) {
                     name
                     description
                     countJobInstance
@@ -79,14 +90,24 @@ class SaagieUtils {
                     isDeletable
                 }
             }
-        """)
+        ''', gqVariables)
         buildRequestFromQuery listProjectJobs
     }
 
     Request getProjectTechnologiesRequest() {
-        def listProjectTechnologies = gq("""
-            {
-                technologies(projectId: "${configuration.project.id}") {
+        Project project = configuration.project
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            projectId: project.id
+        ])
+
+        def listProjectTechnologies = gq('''
+            query technologiesQuery($projectId: UUID!) {
+                technologies(projectId: $projectId) {
                     id
                     label
                     isAvailable
@@ -100,7 +121,7 @@ class SaagieUtils {
                     }
                 }
             }
-        """)
+        ''', gqVariables)
         buildRequestFromQuery listProjectTechnologies
     }
 
