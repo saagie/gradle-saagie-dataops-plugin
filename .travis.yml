@@ -33,9 +33,10 @@ script:
   - gradle test --stacktrace
   - if [ ${TRAVIS_BRANCH} = "master" ]; then
       git checkout master;
-      gradle closeAndReleaseRepository -Prelease.useAutomaticVersion=true --stacktrace;
+      gradle release -Prelease.useAutomaticVersion=true --stacktrace;
+      gradle closeAndReleaseRepository;
     else
-      gradle publish --stacktrace;
+      gradle uploadArchive --stacktrace;
     fi
 env:
     global:
