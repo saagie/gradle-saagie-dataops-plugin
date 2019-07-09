@@ -149,6 +149,13 @@ nexusStaging {
     delayBetweenRetriesInMillis = 10000
 }
 
+gradlePlugin.plugins {
+    saagiePlugin {
+        id = 'io.saagie.gradle-saagie-dataops-plugin'
+        implementationClass = 'io.saagie.plugin.DataOpsPlugin'
+    }
+}
+
 pluginBundle {
     website = 'https://www.saagie.com/'
     vcsUrl = 'https://github.com/saagie/gradle-saagie-dataops-plugin'
