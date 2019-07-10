@@ -11,17 +11,17 @@ class DataOpsModule {
         project.extensions.create('saagie', DataOpsExtension);
         project.ext.SaagieDataOpsExtension = DataOpsExtension;
 
-        project.task('projectList', type: ProjectListTask) {
+        project.task('projectsList', type: ProjectListTask) {
             group = 'Saagie'
             configuration = project.saagie
         }
 
-        project.task('projectListJobs', type: ProjectListJobsTask) {
+        project.task('projectsListJobs', type: ProjectListJobsTask) {
             group = 'Saagie'
             configuration = project.saagie
         }
 
-        project.task('projectListTechnologies', type: ProjectListTechnologiesTask) {
+        project.task('projectsListTechnologies', type: ProjectListTechnologiesTask) {
             group: 'Saagie'
             configuration = project.saagie
         }
