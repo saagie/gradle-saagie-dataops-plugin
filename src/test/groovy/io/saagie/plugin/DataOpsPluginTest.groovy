@@ -267,14 +267,6 @@ class DataOpsPluginTest extends Specification {
 
     def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
-
-        def mockedFileUploadResponse = new MockResponse()
-        mockedFileUploadResponse.responseCode = 500
-        mockWebServer.enqueue(mockedFileUploadResponse)
 
         buildFile << """
             saagie {
