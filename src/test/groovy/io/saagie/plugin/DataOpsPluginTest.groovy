@@ -8,8 +8,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
-import java.util.concurrent.TimeUnit
-
+@Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
@@ -60,6 +59,7 @@ class DataOpsPluginTest extends Specification {
         mockedResponse.body = """
             {"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}
         """
+
         buildFile << """
             saagie {
                 server {
@@ -82,10 +82,14 @@ class DataOpsPluginTest extends Specification {
 
     def "projectsList task with bad config should fail"() {
         given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 400
+        mockWebServer.enqueue(mockedResponse)
+
         buildFile << """
             saagie {
                 server {
-                    url = 'https://localhost:9000'
+                    url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
@@ -94,7 +98,7 @@ class DataOpsPluginTest extends Specification {
         """
 
         when:
-        gradle('projectsList')
+        gradle 'projectsList'
 
         then:
         thrown(Exception)
@@ -132,7 +136,7 @@ class DataOpsPluginTest extends Specification {
         result.output.contains('"countJobInstance"')
     }
 
-    def "projectsListJobs task should fail if no project config is provided"() {
+    def "projectsListJobs task should fail if bad project config is provided"() {
         given:
         buildFile << """
             saagie {
@@ -141,6 +145,10 @@ class DataOpsPluginTest extends Specification {
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
+                }
+                
+                project {
+                
                 }
             }
         """
@@ -156,9 +164,8 @@ class DataOpsPluginTest extends Specification {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}
-        """
+        mockedResponse.body = """{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}"""
+
         buildFile << """
             saagie {
                 server {
@@ -177,7 +184,6 @@ class DataOpsPluginTest extends Specification {
 
         when:
         gradle 'projectsListJobs'
-        mockWebServer.takeRequest(2, TimeUnit.SECONDS)
 
         then:
         thrown(Exception)
