@@ -8,8 +8,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
-import java.util.concurrent.TimeUnit
-
+@Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
@@ -60,6 +59,7 @@ class DataOpsPluginTest extends Specification {
         mockedResponse.body = """
             {"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}
         """
+
         buildFile << """
             saagie {
                 server {
@@ -82,10 +82,14 @@ class DataOpsPluginTest extends Specification {
 
     def "projectsList task with bad config should fail"() {
         given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 400
+        mockWebServer.enqueue(mockedResponse)
+
         buildFile << """
             saagie {
                 server {
-                    url = 'https://localhost:9000'
+                    url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
@@ -94,7 +98,7 @@ class DataOpsPluginTest extends Specification {
         """
 
         when:
-        gradle('projectsList')
+        gradle 'projectsList'
 
         then:
         thrown(Exception)
@@ -132,7 +136,7 @@ class DataOpsPluginTest extends Specification {
         result.output.contains('"countJobInstance"')
     }
 
-    def "projectsListJobs task should fail if no project config is provided"() {
+    def "projectsListJobs task should fail if bad project config is provided"() {
         given:
         buildFile << """
             saagie {
@@ -141,6 +145,10 @@ class DataOpsPluginTest extends Specification {
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
+                }
+                
+                project {
+                
                 }
             }
         """
@@ -156,9 +164,8 @@ class DataOpsPluginTest extends Specification {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}
-        """
+        mockedResponse.body = """{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}"""
+
         buildFile << """
             saagie {
                 server {
@@ -177,7 +184,6 @@ class DataOpsPluginTest extends Specification {
 
         when:
         gradle 'projectsListJobs'
-        mockWebServer.takeRequest(2, TimeUnit.SECONDS)
 
         then:
         thrown(Exception)
@@ -300,6 +306,89 @@ class DataOpsPluginTest extends Specification {
 
         when:
         BuildResult result = gradle 'projectsCreateJob'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsRunJob should run a job and return the job instance id and status"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+
+                job {
+                    id = "jobId"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"id"')
+        result.output.contains('"status"')
+    }
+
+    def "projectsRunJob should fail if job or job id is null"() {
+        given:
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsRunJob should fail if job id doesn't exists"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                job {
+                    id = 'bad-id'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+        println result.output
 
         then:
         thrown(Exception)

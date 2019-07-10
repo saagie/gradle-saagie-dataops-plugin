@@ -4,6 +4,7 @@ import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
 import io.saagie.plugin.dataops.tasks.ProjectListTask
 import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
+import io.saagie.plugin.dataops.tasks.ProjectRunJobTask
 import org.gradle.api.Project
 
 class DataOpsModule {
@@ -12,6 +13,7 @@ class DataOpsModule {
     final static String PROJECT_LIST_JOBS_TASK = 'projectsListJobs'
     final static String PROJECT_LIST_TECHNOLOGIES_TASK = 'projectsListTechnologies'
     final static String PROJECT_CREATE_JOB_TASK = 'projectsCreateJob'
+    final static String PROJECT_RUN_JOB_TASK = 'projectsRunJob'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -35,6 +37,11 @@ class DataOpsModule {
         }
 
         project.task(PROJECT_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
+            group: TASK_GROUP
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_RUN_JOB_TASK, type: ProjectRunJobTask) {
             group: TASK_GROUP
             configuration = project.saagie
         }
