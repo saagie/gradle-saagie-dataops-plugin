@@ -395,7 +395,7 @@ class DataOpsPluginTest extends Specification {
         result == null
     }
 
-    def "projectUpdateJob should update the specified job"() {
+    def "projectsUpdateJob should update the specified job"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
@@ -424,7 +424,7 @@ class DataOpsPluginTest extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectUpdateJob'
+        BuildResult result = gradle 'projectsUpdateJob'
 
         then:
         result.output.contains('"id"')
