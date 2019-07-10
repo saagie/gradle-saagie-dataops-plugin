@@ -4,7 +4,6 @@
 # Ignore Gradle build output directory
 build/
 bin/
-gradle-*
 secring.gpg
 id_rsa_travis
 keys.tar
@@ -17,5 +16,4 @@ keys.tar
 .history
 .vscode
 
-.idea
 .settings

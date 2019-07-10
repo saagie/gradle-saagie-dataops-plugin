@@ -161,7 +161,62 @@ class SaagieUtils {
         buildRequestFromQuery createProjectJob
     }
 
-    Request getUploadFileToJobRequest(String jobId) {
+    Request getProjectUpdateJobRequest() {
+        Job job = configuration.job
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            job: job,
+        ])
+
+        def updateProjectJob = gq('''
+            mutation editJobMutation($job: JobEditionInput!) {
+                editJob(job: $job) {
+                    id
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery updateProjectJob
+    }
+
+    Request getAddJobVersionRequest() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+
+        def file = new File(jobVersion.packageInfo.name)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfos') // TODO: remove this line when `dockerInfos` will be available
+            .addConverter(String) { String value, String key -> key == 'technology' ? [id: value] : value }
+            .addConverter(JobVersion) { JobVersion value ->
+                value.packageInfo.name = file.name
+                return value
+            }
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: job.id,
+            jobVersion: jobVersion
+        ])
+
+        // quick hack needed because the toJson seems to update the converted object, even with a clone
+        jobVersion.packageInfo.name = file.absolutePath
+
+        def updateProjectJob = gq('''
+            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
+                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
+                    number
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery updateProjectJob
+    }
+
+    Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileType = MediaType.parse("text/text")
 
@@ -171,7 +226,7 @@ class SaagieUtils {
             .build()
 
         new Request.Builder()
-            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/1/uploadArtifact")
+            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
             .addHeader('Authorization', credentials)
             .post(body)
             .build()

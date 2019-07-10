@@ -388,10 +388,130 @@ class DataOpsPluginTest extends Specification {
 
         when:
         BuildResult result = gradle 'projectsRunJob'
-        println result.output
 
         then:
         thrown(Exception)
         result == null
+    }
+
+    def "projectsUpdateJob should update the specified job with only job config"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                job {
+                    id = 'jobId'
+                    name = 'Updated from gradle'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['REQUESTED']
+                    }
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdateJob'
+
+        then:
+        result.output.contains('"id"')
+    }
+
+    def "projectsUpdateJob should fail if job id is missing"() {
+        given:
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 2
+                }
+                
+                job {
+                    name = 'Updated from gradle'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['REQUESTED']
+                    }
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdateJob'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
+        given:
+        def mockedJobUpdateResponse = new MockResponse()
+        mockedJobUpdateResponse.responseCode = 200
+        mockedJobUpdateResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
+        mockWebServer.enqueue(mockedJobUpdateResponse)
+
+        def mockedJobVersionResponse = new MockResponse()
+        mockedJobVersionResponse.responseCode = 200
+        mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
+        mockWebServer.enqueue(mockedJobVersionResponse)
+
+        def mockedJobFileUploadResponse = new MockResponse()
+        mockedJobFileUploadResponse.responseCode = 200
+        mockedJobFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedJobFileUploadResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 4
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                job {
+                    id = 'jobId'
+                }
+                
+                jobVersion {
+                    commandLine = "python {file} 1 2 3"
+                    releaseNote = "Feat: won't fail"
+                    runtimeVersion = "3.6"
+                    packageInfo {
+                        name = "${jobFile.absolutePath}"
+                    }
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsUpdateJob'
+
+        then:
+        result.output.contains('"id"')
     }
 }
