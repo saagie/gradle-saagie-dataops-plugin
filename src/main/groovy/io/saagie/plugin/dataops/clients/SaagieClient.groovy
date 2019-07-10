@@ -208,23 +208,56 @@ class SaagieClient {
         }
     }
 
-    def updateProjectJob() {
-        if (configuration?.job?.id == null) {
+    String updateProjectJob() {
+        if (configuration?.job?.id == null ||
+            configuration?.project?.id == null
+        ) {
             throw new InvalidUserDataException(
                 BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
             )
         }
 
-        Request request = saagieUtils.getProjectUpdateJobRequest()
+        Request projectUpdateJopRequest = saagieUtils.getProjectUpdateJobRequest()
         try {
-            client.newCall(request).execute().withCloseable { response ->
+            client.newCall(projectUpdateJopRequest).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string()
+                    String responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when updating project job.')
                     } else {
                         Map updatedJob = parsedResult.data.editJob
+
+                        // If we provide a jobVersion config, use it to update the job
+                        if (configuration?.jobVersion?.runtimeVersion != null) {
+                            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+                            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+                                if (updateResponse.isSuccessful()) {
+                                    String updateResponseBody = updateResponse.body().string()
+                                    def updatedJobVersion = slurper.parseText(updateResponseBody)
+
+                                    String newJobVersion = updatedJobVersion.data.addJobVersion.number
+                                    Request uploadRequest = saagieUtils.getUploadFileToJobRequest(
+                                        configuration.job.id,
+                                        newJobVersion
+                                    )
+                                    client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                                        if (uploadResponse.isSuccessful()) {
+                                            return JsonOutput.toJson(updatedJob)
+                                        } else {
+                                            throw new InvalidUserDataException(
+                                                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    throw new InvalidUserDataException(
+                                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+                                    )
+                                }
+                            }
+                        }
+
                         return JsonOutput.toJson(updatedJob)
                     }
                 } else {
