@@ -209,11 +209,10 @@ class SaagieClient {
     }
 
     def updateProjectJob() {
-        if (configuration?.project?.id == null ||
-            !configuration?.project?.id instanceof String ||
-            configuration?.job?.id == null
-        ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+        if (configuration?.job?.id == null) {
+            throw new InvalidUserDataException(
+                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
+            )
         }
 
         Request request = saagieUtils.getProjectUpdateJobRequest()
@@ -229,11 +228,16 @@ class SaagieClient {
                         return JsonOutput.toJson(updatedJob)
                     }
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+                    throw new InvalidUserDataException(
+                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
+                    )
                 }
             }
-        } catch (Exception error) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+        } catch (Exception ignored) {
+            ignored.printStackTrace()
+            throw new InvalidUserDataException(
+                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
+            )
         }
     }
 }

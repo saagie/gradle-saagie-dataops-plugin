@@ -399,39 +399,65 @@ class DataOpsPluginTest extends Specification {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
+        mockedJobCreationResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
         mockWebServer.enqueue(mockedJobCreationResponse)
 
-        buildFile << """
+        buildFile << '''
             saagie {
                 server {
-                    url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
+                    url = 'http://localhost'
+                    login = 'user.user'
+                    password = 'password'
                     environment = 2
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
                 job {
-                    id = 'my-job-id'
-                    name = 'My custom job'
-                    category = 'Extraction'
-                    technology = 'technologyId'
+                    id = 'jobId'
+                    name = 'Updated from gradle'
+                    description = 'updated description'
                     alerting {
-                        emails = ['renan+dev@bearstudio.fr']
+                        emails = ['email@email.com']
                         statusList = ['REQUESTED']
                     }
                 }
             }
-        """
+        '''
 
         when:
         BuildResult result = gradle 'projectsUpdateJob'
 
         then:
         result.output.contains('"id"')
+    }
+
+    def "projectsUpdateJob should fail if job id is missing"() {
+        given:
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 2
+                }
+                
+                job {
+                    name = 'Updated from gradle'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['REQUESTED']
+                    }
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdateJob'
+
+        then:
+        thrown(Exception)
+        result == null
     }
 }

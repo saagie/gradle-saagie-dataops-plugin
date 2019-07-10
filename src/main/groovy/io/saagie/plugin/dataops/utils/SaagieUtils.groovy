@@ -163,10 +163,6 @@ class SaagieUtils {
 
     Request getProjectUpdateJobRequest() {
         Job job = configuration.job
-        JobVersion jobVersion = configuration.jobVersion
-
-        job.projectId = configuration.project.id
-        def file = new File(jobVersion.packageInfo.name)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -175,6 +171,8 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([
             job: job,
         ])
+
+        println gqVariables
 
         def updateProjectJob = gq('''
             mutation editJobMutation($job: JobEditionInput!) {
@@ -186,7 +184,7 @@ class SaagieUtils {
         buildRequestFromQuery updateProjectJob
     }
 
-    Request getUploadFileToJobRequest(String jobId) {
+    Request getUploadFileToJobRequest(String jobId, String jobVersion = 1) {
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileType = MediaType.parse("text/text")
 
@@ -196,7 +194,7 @@ class SaagieUtils {
             .build()
 
         new Request.Builder()
-            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/1/uploadArtifact")
+            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
             .addHeader('Authorization', credentials)
             .post(body)
             .build()
