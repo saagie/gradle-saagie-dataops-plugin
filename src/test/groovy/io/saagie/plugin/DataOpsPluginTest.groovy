@@ -395,7 +395,7 @@ class DataOpsPluginTest extends Specification {
         result == null
     }
 
-    def "projectsUpdateJob should update the specified job"() {
+    def "projectsUpdateJob should update the specified job with only job config"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
@@ -416,9 +416,14 @@ class DataOpsPluginTest extends Specification {
                 }
                 
                 job {
-                    name = "My custom job"
-                    category = "Extraction"
-                    technology = "technologyId"
+                    id = 'my-job-id'
+                    name = 'My custom job'
+                    category = 'Extraction'
+                    technology = 'technologyId'
+                    alerting {
+                        emails = ['renan+dev@bearstudio.fr']
+                        statusList = ['REQUESTED']
+                    }
                 }
             }
         """

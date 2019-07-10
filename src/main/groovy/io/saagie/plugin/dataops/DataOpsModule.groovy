@@ -15,7 +15,7 @@ class DataOpsModule {
     final static String PROJECT_LIST_TECHNOLOGIES_TASK = 'projectsListTechnologies'
     final static String PROJECT_CREATE_JOB_TASK = 'projectsCreateJob'
     final static String PROJECT_RUN_JOB_TASK = 'projectsRunJob'
-    final static String PROJECT_UPDATE_JOB_TASK = 'projectsJobUpdate'
+    final static String PROJECT_UPDATE_JOB_TASK = 'projectsUpdateJob'
 
     final static String TASK_GROUP = 'Saagie'
 
