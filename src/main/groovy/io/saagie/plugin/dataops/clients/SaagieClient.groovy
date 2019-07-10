@@ -234,7 +234,6 @@ class SaagieClient {
                 }
             }
         } catch (Exception ignored) {
-            ignored.printStackTrace()
             throw new InvalidUserDataException(
                 BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
             )

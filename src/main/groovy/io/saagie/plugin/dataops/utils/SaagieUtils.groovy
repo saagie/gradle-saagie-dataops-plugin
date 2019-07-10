@@ -172,8 +172,6 @@ class SaagieUtils {
             job: job,
         ])
 
-        println gqVariables
-
         def updateProjectJob = gq('''
             mutation editJobMutation($job: JobEditionInput!) {
                 editJob(job: $job) {
