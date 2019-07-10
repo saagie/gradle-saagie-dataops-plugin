@@ -53,7 +53,7 @@ class DataOpsPluginTest extends Specification {
 
     // ===========================
     // TESTS =====================
-    def "projectList task should return a list of project"() {
+    def "projectsList task should return a list of project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
@@ -73,19 +73,19 @@ class DataOpsPluginTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectList'
+        def result = gradle 'projectsList'
 
         then:
         !result.output.contains('"data"')
         result.output.contains('[{"id":"8321e13c')
     }
 
-    def "projectList task with bad config should fail"() {
+    def "projectsList task with bad config should fail"() {
         given:
         buildFile << """
             saagie {
                 server {
-                    url = 'https://saagie-beta.prod.saagie.io/'
+                    url = 'https://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
@@ -94,13 +94,13 @@ class DataOpsPluginTest extends Specification {
         """
 
         when:
-        def result = gradle('projectList')
+        gradle('projectsList')
 
         then:
         thrown(Exception)
     }
 
-    def "projectListJobs task should list jobs on a project"() {
+    def "projectsListJobs task should list jobs on a project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
@@ -124,7 +124,7 @@ class DataOpsPluginTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectListJobs'
+        def result = gradle 'projectsListJobs'
 
         then:
         !result.output.contains('"data"')
@@ -132,7 +132,7 @@ class DataOpsPluginTest extends Specification {
         result.output.contains('"countJobInstance"')
     }
 
-    def "projectListJobs task should fail if no project config is provided"() {
+    def "projectsListJobs task should fail if no project config is provided"() {
         given:
         buildFile << """
             saagie {
@@ -142,21 +142,17 @@ class DataOpsPluginTest extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
-                project {
-                    
-                }
             }
         """
 
         when:
-        def result = gradle 'projectListJobs'
+        gradle 'projectsListJobs'
 
         then:
         thrown(Exception)
     }
 
-    def "projectListJobs task should fail if a wrong project id is provided"() {
+    def "projectsListJobs task should fail if a wrong project id is provided"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
@@ -180,14 +176,14 @@ class DataOpsPluginTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        gradle 'projectListJobs'
+        gradle 'projectsListJobs'
         mockWebServer.takeRequest(2, TimeUnit.SECONDS)
 
         then:
         thrown(Exception)
     }
 
-    def "projectListTechnologies task should list technologies of a project"() {
+    def "projectsListTechnologies task should list technologies of a project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
@@ -211,7 +207,7 @@ class DataOpsPluginTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectListTechnologies'
+        def result = gradle 'projectsListTechnologies'
 
         then:
         !result.output.contains('"data"')
@@ -219,7 +215,7 @@ class DataOpsPluginTest extends Specification {
         result.output.contains('"features"')
     }
 
-    def "projectCreateJob should create job and upload a file for a given project"() {
+    def "projectsCreateJob should create job and upload a file for a given project"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
@@ -269,7 +265,7 @@ class DataOpsPluginTest extends Specification {
         result.output.contains('"id"')
     }
 
-    def "projectCreateJob should fail if the file to upload doesn't exists"() {
+    def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200

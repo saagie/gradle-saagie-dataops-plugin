@@ -9,9 +9,11 @@ import okhttp3.Request
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.tasks.StopActionException
 
+import static io.saagie.plugin.dataops.DataOpsModule.*
+
 class SaagieClient {
-    static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList'
-    static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs'
+    static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
+    static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
     static NO_FILE_MSG = "Check that there is a file in '%FILE%'"
 
     DataOpsExtension configuration
@@ -49,11 +51,11 @@ class SaagieClient {
                         return JsonOutput.toJson(projects)
                     }
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
                 }
             }
         } catch (Exception error) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
         }
     }
 
@@ -62,7 +64,7 @@ class SaagieClient {
             configuration.project.id == null ||
             !configuration.project.id instanceof  String
         ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
 
         Request request = saagieUtils.getProjectJobsRequest()
@@ -79,12 +81,12 @@ class SaagieClient {
                     }
                 } else {
                     println response.body().string()
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
                 }
             }
         } catch (Exception error) {
             error.printStackTrace()
-            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
     }
 
@@ -93,7 +95,7 @@ class SaagieClient {
             configuration.project.id == null ||
             !configuration.project.id instanceof  String
         ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
         }
 
         Request request = saagieUtils.getProjectTechnologiesRequest()
@@ -109,11 +111,11 @@ class SaagieClient {
                         return JsonOutput.toJson(technologies)
                     }
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
                 }
             }
         } catch (Exception error) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
         }
     }
 
@@ -126,7 +128,7 @@ class SaagieClient {
             configuration?.jobVersion?.runtimeVersion == null ||
             configuration?.jobVersion?.resources == null
         ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG)
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
         }
 
         Request request = saagieUtils.getProjectCreateJobRequest()
@@ -145,18 +147,18 @@ class SaagieClient {
                             if (uploadResponse.isSuccessful()) {
                                 return JsonOutput.toJson(createdJob)
                             } else {
-                                throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                                throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
                             }
                         }
                     }
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG)
+                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
                 }
             }
         } catch (FileNotFoundException error) {
             throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
         } catch (Exception error) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG)
+            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
         }
     }
 }

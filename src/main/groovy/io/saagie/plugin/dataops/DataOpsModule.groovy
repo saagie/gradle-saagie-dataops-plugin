@@ -7,27 +7,35 @@ import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
 import org.gradle.api.Project
 
 class DataOpsModule {
+
+    final static String PROJECT_LIST_TASK = 'projectsList'
+    final static String PROJECT_LIST_JOBS_TASK = 'projectsListJobs'
+    final static String PROJECT_LIST_TECHNOLOGIES_TASK = 'projectsListTechnologies'
+    final static String PROJECT_CREATE_JOB_TASK = 'projectsCreateJob'
+
+    final static String TASK_GROUP = 'Saagie'
+
     static void load(Project project) {
         project.extensions.create('saagie', DataOpsExtension);
         project.ext.SaagieDataOpsExtension = DataOpsExtension;
 
-        project.task('projectsList', type: ProjectListTask) {
-            group = 'Saagie'
+        project.task(PROJECT_LIST_TASK, type: ProjectListTask) {
+            group = TASK_GROUP
             configuration = project.saagie
         }
 
-        project.task('projectsListJobs', type: ProjectListJobsTask) {
-            group = 'Saagie'
+        project.task(PROJECT_LIST_JOBS_TASK, type: ProjectListJobsTask) {
+            group = TASK_GROUP
             configuration = project.saagie
         }
 
-        project.task('projectsListTechnologies', type: ProjectListTechnologiesTask) {
-            group: 'Saagie'
+        project.task(PROJECT_LIST_TECHNOLOGIES_TASK, type: ProjectListTechnologiesTask) {
+            group: TASK_GROUP
             configuration = project.saagie
         }
 
-        project.task('projectsCreateJob', type: ProjectCreateJobTask) {
-            group: 'Saagie'
+        project.task(PROJECT_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
+            group: TASK_GROUP
             configuration = project.saagie
         }
     }
