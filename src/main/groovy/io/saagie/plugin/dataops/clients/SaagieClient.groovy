@@ -121,7 +121,6 @@ class SaagieClient {
 
     def createProjectJob() {
         if (configuration?.project?.id == null ||
-            !configuration?.project?.id instanceof String ||
             configuration?.job?.name == null ||
             configuration?.job?.technology == null ||
             configuration?.job?.category == null ||
@@ -129,6 +128,13 @@ class SaagieClient {
             configuration?.jobVersion?.resources == null
         ) {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+        }
+
+        if (configuration.jobVersion.packageInfo?.name != null) {
+            File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
+            if (!scriptToUpload.exists()) {
+                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
+            }
         }
 
         Request request = saagieUtils.getProjectCreateJobRequest()
