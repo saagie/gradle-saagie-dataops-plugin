@@ -7,6 +7,14 @@ More informations about Saagie: https://www.saagie.com
 
 This plugin is only compatible with gradle 3.0+
 
+## Setup
+
+```
+plugins {
+  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.4"
+}
+```
+
 ## Usage
 
 The following tasks are available:
@@ -53,6 +61,23 @@ The following tasks are available:
 | governanceGetDataset              | Get meta data details of dataset                                        | To Do        |
 | governanceUpdateDataset           | Update meta data of a dataset                                           | To Do        |
 
+
+
+## Quick Example
+```
+saagie {
+    server {
+        url = 'https://saagie-beta.prod.saagie.io'
+        login = 'my-login'
+        password = 'my-password'
+        environment = 4
+    }
+    project {
+        id = '2dc84971-6c9c-4500-8be1-9c7faff19f7b'
+    }
+}
+```
+Then launch command ```gradle projectsListJobs```
 
 ## Documentation
 Full documentation is available on the [wiki](https://github.com/saagie/gradle-saagie-dataops-plugin/wiki)
