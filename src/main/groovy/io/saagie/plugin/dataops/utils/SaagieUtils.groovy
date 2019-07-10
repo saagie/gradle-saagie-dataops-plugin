@@ -177,6 +177,28 @@ class SaagieUtils {
             .build()
     }
 
+    Request getRunProjectJobRequest() {
+        Job job = configuration.job
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: job.id
+        ])
+
+        def runProjectJobRequest = gq('''
+            mutation editJobMutation($jobId: UUID!) {
+                runJob(jobId: $jobId) {
+                    id
+                    status
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery runProjectJobRequest
+    }
+
     private Request buildRequestFromQuery(String query) {
         RequestBody body = RequestBody.create(JSON, query)
         new Request.Builder()

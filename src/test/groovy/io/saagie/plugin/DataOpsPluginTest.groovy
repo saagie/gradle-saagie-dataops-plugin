@@ -305,4 +305,87 @@ class DataOpsPluginTest extends Specification {
         thrown(Exception)
         result == null
     }
+
+    def "projectsRunJob should run a job and return the job instance id and status"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+
+                job {
+                    id = "jobId"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"id"')
+        result.output.contains('"status"')
+    }
+
+    def "projectsRunJob should fail if job or job id is null"() {
+        given:
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsRunJob should fail if job id doesn't exists"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                job {
+                    id = 'bad-id'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsRunJob'
+        println result.output
+
+        then:
+        thrown(Exception)
+        result == null
+    }
 }

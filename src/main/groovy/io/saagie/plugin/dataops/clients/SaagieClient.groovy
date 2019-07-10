@@ -13,8 +13,8 @@ import static io.saagie.plugin.dataops.DataOpsModule.*
 
 class SaagieClient {
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
-    static BAD_PROJECT_CONFIG = 'Missing project configuration or project id: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
-    static NO_FILE_MSG = "Check that there is a file in '%FILE%'"
+    static BAD_PROJECT_CONFIG = 'Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
+    static NO_FILE_MSG = "Check that there is a file to upload in '%FILE%'. Be sure that '%FILE%' is a correct file path."
 
     DataOpsExtension configuration
 
@@ -37,12 +37,12 @@ class SaagieClient {
         saagieUtils = new SaagieUtils(configuration)
     }
 
-    def getProjects() {
-        Request request = saagieUtils.getProjectsRequest();
+    String getProjects() {
+        Request projectsRequest = saagieUtils.getProjectsRequest();
         try {
-            client.newCall(request).execute().withCloseable { response ->
+            client.newCall(projectsRequest).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string()
+                    String responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting projectList.')
@@ -54,12 +54,12 @@ class SaagieClient {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
                 }
             }
-        } catch (Exception error) {
+        } catch (Exception ignored) {
             throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
         }
     }
 
-    def getProjectJobs() {
+    String getProjectJobs() {
         if (configuration.project == null ||
             configuration.project.id == null ||
             !configuration.project.id instanceof  String
@@ -67,11 +67,11 @@ class SaagieClient {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
 
-        Request request = saagieUtils.getProjectJobsRequest()
+        Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
         try {
-            client.newCall(request).execute().withCloseable { response ->
+            client.newCall(projectJobsRequest).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string()
+                    String responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting project jobs.')
@@ -80,29 +80,27 @@ class SaagieClient {
                         return JsonOutput.toJson(jobs)
                     }
                 } else {
-                    println response.body().string()
                     throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
                 }
             }
-        } catch (Exception error) {
-            error.printStackTrace()
+        } catch (Exception ignored) {
             throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
     }
 
-    def getProjectTechnologies() {
-        if (configuration.project == null ||
-            configuration.project.id == null ||
-            !configuration.project.id instanceof  String
+    String getProjectTechnologies() {
+        if (configuration?.project?.id == null
         ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
+            throw new InvalidUserDataException(
+                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK)
+            )
         }
 
-        Request request = saagieUtils.getProjectTechnologiesRequest()
+        Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
         try {
-            client.newCall(request).execute().withCloseable { response ->
+            client.newCall(projectTechnologiesRequest).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string()
+                    String responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when getting project technologies.')
@@ -114,12 +112,12 @@ class SaagieClient {
                     throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
                 }
             }
-        } catch (Exception error) {
+        } catch (Exception ignored) {
             throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
         }
     }
 
-    def createProjectJob() {
+    String createProjectJob() {
         if (configuration?.project?.id == null ||
             configuration?.job?.name == null ||
             configuration?.job?.technology == null ||
@@ -127,7 +125,9 @@ class SaagieClient {
             configuration?.jobVersion?.runtimeVersion == null ||
             configuration?.jobVersion?.resources == null
         ) {
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            throw new InvalidUserDataException(
+                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+            )
         }
 
         if (configuration.jobVersion.packageInfo?.name != null) {
@@ -137,11 +137,11 @@ class SaagieClient {
             }
         }
 
-        Request request = saagieUtils.getProjectCreateJobRequest()
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
         try {
-            client.newCall(request).execute().withCloseable { response ->
+            client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 if (response.isSuccessful()) {
-                    def responseBody = response.body().string()
+                    String responseBody = response.body().string()
                     def parsedResult = slurper.parseText(responseBody)
                     if (parsedResult.data == null) {
                         throw new StopActionException('Something went wrong when creating project job.')
@@ -153,18 +153,58 @@ class SaagieClient {
                             if (uploadResponse.isSuccessful()) {
                                 return JsonOutput.toJson(createdJob)
                             } else {
-                                throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+                                throw new InvalidUserDataException(
+                                    BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+                                )
                             }
                         }
                     }
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+                    throw new InvalidUserDataException(
+                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+                    )
                 }
             }
-        } catch (FileNotFoundException error) {
-            throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
-        } catch (Exception error) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+        } catch (FileNotFoundException ignored) {
+            throw new InvalidUserDataException(
+                NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name)
+            )
+        } catch (Exception ignored) {
+            throw new InvalidUserDataException(
+                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
+            )
+        }
+    }
+
+    String runProjectJob() {
+        if (configuration?.job?.id == null) {
+            throw new InvalidUserDataException(
+                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
+            )
+        }
+
+        Request runProjectJobRequest = saagieUtils.getRunProjectJobRequest()
+        try {
+            client.newCall(runProjectJobRequest).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        throw new StopActionException('Something went wrong when requesting the job to run.')
+                    } else {
+                        Map runningJob = parsedResult.data.runJob
+                        return JsonOutput.toJson(runningJob)
+                    }
+                } else {
+                    throw new InvalidUserDataException(
+                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
+                    )
+                }
+            }
+        } catch (Exception ignored) {
+            throw new InvalidUserDataException(
+                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
+            )
         }
     }
 }

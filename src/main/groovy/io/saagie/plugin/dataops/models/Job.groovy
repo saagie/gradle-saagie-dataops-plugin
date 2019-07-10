@@ -2,6 +2,7 @@ package io.saagie.plugin.dataops.models
 
 class Job {
     String name
+    String id
     String projectId
     String description
     String category

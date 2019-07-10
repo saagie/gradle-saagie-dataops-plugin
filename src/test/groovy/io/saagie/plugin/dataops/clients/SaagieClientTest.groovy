@@ -37,6 +37,7 @@ class SaagieClientTest extends Specification {
             id = 'projectId'
         }
         configuration.job {
+            id = "jobId"
             name = "My custom job 2"
             category = "Extraction"
             technology = "technologyId"
@@ -152,5 +153,35 @@ class SaagieClientTest extends Specification {
         then:
         thrown(InvalidUserDataException)
         createdJobConfig == null
+    }
+
+    def "runProjectJob should fail there is no job id config"() {
+        given:
+        client.configuration.job.id = null
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        when:
+        String runJobConfig = client.runProjectJob()
+
+        then:
+        thrown(InvalidUserDataException)
+        runJobConfig == null
+    }
+
+    def "runProjectJob should run the provided job and return instance id of the job"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        when:
+        String runJobConfig = client.runProjectJob()
+
+        then:
+        runJobConfig == '{"id":"job-instance-id","status":"REQUESTED"}'
     }
 }
