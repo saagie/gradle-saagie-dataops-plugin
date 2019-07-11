@@ -25,31 +25,37 @@ class DataOpsModule {
 
         project.task(PROJECT_LIST_TASK, type: ProjectListTask) {
             group = TASK_GROUP
+            description = 'list all projects on the environment'
             configuration = project.saagie
         }
 
         project.task(PROJECT_LIST_JOBS_TASK, type: ProjectListJobsTask) {
             group = TASK_GROUP
+            description = 'list all jobs of a project'
             configuration = project.saagie
         }
 
         project.task(PROJECT_LIST_TECHNOLOGIES_TASK, type: ProjectListTechnologiesTask) {
             group = TASK_GROUP
+            description = 'list all technologies of a project'
             configuration = project.saagie
         }
 
         project.task(PROJECT_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
             group = TASK_GROUP
-            configuration = project.saagie
-        }
-
-        project.task(PROJECT_RUN_JOB_TASK, type: ProjectRunJobTask) {
-            group = TASK_GROUP
+            description = 'create a brand new job in a project'
             configuration = project.saagie
         }
 
         project.task(PROJECT_UPDATE_JOB_TASK, type: ProjectUpdateJob) {
             group = TASK_GROUP
+            description = 'update a existing job in a project'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_RUN_JOB_TASK, type: ProjectRunJobTask) {
+            group = TASK_GROUP
+            description = 'run an existing job'
             configuration = project.saagie
         }
     }
