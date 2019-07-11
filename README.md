@@ -11,7 +11,7 @@ This plugin is only compatible with gradle 3.0+
 
 ```
 plugins {
-  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.4"
+  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.5"
 }
 ```
 
@@ -27,8 +27,8 @@ The following tasks are available:
 | projectsArchive                   | Archive an existing project                                             | To Do        |
 | projectsListTechnologies          | Lists all technologies of a project                                     | Available    |
 | projectsListJobs                  | Lists all jobs of a project                                             | Available    |
-| projectsCreateJob                 | Creates a new job in a project                                          | In Progress  |
-| projectsUpdateJob                 | Updates an existing job                                                 | In Progress  |
+| projectsCreateJob                 | Creates a new job in a project                                          | Available    |
+| projectsUpdateJob                 | Updates an existing job                                                 | Available    |
 | projectsRunJob                    | Run an existing job                                                     | To Do        |
 | projectsStopJob                   | Stops an existing job                                                   | To Do        |
 | projectsListJobInstances          | List instances of a job                                                 | To Do        |
