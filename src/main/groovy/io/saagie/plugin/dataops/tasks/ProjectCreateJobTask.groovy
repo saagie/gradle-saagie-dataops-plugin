@@ -11,7 +11,7 @@ class ProjectCreateJobTask extends DefaultTask {
 
     @TaskAction
     def createProjectJob() {
-        saagieClient = new SaagieClient(configuration)
+        saagieClient = new SaagieClient(configuration, logger)
         logger.quiet(saagieClient.createProjectJob())
     }
 }
