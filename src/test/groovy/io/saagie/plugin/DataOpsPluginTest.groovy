@@ -2,11 +2,15 @@ package io.saagie.plugin
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.gradle.api.InvalidUserDataException
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
+
+import static org.gradle.testkit.runner.TaskOutcome.*
 
 @Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
@@ -98,19 +102,20 @@ class DataOpsPluginTest extends Specification {
         """
 
         when:
-        gradle 'projectsList'
+        BuildResult result = gradle 'projectsList'
+        println result?.output
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
+        e.message.contains('Error 400 when requesting on http://localhost:9000')
+        e.getBuildResult().task(':projectsList').outcome == FAILED
     }
 
     def "projectsListJobs task should list jobs on a project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":{"jobs":[{"name":"test2","description":"","countJobInstance":1,"versions":[{"number":1}],"category":"Processing","technology":{"id":"frefref-c18b-4ecd-b61f-frefefreff","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-15T14:06:49.053Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true},{"name":"test 2","description":"","countJobInstance":4,"versions":[{"number":2},{"number":0}],"category":"Processing","technology":{"id":"dezded-26bd-4f7d-a3a5-dezdedzdz","label":"Spark","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-11T09:32:46.424Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}]}}
-        """
+        mockedResponse.body = """{"data":{"jobs":[{"name":"test2","description":"","countJobInstance":1,"versions":[{"number":1}],"category":"Processing","technology":{"id":"frefref-c18b-4ecd-b61f-frefefreff","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-15T14:06:49.053Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true},{"name":"test 2","description":"","countJobInstance":4,"versions":[{"number":2},{"number":0}],"category":"Processing","technology":{"id":"dezded-26bd-4f7d-a3a5-dezdedzdz","label":"Spark","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-11T09:32:46.424Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}]}}"""
         buildFile << '''
             saagie {
                 server {
@@ -157,7 +162,9 @@ class DataOpsPluginTest extends Specification {
         gradle 'projectsListJobs'
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
+        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs')
+        e.getBuildResult().task(':projectsListJobs').outcome == FAILED
     }
 
     def "projectsListJobs task should fail if a wrong project id is provided"() {
@@ -186,16 +193,16 @@ class DataOpsPluginTest extends Specification {
         gradle 'projectsListJobs'
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
+        e.message.contains('Something went wrong when getting project jobs: ')
+        e.getBuildResult().task(':projectsListJobs').outcome == FAILED
     }
 
     def "projectsListTechnologies task should list technologies of a project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}
-        """
+        mockedResponse.body = """{"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}"""
         buildFile << """
             saagie {
                 server {
