@@ -9,6 +9,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
+import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.StopActionException
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
@@ -23,12 +24,15 @@ class SaagieClient {
 
     SaagieUtils saagieUtils
 
+    Logger logger
+
     OkHttpClient client = new OkHttpClient()
 
     JsonSlurper slurper = new JsonSlurper()
 
-    SaagieClient(DataOpsExtension configuration) {
+    SaagieClient(DataOpsExtension configuration, Logger logger) {
         this.configuration = configuration
+        this.logger = logger
 
         // TODO: remember to parameterize that once it will be available
         this.configuration.jobVersion.resources {
