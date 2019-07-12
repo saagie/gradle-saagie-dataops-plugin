@@ -6,6 +6,7 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Project
+import io.saagie.plugin.dataops.models.Server
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -15,11 +16,9 @@ import okhttp3.RequestBody
 @TypeChecked
 class SaagieUtils {
     DataOpsExtension configuration
-    String credentials
 
     SaagieUtils(DataOpsExtension configuration) {
         this.configuration = configuration
-        this.credentials = Credentials.basic(configuration.server.login, configuration.server.password)
     }
 
     static String gq(String request, String vars = null) {
@@ -227,7 +226,7 @@ class SaagieUtils {
 
         new Request.Builder()
             .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
-            .addHeader('Authorization', credentials)
+            .addHeader('Authorization', getCredentials())
             .post(body)
             .build()
     }
@@ -254,12 +253,35 @@ class SaagieUtils {
         buildRequestFromQuery runProjectJobRequest
     }
 
+    Request getJwtTokenRequest() {
+        new Request.Builder()
+            .url("${configuration.server.url}/data-fabric/api/auth")
+            .addHeader('Authorization', getCredentials())
+            .get()
+            .build()
+    }
+
     private Request buildRequestFromQuery(String query) {
         RequestBody body = RequestBody.create(JSON, query)
-        new Request.Builder()
-            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
-            .addHeader('Authorization', credentials)
-            .post(body)
-            .build()
+        Server server = configuration.server
+        if (server.jwt) {
+            def realm = server.realm
+            def jwtToken = server.token
+            return new Request.Builder()
+                .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/graphql")
+                .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
+                .post(body)
+                .build()
+        } else {
+            return new Request.Builder()
+                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
+                .addHeader('Authorization', getCredentials())
+                .post(body)
+                .build()
+        }
+    }
+
+    private String getCredentials() {
+        Credentials.basic(configuration.server.login, configuration.server.password)
     }
 }
