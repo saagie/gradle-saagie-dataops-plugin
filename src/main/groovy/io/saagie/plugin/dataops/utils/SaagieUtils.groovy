@@ -224,11 +224,22 @@ class SaagieUtils {
             .addFormDataPart('files', file.name, RequestBody.create(fileType, file))
             .build()
 
-        new Request.Builder()
-            .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
-            .addHeader('Authorization', getCredentials())
-            .post(body)
-            .build()
+        Server server = configuration.server
+        if (server.jwt) {
+            def realm = server.realm
+            def jwtToken = server.token
+            new Request.Builder()
+                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
+                .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
+                .post(body)
+                .build()
+        } else {
+            new Request.Builder()
+                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
+                .addHeader('Authorization', getCredentials())
+                .post(body)
+                .build()
+        }
     }
 
     Request getRunProjectJobRequest() {
