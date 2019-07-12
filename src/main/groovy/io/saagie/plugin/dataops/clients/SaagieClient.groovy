@@ -3,13 +3,16 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.tasks.StopActionException
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_LIST_TASK
 
 class SaagieClient {
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
@@ -35,6 +38,41 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
+        this.checkBaseConfiguration()
+    }
+
+    private checkBaseConfiguration() {
+        Server server = configuration.server
+        if (server?.url == null ||
+            server?.environment == null ||
+            server?.login == null ||
+            server?.password == null
+        ) {
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
+        }
+
+        if (server?.jwt) {
+            // Get customer_realm
+            if (server?.realm == null) {
+                String urlWithoutPrefix = server.url.split('//')[1]
+                String customerRealm = urlWithoutPrefix.split('-')[0]
+                configuration.server.realm = customerRealm
+            }
+            configuration.server.realm = configuration.server.realm.toUpperCase()
+
+            // Get jwt_token
+            Request getJwtTokenRequest = saagieUtils.getJwtTokenRequest()
+            client.newCall(getJwtTokenRequest).execute().withCloseable { response ->
+                if (response.isSuccessful()) {
+                    String jwtToken = response.body().string()
+                    configuration.server.token = jwtToken
+                } else {
+                    String statusCode = response.code()
+                    String body = response.body().string()
+                    throw new GradleException("Cannot get jwtToken, be sure to provide the right credentials\nhttp code: $statusCode\nbody: $body")
+                }
+            }
+        }
     }
 
     String getProjects() {
@@ -55,6 +93,7 @@ class SaagieClient {
                 }
             }
         } catch (Exception ignored) {
+            ignored.printStackTrace()
             throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
         }
     }
