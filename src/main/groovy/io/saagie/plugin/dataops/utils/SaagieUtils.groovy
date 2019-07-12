@@ -229,7 +229,7 @@ class SaagieUtils {
             def realm = server.realm
             def jwtToken = server.token
             new Request.Builder()
-                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
+                .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
                 .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
                 .post(body)
                 .build()

@@ -209,6 +209,7 @@ class SaagieClient {
                 NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name)
             )
         } catch (Exception ignored) {
+            ignored.printStackTrace()
             throw new InvalidUserDataException(
                 BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
             )
