@@ -136,6 +136,30 @@ class SaagieClientTest extends Specification {
         e.message.contains('Error 401 when requesting on http://localhost:9000:\nBad credentials')
     }
 
+    def "class instance with a config with a trailing / in the url must succedd"() {
+        given:
+        DataOpsExtension badConfig = new DataOpsExtension()
+        badConfig.server {
+            url = 'http://localhost:9000/'
+            login = 'login'
+            password = 'password'
+            environment = 1
+            jwt = true
+            realm = 'userrealm'
+        }
+
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = 'ok'
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        SaagieClient client = new SaagieClient(badConfig)
+
+        then:
+        !client.configuration.server.url.endsWith('/')
+    }
+
     def "getProjects should return a list of projects"() {
         given:
         enqueueToken()

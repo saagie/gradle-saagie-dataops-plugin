@@ -12,7 +12,6 @@ import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import org.gradle.api.tasks.StopActionException
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
 
@@ -41,6 +40,10 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
+
+        configuration.server.password = '************'
+        logger.debug('Using server config {}', configuration.server)
+
         this.checkBaseConfiguration()
     }
 
@@ -54,6 +57,11 @@ class SaagieClient {
         ) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
+        }
+
+        server.url = server.url.trim()
+        if (server.url.endsWith('/')) {
+            server.url = server.url.substring(0, server.url.length() - 1)
         }
 
         logger.debug('Server config is valid !')
@@ -111,6 +119,8 @@ class SaagieClient {
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
 
+        logger.debug('Using config [project={}]', configuration.project)
+
         Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
         try {
             client.newCall(projectJobsRequest).execute().withCloseable { response ->
@@ -122,7 +132,6 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    logger.debug('Successfully requested project jobs')
                     List jobs = parsedResult.data.jobs
                     return JsonOutput.toJson(jobs)
                 }
@@ -131,6 +140,9 @@ class SaagieClient {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
             throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getProjectJobs')
+            throw exception
         }
     }
 
@@ -140,6 +152,8 @@ class SaagieClient {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
         }
+
+        logger.debug('Using config [project={}]', configuration.project)
 
         Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
         try {
@@ -156,8 +170,12 @@ class SaagieClient {
                     return JsonOutput.toJson(technologies)
                 }
             }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknow exception thrown when requesting project technologies')
+            logger.error('Unknown error in getProjectTechnologies')
             throw exception
         }
     }
@@ -183,6 +201,8 @@ class SaagieClient {
             }
         }
 
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
+
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
         try {
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
@@ -190,7 +210,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = 'Something went wrong when creating project job.'
+                    def message = 'Something went wrong when creating project job'
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -203,8 +223,12 @@ class SaagieClient {
                     }
                 }
             }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
         } catch (Exception exception) {
-            logger.error(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            logger.error('Unknown error in createProjectJob')
             throw exception
         }
     }
@@ -215,6 +239,8 @@ class SaagieClient {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
         }
+
+        logger.debug('Using config [job={}]', configuration.job)
 
         Request runProjectJobRequest = saagieUtils.getRunProjectJobRequest()
         try {
@@ -231,8 +257,12 @@ class SaagieClient {
                     return JsonOutput.toJson(runningJob)
                 }
             }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
         } catch (Exception exception) {
-            logger.error(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
+            logger.error('Unknown error in runProjectJob')
             throw exception
         }
     }
@@ -245,6 +275,8 @@ class SaagieClient {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
         }
+
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
         Request projectUpdateJopRequest = saagieUtils.getProjectUpdateJobRequest()
         try {
@@ -259,7 +291,6 @@ class SaagieClient {
                 } else {
                     Map updatedJob = parsedResult.data.editJob
 
-                    // If we provide a jobVersion config, use it to update the job
                     if (configuration?.jobVersion?.runtimeVersion != null) {
                         Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
                         client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
@@ -282,8 +313,12 @@ class SaagieClient {
                     return JsonOutput.toJson(updatedJob)
                 }
             }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
         } catch (Exception exception) {
-            logger.error(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            logger.error('Unknown error in updateProjectJob')
             throw exception
         }
     }
