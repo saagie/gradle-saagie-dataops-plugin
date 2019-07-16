@@ -7,14 +7,16 @@ import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.Response
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
-import org.gradle.api.tasks.StopActionException
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_LIST_TASK
 
 class SaagieClient {
+    static final Logger logger = Logging.getLogger(SaagieClient.class)
     static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
     static BAD_PROJECT_CONFIG = 'Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
     static NO_FILE_MSG = "Check that there is a file to upload in '%FILE%'. Be sure that '%FILE%' is a correct file path."
@@ -38,125 +40,148 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
+
+        configuration.server.password = '************'
+        logger.debug('Using server config {}', configuration.server)
+
         this.checkBaseConfiguration()
     }
 
     private checkBaseConfiguration() {
+        logger.debug('Checking for a valid server configuration')
         Server server = configuration.server
         if (server?.url == null ||
             server?.environment == null ||
             server?.login == null ||
             server?.password == null
         ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
         }
 
+        server.url = server.url.trim()
+        if (server.url.endsWith('/')) {
+            server.url = server.url.substring(0, server.url.length() - 1)
+        }
+
+        logger.debug('Server config is valid !')
+
         if (server?.jwt) {
-            // Get customer_realm
             if (server?.realm == null) {
                 String urlWithoutPrefix = server.url.split('//')[1]
                 String customerRealm = urlWithoutPrefix.split('-')[0]
                 configuration.server.realm = customerRealm
             }
             configuration.server.realm = configuration.server.realm.toUpperCase()
+            logger.debug('Using {} as customer realm', configuration.server.realm)
 
-            // Get jwt_token
+            logger.debug('Starting jwt authentication')
             Request getJwtTokenRequest = saagieUtils.getJwtTokenRequest()
             client.newCall(getJwtTokenRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String jwtToken = response.body().string()
-                    configuration.server.token = jwtToken
-                } else {
-                    String statusCode = response.code()
-                    String body = response.body().string()
-                    throw new GradleException("Cannot get jwtToken, be sure to provide the right credentials\nhttp code: $statusCode\nbody: $body")
-                }
+                handleErrors(response)
+                logger.debug('Successfully authenticated')
+                String jwtToken = response.body().string()
+                configuration.server.token = jwtToken
             }
         }
     }
 
     String getProjects() {
+        logger.info('Starting getProject task')
         Request projectsRequest = saagieUtils.getProjectsRequest();
         try {
             client.newCall(projectsRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when getting projectList.')
-                    } else {
-                        List projects = parsedResult.data.projects
-                        return JsonOutput.toJson(projects)
-                    }
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting projectList: $responseBody}"
+                    logger.error(message)
+                    throw new GradleException(message)
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
+                    List projects = parsedResult.data.projects
+                    return JsonOutput.toJson(projects)
                 }
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace()
-            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
         }
     }
 
     String getProjectJobs() {
+        logger.info('Starting getProjectJob task')
         if (configuration.project == null ||
-            configuration.project.id == null ||
-            !configuration.project.id instanceof  String
+            configuration.project.id == null
         ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
+
+        logger.debug('Using config [project={}]', configuration.project)
 
         Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
         try {
             client.newCall(projectJobsRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when getting project jobs.')
-                    } else {
-                        List jobs = parsedResult.data.jobs
-                        return JsonOutput.toJson(jobs)
-                    }
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting project jobs: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
+                    List jobs = parsedResult.data.jobs
+                    return JsonOutput.toJson(jobs)
                 }
             }
-        } catch (Exception ignored) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getProjectJobs')
+            throw exception
         }
     }
 
     String getProjectTechnologies() {
-        if (configuration?.project?.id == null
-        ) {
-            throw new InvalidUserDataException(
-                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK)
-            )
+        logger.info('Starting getProjectTechnologies task')
+        if (configuration?.project?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
         }
+
+        logger.debug('Using config [project={}]', configuration.project)
 
         Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
         try {
             client.newCall(projectTechnologiesRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when getting project technologies.')
-                    } else {
-                        List technologies = parsedResult.data.technologies
-                        return JsonOutput.toJson(technologies)
-                    }
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = 'Something went wrong when getting project technologies.'
+                    logger.error(message)
+                    throw new GradleException(message)
                 } else {
-                    throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
+                    List technologies = parsedResult.data.technologies
+                    return JsonOutput.toJson(technologies)
                 }
             }
-        } catch (Exception ignored) {
-            throw new InvalidUserDataException(BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getProjectTechnologies')
+            throw exception
         }
     }
 
     String createProjectJob() {
+        logger.info('Starting createProjectJob task')
         if (configuration?.project?.id == null ||
             configuration?.job?.name == null ||
             configuration?.job?.technology == null ||
@@ -164,152 +189,150 @@ class SaagieClient {
             configuration?.jobVersion?.runtimeVersion == null ||
             configuration?.jobVersion?.resources == null
         ) {
-            throw new InvalidUserDataException(
-                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-            )
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
         }
 
         if (configuration.jobVersion.packageInfo?.name != null) {
             File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
             if (!scriptToUpload.exists()) {
+                logger.error(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
                 throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
             }
         }
 
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
+
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
         try {
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when creating project job.')
-                    } else {
-                        Map createdJob = parsedResult.data.createJob
-                        String jobId = createdJob.id
-                        Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
-                        client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
-                            if (uploadResponse.isSuccessful()) {
-                                return JsonOutput.toJson(createdJob)
-                            } else {
-                                throw new InvalidUserDataException(
-                                    BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-                                )
-                            }
-                        }
-                    }
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = 'Something went wrong when creating project job'
+                    logger.error(message)
+                    throw new GradleException(message)
                 } else {
-                    throw new InvalidUserDataException(
-                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-                    )
+                    Map createdJob = parsedResult.data.createJob
+                    String jobId = createdJob.id
+                    Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
+                    client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                        handleErrors(uploadResponse)
+                        return JsonOutput.toJson(createdJob)
+                    }
                 }
             }
-        } catch (FileNotFoundException ignored) {
-            throw new InvalidUserDataException(
-                NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name)
-            )
-        } catch (Exception ignored) {
-            ignored.printStackTrace()
-            throw new InvalidUserDataException(
-                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-            )
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in createProjectJob')
+            throw exception
         }
     }
 
     String runProjectJob() {
+        logger.info('Starting runProjectJob task')
         if (configuration?.job?.id == null) {
-            throw new InvalidUserDataException(
-                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
-            )
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
         }
+
+        logger.debug('Using config [job={}]', configuration.job)
 
         Request runProjectJobRequest = saagieUtils.getRunProjectJobRequest()
         try {
             client.newCall(runProjectJobRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when requesting the job to run.')
-                    } else {
-                        Map runningJob = parsedResult.data.runJob
-                        return JsonOutput.toJson(runningJob)
-                    }
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = 'Something went wrong when requesting the job to run.'
+                    logger.error(message)
+                    throw new GradleException(message)
                 } else {
-                    throw new InvalidUserDataException(
-                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
-                    )
+                    Map runningJob = parsedResult.data.runJob
+                    return JsonOutput.toJson(runningJob)
                 }
             }
-        } catch (Exception ignored) {
-            throw new InvalidUserDataException(
-                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK)
-            )
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in runProjectJob')
+            throw exception
         }
     }
 
     String updateProjectJob() {
+        logger.info('Starting updateProjectJob task')
         if (configuration?.job?.id == null ||
             configuration?.project?.id == null
         ) {
-            throw new InvalidUserDataException(
-                BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
-            )
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
         }
+
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
         Request projectUpdateJopRequest = saagieUtils.getProjectUpdateJobRequest()
         try {
             client.newCall(projectUpdateJopRequest).execute().withCloseable { response ->
-                if (response.isSuccessful()) {
-                    String responseBody = response.body().string()
-                    def parsedResult = slurper.parseText(responseBody)
-                    if (parsedResult.data == null) {
-                        throw new StopActionException('Something went wrong when updating project job.')
-                    } else {
-                        Map updatedJob = parsedResult.data.editJob
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = 'Something went wrong when updating project job.'
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map updatedJob = parsedResult.data.editJob
 
-                        // If we provide a jobVersion config, use it to update the job
-                        if (configuration?.jobVersion?.runtimeVersion != null) {
-                            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
-                            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
-                                if (updateResponse.isSuccessful()) {
-                                    String updateResponseBody = updateResponse.body().string()
-                                    def updatedJobVersion = slurper.parseText(updateResponseBody)
+                    if (configuration?.jobVersion?.runtimeVersion != null) {
+                        Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+                        client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+                            handleErrors(updateResponse)
+                            String updateResponseBody = updateResponse.body().string()
+                            def updatedJobVersion = slurper.parseText(updateResponseBody)
 
-                                    String newJobVersion = updatedJobVersion.data.addJobVersion.number
-                                    Request uploadRequest = saagieUtils.getUploadFileToJobRequest(
-                                        configuration.job.id,
-                                        newJobVersion
-                                    )
-                                    client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
-                                        if (uploadResponse.isSuccessful()) {
-                                            return JsonOutput.toJson(updatedJob)
-                                        } else {
-                                            throw new InvalidUserDataException(
-                                                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-                                            )
-                                        }
-                                    }
-                                } else {
-                                    throw new InvalidUserDataException(
-                                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK)
-                                    )
-                                }
+                            String newJobVersion = updatedJobVersion.data.addJobVersion.number
+                            Request uploadRequest = saagieUtils.getUploadFileToJobRequest(
+                                configuration.job.id,
+                                newJobVersion
+                            )
+                            client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                                handleErrors(uploadResponse)
+                                return JsonOutput.toJson(updatedJob)
                             }
                         }
-
-                        return JsonOutput.toJson(updatedJob)
                     }
-                } else {
-                    throw new InvalidUserDataException(
-                        BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
-                    )
+
+                    return JsonOutput.toJson(updatedJob)
                 }
             }
-        } catch (Exception ignored) {
-            throw new InvalidUserDataException(
-                BAD_CONFIG_MSG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK)
-            )
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in updateProjectJob')
+            throw exception
         }
+    }
+
+    private handleErrors(Response response) {
+        logger.debug('Checking server response')
+        if (response.successful) {
+            logger.debug('No error in server response.')
+            return
+        }
+        String body = response.body().string()
+        String status = "${response.code()}"
+        def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
+        logger.error(message)
+        throw new GradleException(message)
     }
 }

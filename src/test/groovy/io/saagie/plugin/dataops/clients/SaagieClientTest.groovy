@@ -5,6 +5,8 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
+import org.gradle.api.invocation.Gradle
+import org.gradle.api.logging.Logger
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
@@ -131,7 +133,31 @@ class SaagieClientTest extends Specification {
 
         then:
         GradleException e = thrown()
-        e.message.contains('Cannot get jwtToken, be sure to provide the right credentials\nhttp code: 401\nbody: Bad credentials')
+        e.message.contains('Error 401 when requesting on http://localhost:9000:\nBad credentials')
+    }
+
+    def "class instance with a config with a trailing / in the url must succedd"() {
+        given:
+        DataOpsExtension badConfig = new DataOpsExtension()
+        badConfig.server {
+            url = 'http://localhost:9000/'
+            login = 'login'
+            password = 'password'
+            environment = 1
+            jwt = true
+            realm = 'userrealm'
+        }
+
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = 'ok'
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        SaagieClient client = new SaagieClient(badConfig)
+
+        then:
+        !client.configuration.server.url.endsWith('/')
     }
 
     def "getProjects should return a list of projects"() {
@@ -242,8 +268,9 @@ class SaagieClientTest extends Specification {
         def createdJobConfig = client.createProjectJob()
 
         then:
-        thrown(InvalidUserDataException)
+        GradleException exception = thrown()
         createdJobConfig == null
+        exception.message.contains('Error 500 when requesting on http://localhost:9000:\ntrue')
     }
 
     def "runProjectJob should fail there is no job id config"() {
@@ -257,8 +284,9 @@ class SaagieClientTest extends Specification {
         String runJobConfig = client.runProjectJob()
 
         then:
-        thrown(InvalidUserDataException)
+        InvalidUserDataException exception = thrown()
         runJobConfig == null
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsRunJob')
     }
 
     def "runProjectJob should run the provided job and return instance id of the job"() {
