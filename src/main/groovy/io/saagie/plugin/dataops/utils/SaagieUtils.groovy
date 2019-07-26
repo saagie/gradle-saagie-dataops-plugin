@@ -71,6 +71,7 @@ class SaagieUtils {
         def listProjectJobs = gq('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
+                    id
                     name
                     description
                     countJobInstance

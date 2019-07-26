@@ -138,6 +138,7 @@ class DataOpsPluginTest extends Specification {
         then:
         !result.output.contains('"data"')
         result.output.contains('"name"')
+        result.output.contains('"id"')
         result.output.contains('"countJobInstance"')
     }
 
