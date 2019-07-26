@@ -332,9 +332,9 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobInstance)
 
-        Request projectUpdateJopRequest = saagieUtils.getProjectJobInstanceStatusRequest()
+        Request projectJobInstanceStatusRequest = saagieUtils.getProjectJobInstanceStatusRequest()
         try {
-            client.newCall(projectUpdateJopRequest).execute().withCloseable { response ->
+            client.newCall(projectJobInstanceStatusRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
@@ -343,8 +343,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map updatedJob = parsedResult.data.jobInstance
-                    return JsonOutput.toJson(updatedJob)
+                    Map jobInstanceStatus = parsedResult.data.jobInstance
+                    return JsonOutput.toJson(jobInstanceStatus)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -352,7 +352,7 @@ class SaagieClient {
         } catch (GradleException stopActionException) {
             throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknown error in updateProjectJob')
+            logger.error('Unknown error in getJobInstanceStatus')
             throw exception
         }
     }

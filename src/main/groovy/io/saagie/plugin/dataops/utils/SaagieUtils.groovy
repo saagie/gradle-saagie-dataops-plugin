@@ -296,14 +296,14 @@ class SaagieUtils {
             id: jobInstance.id
         ])
 
-        def listProjectJobs = gq('''
+        def getJobInstanceStatus = gq('''
             query getJobInstanceStatus($jobId: UUID!) {
                 jobInstance(id: $id) {
                     status
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery listProjectJobs
+        buildRequestFromQuery getJobInstanceStatus
     }
 
     Request getJwtTokenRequest() {
