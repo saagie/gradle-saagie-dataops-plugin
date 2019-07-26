@@ -5,6 +5,7 @@ import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
@@ -281,6 +282,28 @@ class SaagieUtils {
             }
         ''', gqVariables)
         buildRequestFromQuery runProjectJobRequest
+    }
+
+    Request getProjectJobInstanceStatusRequest() {
+        JobInstance jobInstance = configuration.jobInstance;
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            id: jobInstance.id
+        ])
+
+        def listProjectJobs = gq('''
+            query getJobInstanceStatus($jobId: UUID!) {
+                jobInstance(id: $id) {
+                    status
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery listProjectJobs
     }
 
     Request getJwtTokenRequest() {
