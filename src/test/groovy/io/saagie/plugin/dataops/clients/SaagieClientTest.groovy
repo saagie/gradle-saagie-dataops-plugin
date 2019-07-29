@@ -55,6 +55,9 @@ class SaagieClientTest extends Specification {
                 name = tempFile.absolutePath
             }
         }
+        configuration.jobInstance {
+            id = 'jobInstanceId'
+        }
     }
 
     def cleanup() {
@@ -304,5 +307,57 @@ class SaagieClientTest extends Specification {
 
         then:
         runJobConfig == '{"id":"job-instance-id","status":"REQUESTED"}'
+    }
+
+    def "getJobInstanceStatus should return the status of the provided job instance"() {
+        given:
+        enqueueToken()
+
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"jobInstance":{"status":"SUCCEEDED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+        client = new SaagieClient(configuration)
+
+        when:
+        String getJobInstanceStatusResult = client.getJobInstanceStatus()
+
+        then:
+        getJobInstanceStatusResult == '{"status":"SUCCEEDED"}'
+    }
+
+    def "getJobInstanceStatus should fail if no jobInstance is provided"() {
+        given:
+        enqueueToken()
+
+        client = new SaagieClient(configuration)
+        client.configuration.jobInstance.id = null
+
+        when:
+        String getJobInstanceStatusResult = client.getJobInstanceStatus()
+
+        then:
+        InvalidUserDataException exception = thrown()
+        getJobInstanceStatusResult == null
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsGetJobInstanceStatus')
+    }
+
+    def "getJobInstanceStatus should fail if bad response is returned"() {
+        given:
+        enqueueToken()
+
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+        client = new SaagieClient(configuration)
+
+        when:
+        String getJobInstanceStatusResult = client.getJobInstanceStatus()
+
+        then:
+        GradleException exception = thrown()
+        getJobInstanceStatusResult == null
+        exception.message.contains('Something went wrong when requesting job instance status: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
     }
 }

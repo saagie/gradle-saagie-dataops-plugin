@@ -323,6 +323,40 @@ class SaagieClient {
         }
     }
 
+    String getJobInstanceStatus() {
+        logger.info('Starting getJobInstanceStatus task')
+        if (configuration?.jobInstance?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
+        }
+
+        logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobInstance)
+
+        Request projectJobInstanceStatusRequest = saagieUtils.getProjectJobInstanceStatusRequest()
+        try {
+            client.newCall(projectJobInstanceStatusRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when requesting job instance status: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map jobInstanceStatus = parsedResult.data.jobInstance
+                    return JsonOutput.toJson(jobInstanceStatus)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getJobInstanceStatus')
+            throw exception
+        }
+    }
+
     private handleErrors(Response response) {
         logger.debug('Checking server response')
         if (response.successful) {
