@@ -3,7 +3,9 @@ package io.saagie.plugin.dataops.utils
 import groovy.json.JsonGenerator
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
@@ -12,9 +14,13 @@ import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 
 @TypeChecked
 class SaagieUtils {
+    static final Logger logger = Logging.getLogger(SaagieUtils.class)
+    static final MediaType JSON = MediaType.parse 'application/json; charset=utf-8'
     DataOpsExtension configuration
 
     SaagieUtils(DataOpsExtension configuration) {
@@ -23,16 +29,18 @@ class SaagieUtils {
 
     static String gq(String request, String vars = null) {
         def inlinedRequest = request.replaceAll('\\n', '')
+        def query
         if (vars != null) {
-            """{ "query": "$inlinedRequest", "variables": $vars }"""
+            query = """{ "query": "$inlinedRequest", "variables": $vars }"""
         } else {
-            """{ "query": "$inlinedRequest" }"""
+            query = """{ "query": "$inlinedRequest" }"""
         }
+        logger.debug('Generated graphql query:\n{}', query)
+        return query
     }
 
-    static final MediaType JSON = MediaType.parse 'application/json; charset=utf-8'
-
     Request getProjectsRequest() {
+        logger.debug('Generating getProjectsRequest')
         def listProjectsRequest = gq('''
             {
                 projects {
@@ -51,6 +59,7 @@ class SaagieUtils {
 
     Request getProjectJobsRequest() {
         Project project = configuration.project
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -63,6 +72,7 @@ class SaagieUtils {
         def listProjectJobs = gq('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
+                    id
                     name
                     description
                     countJobInstance
@@ -95,6 +105,7 @@ class SaagieUtils {
 
     Request getProjectTechnologiesRequest() {
         Project project = configuration.project
+        logger.debug('generating getProjectTechnologiesRequest [projectId={}]', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -127,9 +138,11 @@ class SaagieUtils {
     Request getProjectCreateJobRequest() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
         job.projectId = configuration.project.id
-        def file = new File(jobVersion.packageInfo.name)
+        File file = new File(jobVersion.packageInfo.name)
+        logger.debug('Using [file={}] for upload', file.absolutePath)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -162,6 +175,7 @@ class SaagieUtils {
 
     Request getProjectUpdateJobRequest() {
         Job job = configuration.job
+        logger.debug('Generating getProjectUpdateJobRequest [job={}]', job)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -184,8 +198,10 @@ class SaagieUtils {
     Request getAddJobVersionRequest() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
 
         def file = new File(jobVersion.packageInfo.name)
+        logger.debug('Using [file={}] for upload', file.absolutePath)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -216,8 +232,10 @@ class SaagieUtils {
     }
 
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
+        logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
         def file = new File(configuration.jobVersion.packageInfo.name)
-        def fileType = MediaType.parse("text/text")
+        def fileType = MediaType.parse('text/text')
+        logger.debug('Using [file={}] for upload', file.absolutePath)
 
         RequestBody body = new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
@@ -226,6 +244,7 @@ class SaagieUtils {
 
         Server server = configuration.server
         if (server.jwt) {
+            logger.debug('Building upload file request with jwt auth...')
             def realm = server.realm
             def jwtToken = server.token
             new Request.Builder()
@@ -234,6 +253,7 @@ class SaagieUtils {
                 .post(body)
                 .build()
         } else {
+            logger.debug('Building upload file request with basic auth...')
             new Request.Builder()
                 .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
                 .addHeader('Authorization', getCredentials())
@@ -244,6 +264,7 @@ class SaagieUtils {
 
     Request getRunProjectJobRequest() {
         Job job = configuration.job
+        logger.debug('Generating getRunProjectJobRequest for job [id={}]', job.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -264,7 +285,30 @@ class SaagieUtils {
         buildRequestFromQuery runProjectJobRequest
     }
 
+    Request getProjectJobInstanceStatusRequest() {
+        JobInstance jobInstance = configuration.jobInstance;
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            id: jobInstance.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            query getJobInstanceStatus($jobId: UUID!) {
+                jobInstance(id: $id) {
+                    status
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getJobInstanceStatus
+    }
+
     Request getJwtTokenRequest() {
+        logger.debug('Requesting JWT...')
         new Request.Builder()
             .url("${configuration.server.url}/data-fabric/api/auth")
             .addHeader('Authorization', getCredentials())
@@ -273,9 +317,11 @@ class SaagieUtils {
     }
 
     private Request buildRequestFromQuery(String query) {
+        logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(JSON, query)
         Server server = configuration.server
         if (server.jwt) {
+            logger.debug('Generating graphql request with JWT auth...')
             def realm = server.realm
             def jwtToken = server.token
             return new Request.Builder()
@@ -284,6 +330,7 @@ class SaagieUtils {
                 .post(body)
                 .build()
         } else {
+            logger.debug('Generating graphql request with basic auth...')
             return new Request.Builder()
                 .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
                 .addHeader('Authorization', getCredentials())
