@@ -7,6 +7,8 @@ import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.Pipeline
+import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
 import okhttp3.Credentials
@@ -27,14 +29,19 @@ class SaagieUtils {
         this.configuration = configuration
     }
 
-    static String gq(String request, String vars = null) {
+    static String gq(String request, String vars = null, String operationName = null) {
         def inlinedRequest = request.replaceAll('\\n', '')
-        def query
+        def query = """{ "query": "$inlinedRequest\""""
         if (vars != null) {
-            query = """{ "query": "$inlinedRequest", "variables": $vars }"""
-        } else {
-            query = """{ "query": "$inlinedRequest" }"""
+            query += """, "variables": $vars"""
         }
+
+        if (operationName) {
+            query += """, "operationName": "$operationName\""""
+        }
+
+        query += """ }"""
+
         logger.debug('Generated graphql query:\n{}', query)
         return query
     }
@@ -285,6 +292,39 @@ class SaagieUtils {
         buildRequestFromQuery runProjectJobRequest
     }
 
+    Request getCreatePipelineRequest() {
+        Project project = configuration.project;
+        Pipeline pipeline = configuration.pipeline;
+        PipelineVersion pipelineVersion = configuration.pipelineVersion
+
+        logger.debug('Generating getCreatePipelineRequest for project [projectId={}, pipeline={}, pipelineVersion={}]', project.id, pipeline, pipelineVersion)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def graphqlPipelineVar = [
+            *:extractProperties(pipeline),
+            projectId: project.id,
+            jobsId: pipelineVersion.jobs,
+            releaseNote: pipelineVersion.releaseNote
+        ]
+
+        def gqVariables = jsonGenerator.toJson([
+            pipeline: graphqlPipelineVar
+        ])
+
+        def runProjectJobRequest = gq('''
+            mutation createPipelineMutation($pipeline: PipelineInput!) {
+                createPipeline(pipeline: $pipeline) {
+                    id
+                }
+            }
+        ''', gqVariables)
+
+        buildRequestFromQuery runProjectJobRequest
+    }
+
     Request getProjectJobInstanceStatusRequest() {
         JobInstance jobInstance = configuration.jobInstance;
         logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
@@ -341,5 +381,15 @@ class SaagieUtils {
 
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
+    }
+
+    // From stackoverflow: https://stackoverflow.com/a/36072704/8543172
+    private def extractProperties(obj) {
+        obj.getClass()
+            .declaredFields
+            .findAll { !it.synthetic }
+            .collectEntries { field ->
+                [field.name, obj["$field.name"]]
+            }
     }
 }

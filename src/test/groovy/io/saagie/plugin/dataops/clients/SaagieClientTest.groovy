@@ -42,21 +42,28 @@ class SaagieClientTest extends Specification {
             id = 'projectId'
         }
         configuration.job {
-            id = "jobId"
-            name = "My custom job 2"
-            category = "Extraction"
-            technology = "technologyId"
+            id = 'jobId'
+            name = 'My custom job 2'
+            category = 'Extraction'
+            technology = 'technologyId'
         }
         configuration.jobVersion {
-            runtimeVersion = "3.6"
-            commandLine = "python {file} arg1 arg2"
-            releaseNote = "First job version"
+            runtimeVersion = '3.6'
+            commandLine = 'python {file} arg1 arg2'
+            releaseNote = 'First job version'
             packageInfo {
                 name = tempFile.absolutePath
             }
         }
         configuration.jobInstance {
             id = 'jobInstanceId'
+        }
+        configuration.pipeline {
+            name = 'Pipeline name'
+        }
+        configuration.pipelineVersion {
+            releaseNote = 'Release note'
+            jobs = ['jobId-1', 'jobId-2']
         }
     }
 
@@ -139,7 +146,7 @@ class SaagieClientTest extends Specification {
         e.message.contains('Error 401 when requesting on http://localhost:9000:\nBad credentials')
     }
 
-    def "class instance with a config with a trailing / in the url must succedd"() {
+    def "class instance with a config with a trailing / in the url must succeed"() {
         given:
         DataOpsExtension badConfig = new DataOpsExtension()
         badConfig.server {
@@ -359,5 +366,22 @@ class SaagieClientTest extends Specification {
         GradleException exception = thrown()
         getJobInstanceStatusResult == null
         exception.message.contains('Something went wrong when requesting job instance status: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+    }
+
+    def "createPipelineJob should create a new pipeline"() {
+        given:
+        enqueueToken()
+
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '''{"data":{"createPipeline":{"id":"pipeline-instance-id"}}}'''
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
+        client = new SaagieClient(configuration)
+
+        when:
+        String createPipelineJobConfig = client.createProjectPipelineJob()
+
+        then:
+        createPipelineJobConfig == '{"id":"pipeline-instance-id"}'
     }
 }
