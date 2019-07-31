@@ -1,6 +1,7 @@
 package io.saagie.plugin.dataops
 
 import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
+import io.saagie.plugin.dataops.tasks.ProjectCreatePipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectGetJobInstanceStatus
 import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
 import io.saagie.plugin.dataops.tasks.ProjectListTask
@@ -18,6 +19,7 @@ class DataOpsModule {
     final static String PROJECT_RUN_JOB_TASK = 'projectsRunJob'
     final static String PROJECT_UPDATE_JOB_TASK = 'projectsUpdateJob'
     final static String PROJECTS_GET_JOB_INSTANCE_STATUS = 'projectsGetJobInstanceStatus'
+    final static String PROJECT_CREATE_PIPELINE_TASK = 'projectsCreatePipeline'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -64,6 +66,12 @@ class DataOpsModule {
         project.task(PROJECTS_GET_JOB_INSTANCE_STATUS, type: ProjectGetJobInstanceStatus) {
             group = TASK_GROUP
             description = 'get the status of a job instance'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_CREATE_PIPELINE_TASK, type: ProjectCreatePipelineTask) {
+            group = TASK_GROUP
+            description = 'create a pipeline'
             configuration = project.saagie
         }
     }

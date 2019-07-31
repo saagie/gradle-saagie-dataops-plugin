@@ -17,7 +17,6 @@ import static io.saagie.plugin.dataops.DataOpsModule.*
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
-    static BAD_CONFIG_MSG = 'Bad config. Make sure you provide rights params: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
     static BAD_PROJECT_CONFIG = 'Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
     static NO_FILE_MSG = "Check that there is a file to upload in '%FILE%'. Be sure that '%FILE%' is a correct file path."
 
@@ -40,9 +39,6 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
-
-        configuration.server.password = '************'
-        logger.debug('Using server config {}', configuration.server)
 
         this.checkBaseConfiguration()
     }
@@ -95,7 +91,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting projectList: $responseBody}"
+                    def message = "Something went wrong when getting projectList: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -319,6 +315,42 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in updateProjectJob')
+            throw exception
+        }
+    }
+
+    String createProjectPipelineJob() {
+        logger.info('Starting createPipeline task')
+        if (configuration?.project?.id == null ||
+            configuration?.pipeline?.name == null
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_PIPELINE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_PIPELINE_TASK))
+        }
+
+        logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, configuration.pipeline, configuration.pipelineVersion)
+
+        Request createPipelineRequest = saagieUtils.getCreatePipelineRequest()
+        try {
+            client.newCall(createPipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating the pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdPipeline = parsedResult.data.createPipeline
+                    return JsonOutput.toJson(createdPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in createPipeline')
             throw exception
         }
     }
