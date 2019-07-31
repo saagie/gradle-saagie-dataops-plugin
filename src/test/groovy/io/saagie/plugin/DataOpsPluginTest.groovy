@@ -14,10 +14,8 @@ import static org.gradle.testkit.runner.TaskOutcome.*
 
 @Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
-    @Rule
-    TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared
-    MockWebServer mockWebServer = new MockWebServer()
+    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+    @Shared MockWebServer mockWebServer = new MockWebServer()
 
     File buildFile
     File jobFile
@@ -571,6 +569,58 @@ class DataOpsPluginTest extends Specification {
 
         when:
         BuildResult result = gradle 'projectsGetJobInstanceStatus'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsGetPipelineInstanceStatus should return the status of the pipelineInstance"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"pipelineInstance":{"status":"SUCCEEDED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+
+                pipelineInstance {
+                    id = "pipelineInstanceId"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsGetPipelineInstanceStatus'
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"status"')
+    }
+
+    def "projectsGetPipelineInstanceStatus should fail if no pipelineInstance id was provided"() {
+        given:
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsGetPipelineInstanceStatus'
 
         then:
         thrown(Exception)

@@ -7,6 +7,7 @@ import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
@@ -345,6 +346,28 @@ class SaagieUtils {
             }
         ''', gqVariables)
         buildRequestFromQuery getJobInstanceStatus
+    }
+
+    Request getProjectPipelineInstanceStatusRequest() {
+        PipelineInstance pipelineInstance = configuration.pipelineInstance
+        logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            id: pipelineInstance.id
+        ])
+
+        def getPipelineInstanceStatus = gq('''
+            query getPipelineInstanceStatus($id: UUID!) {
+                pipelineInstance(id: $id) {
+                    status
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getPipelineInstanceStatus
     }
 
     Request getJwtTokenRequest() {
