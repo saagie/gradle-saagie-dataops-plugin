@@ -14,8 +14,10 @@ import static org.gradle.testkit.runner.TaskOutcome.*
 
 @Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Rule
+    TemporaryFolder testProjectDir = new TemporaryFolder()
+    @Shared
+    MockWebServer mockWebServer = new MockWebServer()
 
     File buildFile
     File jobFile
@@ -573,5 +575,153 @@ class DataOpsPluginTest extends Specification {
         then:
         thrown(Exception)
         result == null
+    }
+
+    def "projectsCreatePipelineJob should create a new pipeline"() {
+        given:
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '''{"data":{"createPipeline":{"id":"pipeline-instance-id"}}}'''
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                pipeline {
+                    name = 'Pipeline name'
+                }
+                
+                pipelineVersion {
+                    releaseNote = 'Release note'
+                    jobs = ['jobId-1', 'jobId-2']
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsCreatePipeline'
+
+        then:
+        result.output.contains('{"id":"pipeline-instance-id"}')
+    }
+
+    def "projectsCreatePipelineJob should fail if required config is missing"() {
+        given:
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsCreatePipeline'
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
+    def "projectsCreatePipelineJob should fail if there is already a pipeline with the same name"() {
+        given:
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '''{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"locations":null,"errorType":"ValidationError","message":"Pipeline not valid","path":null,"localizedMessage":"Pipeline not valid","suppressed":[]}]}'''
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                pipeline {
+                    name = 'Pipeline name already used'
+                }
+                
+                pipelineVersion {
+                    releaseNote = 'Release note'
+                    jobs = ['jobId-1', 'jobId-2']
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsCreatePipeline'
+
+        then:
+        Exception e = thrown()
+        e.message.contains('{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"locations":null,"errorType":"ValidationError","message":"Pipeline not valid","path":null,"localizedMessage":"Pipeline not valid","suppressed":[]}]}')
+    }
+
+    def "projectsUpdatePipeline should update pipeline infos"() {
+        given:
+        def mockedPipelineUpdateResponse = new MockResponse()
+        mockedPipelineUpdateResponse.responseCode = 200
+        mockedPipelineUpdateResponse.body = '''{"data":{"editPipeline":{"id":"pipeline-id"}}}'''
+        mockWebServer.enqueue(mockedPipelineUpdateResponse)
+
+        def mockedPipelineVersionUpdateResponse = new MockResponse()
+        mockedPipelineVersionUpdateResponse.responseCode = 200
+        mockedPipelineVersionUpdateResponse.body = '''{"data":{"addPipelineVersion":{"number":"pipeline-version-number"}}}'''
+        mockWebServer.enqueue(mockedPipelineVersionUpdateResponse)
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                    id = 'pipelineId'
+                    name = 'Pipeline updated'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['FAILED']
+                    }
+                }
+                
+                pipelineVersion {
+                    releaseNote = 'Updated release note'
+                    jobs = ['job-id-1', 'job-id-2']
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdatePipeline'
+
+        then:
+        notThrown(Exception)
+        result.output.contains('')
     }
 }
