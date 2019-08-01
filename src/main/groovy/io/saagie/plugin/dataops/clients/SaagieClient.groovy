@@ -502,6 +502,40 @@ class SaagieClient {
         }
     }
 
+    String runProjectPipeline() {
+        logger.info('Starting runProjectPipeline task')
+        if (configuration?.pipeline?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_PIPELINE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_PIPELINE_TASK))
+        }
+
+        logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
+
+        Request projectRunPipelineRequest = saagieUtils.getProjectRunPipelineRequest()
+        try {
+            client.newCall(projectRunPipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when running pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map runPipeline = parsedResult.data.runPipeline
+                    return JsonOutput.toJson(runPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in runProjectPipeline')
+            throw exception
+        }
+    }
+
     private handleErrors(Response response) {
         logger.debug('Checking server response')
         if (response.successful) {

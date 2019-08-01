@@ -425,6 +425,28 @@ class SaagieUtils {
         buildRequestFromQuery addPipelineVersionRequest
     }
 
+    Request getProjectRunPipelineRequest() {
+        Pipeline pipeline = configuration.pipeline;
+        logger.debug('Generating getProjectRunPipelineRequest [pipelineId={}]', pipeline.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipelineId: pipeline.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            mutation editPipelineMutation($pipelineId: UUID!) {
+                runPipeline(pipelineId: $pipelineId) {
+                    id
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getJobInstanceStatus
+    }
+
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
         new Request.Builder()
