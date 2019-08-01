@@ -724,4 +724,39 @@ class DataOpsPluginTest extends Specification {
         notThrown(Exception)
         result.output.contains('')
     }
+
+    def "projectsUpdatePipeline should fail if no pipeline id is provided"() {
+        given:
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                    name = 'Pipeline updated'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['FAILED']
+                    }
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdatePipeline'
+
+        then:
+        Exception exception = thrown()
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsUpdatePipeline')
+        result == null
+    }
+
+
+
 }
