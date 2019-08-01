@@ -1,6 +1,7 @@
 package io.saagie.plugin.dataops.models
 
 class Pipeline {
+    String id = null
     String name
     String description = null
     Boolean isScheduled = false

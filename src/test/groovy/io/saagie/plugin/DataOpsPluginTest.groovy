@@ -728,4 +728,85 @@ class DataOpsPluginTest extends Specification {
         Exception e = thrown()
         e.message.contains('{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"locations":null,"errorType":"ValidationError","message":"Pipeline not valid","path":null,"localizedMessage":"Pipeline not valid","suppressed":[]}]}')
     }
+
+    def "projectsUpdatePipeline should update pipeline infos"() {
+        given:
+        def mockedPipelineUpdateResponse = new MockResponse()
+        mockedPipelineUpdateResponse.responseCode = 200
+        mockedPipelineUpdateResponse.body = '''{"data":{"editPipeline":{"id":"pipeline-id"}}}'''
+        mockWebServer.enqueue(mockedPipelineUpdateResponse)
+
+        def mockedPipelineVersionUpdateResponse = new MockResponse()
+        mockedPipelineVersionUpdateResponse.responseCode = 200
+        mockedPipelineVersionUpdateResponse.body = '''{"data":{"addPipelineVersion":{"number":"pipeline-version-number"}}}'''
+        mockWebServer.enqueue(mockedPipelineVersionUpdateResponse)
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                    id = 'pipelineId'
+                    name = 'Pipeline updated'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['FAILED']
+                    }
+                }
+                
+                pipelineVersion {
+                    releaseNote = 'Updated release note'
+                    jobs = ['job-id-1', 'job-id-2']
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdatePipeline'
+
+        then:
+        notThrown(Exception)
+        result.output.contains('')
+    }
+
+    def "projectsUpdatePipeline should fail if no pipeline id is provided"() {
+        given:
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                    name = 'Pipeline updated'
+                    description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['FAILED']
+                    }
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsUpdatePipeline'
+
+        then:
+        Exception exception = thrown()
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsUpdatePipeline')
+        result == null
+    }
+
+
+
 }

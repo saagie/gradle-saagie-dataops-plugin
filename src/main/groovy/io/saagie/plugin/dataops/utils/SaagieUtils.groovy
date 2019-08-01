@@ -370,6 +370,61 @@ class SaagieUtils {
         buildRequestFromQuery getPipelineInstanceStatus
     }
 
+    Request getProjectUpdatePipelineRequest() {
+        Pipeline pipeline = configuration.pipeline;
+        logger.debug('Generating getProjectUpdatePipelineRequest [pipelineId={}]', pipeline.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipeline: pipeline
+        ])
+
+        def getPipelineInstanceStatus = gq('''
+            mutation editPipelineMutation($pipeline: PipelineEditionInput!) {
+                editPipeline(pipeline: $pipeline) {
+                    id
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getPipelineInstanceStatus
+    }
+
+    Request getAddPipelineVersionRequest() {
+        Pipeline pipeline = configuration.pipeline;
+        PipelineVersion pipelineVersion = configuration.pipelineVersion;
+        logger.debug('Generating getAddPipelineVersionRequest [pipelineId={}]', pipeline.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipelineId: pipeline.id,
+            jobsId: pipelineVersion.jobs,
+            releaseNote: pipelineVersion.releaseNote
+        ])
+
+        def addPipelineVersionRequest = gq('''
+            mutation addPipelineVersionMutation(
+                $pipelineId: UUID!,
+                $jobsId: [UUID!]!,
+                $releaseNote: String,
+            ) {
+                addPipelineVersion(
+                    pipelineId: $pipelineId,
+                    jobsId: $jobsId,
+                    releaseNote: $releaseNote
+                ) {
+                    number
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery addPipelineVersionRequest
+    }
+
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
         new Request.Builder()

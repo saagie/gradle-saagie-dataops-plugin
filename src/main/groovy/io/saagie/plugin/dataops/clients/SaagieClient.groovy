@@ -274,9 +274,9 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
-        Request projectUpdateJopRequest = saagieUtils.getProjectUpdateJobRequest()
+        Request projectUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
         try {
-            client.newCall(projectUpdateJopRequest).execute().withCloseable { response ->
+            client.newCall(projectUpdateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
@@ -385,6 +385,86 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in getJobInstanceStatus')
+            throw exception
+        }
+    }
+
+    String updateProjectPipeline() {
+        logger.info('Starting updateProjectPipeline task')
+
+        // 1. try to update pipeline infos
+        if (
+            configuration?.pipeline &&
+            configuration?.pipeline?.id == null
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+        }
+        updatePipelineInfos();
+
+        // 2. try to update pipeline version
+        if (configuration?.pipelineVersion) {
+            if (configuration?.pipelineVersion && configuration?.pipelineVersion?.jobs?.isEmpty()) {
+                logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+                throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+            }
+            updatePipelineVersion()
+        }
+
+        return ''
+    }
+
+    private updatePipelineInfos() {
+        logger.debug('Using config [pipeline={}]', configuration.pipeline)
+        Request projectUpdatePipelineRequest = saagieUtils.getProjectUpdatePipelineRequest()
+        try {
+            client.newCall(projectUpdatePipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when updating project pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map updatedPipeline = parsedResult.data.editPipeline
+                    return JsonOutput.toJson(updatedPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in updateProjectPipeline')
+            throw exception
+        }
+    }
+
+    private updatePipelineVersion() {
+        logger.debug('Using config [pipelineVersion={}]', configuration.pipelineVersion)
+        Request updatePipelineVersionRequest = saagieUtils.getAddPipelineVersionRequest()
+        try {
+            client.newCall(updatePipelineVersionRequest).execute().withCloseable { updateResponse ->
+                handleErrors(updateResponse)
+                String updateResponseBody = updateResponse.body().string()
+                def updatedPipelineVersion = slurper.parseText(updateResponseBody)
+                if (updatedPipelineVersion.data == null) {
+                    def message = "Something went wrong when adding new project pipeline version: $updateResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String newPipelineVersion = updatedPipelineVersion.data.addPipelineVersion.number
+                    logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
+                }
+
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in updateProjectPipeline')
             throw exception
         }
     }
