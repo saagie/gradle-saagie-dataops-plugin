@@ -65,6 +65,9 @@ class SaagieClientTest extends Specification {
             releaseNote = 'Release note'
             jobs = ['jobId-1', 'jobId-2']
         }
+        configuration.pipelineInstance {
+            id = 'pipelineInstanceId'
+        }
     }
 
     def cleanup() {
@@ -384,4 +387,40 @@ class SaagieClientTest extends Specification {
         then:
         createPipelineJobConfig == '{"id":"pipeline-instance-id"}'
     }
+
+    def "getPipelineInstanceStatus should fail if no pipelineInstance is provided"() {
+        given:
+        enqueueToken()
+
+        client = new SaagieClient(configuration)
+        client.configuration.pipelineInstance.id = null
+
+        when:
+        String getPipelineInstanceStatusResult = client.getPipelineInstanceStatus()
+
+        then:
+        InvalidUserDataException exception = thrown()
+        getPipelineInstanceStatusResult == null
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsGetPipelineInstanceStatus')
+    }
+
+    def "getPipelineInstanceStatus should fail if bad response is returned"() {
+        given:
+        enqueueToken()
+
+        def mockedGetPipelineStatusResponse = new MockResponse()
+        mockedGetPipelineStatusResponse.responseCode = 200
+        mockedGetPipelineStatusResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedGetPipelineStatusResponse)
+        client = new SaagieClient(configuration)
+
+        when:
+        String getPipelineInstanceStatusResult = client.getPipelineInstanceStatus()
+
+        then:
+        GradleException exception = thrown()
+        getPipelineInstanceStatusResult == null
+        exception.message.contains('Something went wrong when requesting pipeline instance status: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+    }
+
 }

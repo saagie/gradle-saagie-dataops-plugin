@@ -469,6 +469,39 @@ class SaagieClient {
         }
     }
 
+    String getPipelineInstanceStatus() {
+        logger.info('Starting getPipelineInstanceStatus task')
+        if (configuration?.pipelineInstance?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_PIPELINE_INSTANCE_STATUS))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_PIPELINE_INSTANCE_STATUS))
+        }
+
+        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
+        Request projectPipelineInstanceStatusRequest = saagieUtils.getProjectPipelineInstanceStatusRequest()
+        try {
+            client.newCall(projectPipelineInstanceStatusRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when requesting pipeline instance status: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map pipelineInstanceStatus = parsedResult.data.pipelineInstance
+                    return JsonOutput.toJson(pipelineInstanceStatus)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getPipelineInstanceStatus')
+            throw exception
+        }
+    }
+
     private handleErrors(Response response) {
         logger.debug('Checking server response')
         if (response.successful) {
