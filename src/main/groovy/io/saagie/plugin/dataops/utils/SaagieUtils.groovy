@@ -438,7 +438,7 @@ class SaagieUtils {
         ])
 
         def getJobInstanceStatus = gq('''
-            mutation editPipelineMutation($pipelineId: UUID!) {
+            mutation runPipelineMutation($pipelineId: UUID!) {
                 runPipeline(pipelineId: $pipelineId) {
                     id
                 }
