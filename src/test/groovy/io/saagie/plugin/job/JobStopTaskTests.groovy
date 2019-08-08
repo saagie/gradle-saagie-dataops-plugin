@@ -10,8 +10,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-@Title('projectsUpdateJob task tests')
-class JobUpdateTaskTests extends Specification {
+@Title('projectsStopJobInstance task tests')
+class JobStopTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
 
@@ -52,73 +52,54 @@ class JobUpdateTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsUpdateJob should update the specified job with only job config"() {
+    def "projectsStopJobInstance should stop a job"() {
         given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
+        def mockedStopJobResponse = new MockResponse()
+        mockedStopJobResponse.responseCode = 200
+        mockedStopJobResponse.body = '''{"data":{"stopJobInstance":{"id":"stopped-job-id"}}}'''
+        mockWebServer.enqueue(mockedStopJobResponse)
 
-        buildFile << '''
+        buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
                     login = 'user.user'
                     password = 'password'
-                    environment = 2
+                    environment = 4
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
-                job {
-                    id = 'jobId'
-                    name = 'Updated from gradle'
-                    description = 'updated description'
-                    alerting {
-                        emails = ['email@email.com']
-                        statusList = ['REQUESTED']
-                    }
+                jobInstance {
+                    id = 'job-instance-id'
                 }
             }
-        '''
+        """
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle 'projectsStopJobInstance'
 
         then:
-        result.output.contains('"id"')
+        result.output.contains('{"id":"stopped-job-id"}')
     }
 
-    def "projectsUpdateJob should fail if job id is missing"() {
+    def "projectsStopJobInstance should fail if job instance id is missing"() {
         given:
-        buildFile << '''
+        buildFile << """
             saagie {
                 server {
-                    url = 'http://localhost'
+                    url = 'http://localhost:9000'
                     login = 'user.user'
                     password = 'password'
-                    environment = 2
-                }
-                
-                job {
-                    name = 'Updated from gradle'
-                    description = 'updated description'
-                    alerting {
-                        emails = ['email@email.com']
-                        statusList = ['REQUESTED']
-                    }
+                    environment = 4
                 }
             }
-        '''
+        """
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle 'projectsStopJobInstance'
 
         then:
-        thrown(Exception)
+        Exception e = thrown()
         result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsStopJobInstance")
     }
-
 }

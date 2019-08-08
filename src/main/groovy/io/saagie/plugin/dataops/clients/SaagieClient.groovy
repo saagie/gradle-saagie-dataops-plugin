@@ -14,6 +14,7 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_STOP_JOB_INSTANCE_TASK
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -245,7 +246,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = 'Something went wrong when requesting the job to run.'
+                    def message = "Something went wrong when requesting the job to run: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -532,6 +533,40 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in runProjectPipeline')
+            throw exception
+        }
+    }
+
+    String stopJobInstance() {
+        logger.info('Starting stopJobInstance task')
+        if (configuration?.jobInstance?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
+        }
+
+        logger.debug('Using config [job={}]', configuration.job)
+
+        Request stopJobInstanceRequest = saagieUtils.getStopJobInstanceRequest()
+        try {
+            client.newCall(stopJobInstanceRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when stopping the job instance: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map stoppedJobInstance = parsedResult.data.stopJobInstance
+                    return JsonOutput.toJson(stoppedJobInstance)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in stopJobInstance')
             throw exception
         }
     }

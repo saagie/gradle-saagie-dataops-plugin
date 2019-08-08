@@ -456,6 +456,28 @@ class SaagieUtils {
             .build()
     }
 
+    Request getStopJobInstanceRequest() {
+        JobInstance jobInstance = configuration.jobInstance
+        logger.debug('Generating getStopJobInstanceRequest for job instance [id={}]', jobInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobInstanceId: jobInstance.id
+        ])
+
+        def runProjectJobRequest = gq('''
+            mutation stopJobMutation($jobInstanceId: UUID!) {
+                stopJobInstance(jobInstanceId: $jobInstanceId) {
+                    id
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery runProjectJobRequest
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(JSON, query)
