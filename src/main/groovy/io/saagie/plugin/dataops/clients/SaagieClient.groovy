@@ -400,7 +400,7 @@ class SaagieClient {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
         }
-        updatePipelineInfos();
+        def pipelineResult = updatePipelineInfos();
 
         // 2. try to update pipeline version
         if (configuration?.pipelineVersion) {
@@ -411,7 +411,7 @@ class SaagieClient {
             updatePipelineVersion()
         }
 
-        return ''
+        return pipelineResult
     }
 
     private updatePipelineInfos() {
