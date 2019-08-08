@@ -8,6 +8,7 @@ import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
 import io.saagie.plugin.dataops.tasks.ProjectListTask
 import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
 import io.saagie.plugin.dataops.tasks.ProjectRunJobTask
+import io.saagie.plugin.dataops.tasks.ProjectRunPipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.ProjectUpdatePipelineTask
 import org.gradle.api.Project
@@ -24,6 +25,7 @@ class DataOpsModule {
     final static String PROJECT_CREATE_PIPELINE_TASK = 'projectsCreatePipeline'
     final static String PROJECTS_GET_PIPELINE_INSTANCE_STATUS = 'projectsGetPipelineInstanceStatus'
     final static String PROJECT_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
+    final static String PROJECT_RUN_PIPELINE_TASK = 'projectsRunPipeline'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -88,6 +90,12 @@ class DataOpsModule {
         project.task(PROJECT_UPDATE_PIPELINE_TASK, type: ProjectUpdatePipelineTask) {
             group = TASK_GROUP
             description = 'update a pipeline'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_RUN_PIPELINE_TASK, type: ProjectRunPipelineTask) {
+            group = TASK_GROUP
+            description = 'run a pipeline'
             configuration = project.saagie
         }
     }

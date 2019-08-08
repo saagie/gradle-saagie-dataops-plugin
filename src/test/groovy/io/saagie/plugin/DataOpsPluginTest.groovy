@@ -807,6 +807,59 @@ class DataOpsPluginTest extends Specification {
         result == null
     }
 
+    def "projectsRunPipeline should run pipeline"() {
+        given:
+        def mockedRunPipelineResponse = new MockResponse()
+        mockedRunPipelineResponse.responseCode = 200
+        mockedRunPipelineResponse.body = '''{"data":{"runPipeline":{"id":"pipeline-id"}}}'''
+        mockWebServer.enqueue(mockedRunPipelineResponse)
 
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                    id = 'pipelineId'
+                }
+            }
+        '''
 
+        when:
+        BuildResult result = gradle 'projectsRunPipeline'
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{"id":"pipeline-id"}')
+    }
+
+    def "projectsRunPipeline should fail if pipeline id is missing in config"() {
+        given:
+
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.login'
+                    password = 'password'
+                    environment = 1
+                }
+                
+                pipeline {
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle 'projectsRunPipeline'
+
+        then:
+        Exception e = thrown()
+        result == null
+        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsRunPipeline')
+    }
 }
