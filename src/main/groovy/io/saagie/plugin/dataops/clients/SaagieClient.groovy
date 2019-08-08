@@ -206,7 +206,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = 'Something went wrong when creating project job'
+                    def message = "Something went wrong when creating project job: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
