@@ -9,8 +9,10 @@ import spock.lang.*
 
 @Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Rule
+    TemporaryFolder testProjectDir = new TemporaryFolder()
+    @Shared
+    MockWebServer mockWebServer = new MockWebServer()
 
     File buildFile
     File jobFile
@@ -49,4 +51,36 @@ class DataOpsPluginTest extends Specification {
         gradle(true, arguments)
     }
 
+    def "./gradlew tasks should show all tasks under a Saagie group"() {
+        given:
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'tasks', '--all'
+
+        then:
+        notThrown()
+        result.output.contains 'Saagie tasks'
+        result.output.contains 'projectsCreateJob - create a brand new job in a project'
+        result.output.contains 'projectsCreatePipeline - create a pipeline'
+        result.output.contains 'projectsGetJobInstanceStatus - get the status of a job instance'
+        result.output.contains 'projectsGetPipelineInstanceStatus - get the status of a pipeline instance'
+        result.output.contains 'projectsList - list all projects on the environment'
+        result.output.contains 'projectsListJobs - list all jobs of a project'
+        result.output.contains 'projectsListTechnologies - list all technologies of a project'
+        result.output.contains 'projectsRunJob - run an existing job'
+        result.output.contains 'projectsRunPipeline - run a pipeline'
+        result.output.contains 'projectsStopPipelineInstance - stop a pipeline instance'
+        result.output.contains 'projectsUpdatePipeline - update a pipeline'
+        result.output.contains 'projectsUpdateJob - update a existing job in a project'
+    }
 }
