@@ -102,4 +102,35 @@ class JobStopTaskTests extends Specification {
         result == null
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsStopJobInstance")
     }
+
+    def "projectsStopJobInstance should fail if job instance doesn't exists"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'test.user'
+                    password = 'password'
+                    environment = 2
+                }
+                
+                jobInstance {
+                    id = 'bad-id'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsStopJobInstance'
+
+        then:
+        Exception e = thrown()
+        result == null
+        e.message.contains('Something went wrong when stopping the job instance: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+    }
 }
