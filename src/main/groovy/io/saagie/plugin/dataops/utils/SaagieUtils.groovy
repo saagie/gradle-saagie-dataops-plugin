@@ -467,6 +467,29 @@ class SaagieUtils {
         buildRequestFromQuery getJobInstanceStatus
     }
 
+    Request getProjectStopPipelineInstanceRequest() {
+        PipelineInstance pipelineInstance = configuration.pipelineInstance;
+        logger.debug('Generating getProjectStopPipelineInstanceRequest [pipelineInstanceId={}]', pipelineInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipelineInstanceId: pipelineInstance.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            mutation stopPipelineInstanceMutation($pipelineInstanceId: UUID!) {
+                stopPipelineInstance(pipelineInstanceId: $pipelineInstanceId) {
+                    id
+                    status
+                }  
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getJobInstanceStatus
+    }
+
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
         new Request.Builder()

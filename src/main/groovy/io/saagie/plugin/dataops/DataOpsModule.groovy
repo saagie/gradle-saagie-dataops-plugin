@@ -11,6 +11,7 @@ import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
 import io.saagie.plugin.dataops.tasks.ProjectRunJobTask
 import io.saagie.plugin.dataops.tasks.ProjectRunPipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectStopJobInstanceTask
+import io.saagie.plugin.dataops.tasks.ProjectStopPipelineInstanceTask
 import io.saagie.plugin.dataops.tasks.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.ProjectUpdatePipelineTask
 import org.gradle.api.Project
@@ -30,6 +31,7 @@ class DataOpsModule {
     final static String PROJECT_RUN_PIPELINE_TASK = 'projectsRunPipeline'
     final static String PROJECT_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
     final static String PROJECT_ARCHIVE_JOB_TASK = 'projectsArchiveJob'
+    final static String PROJECTS_STOP_PIPELINE_INSTANCE = 'projectsStopPipelineInstance'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -112,6 +114,12 @@ class DataOpsModule {
         project.task(PROJECT_ARCHIVE_JOB_TASK, type: ProjectArchiveJobTask) {
             group = TASK_GROUP
             description = 'archive a task'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECTS_STOP_PIPELINE_INSTANCE, type: ProjectStopPipelineInstanceTask) {
+            group = TASK_GROUP
+            description = 'stop a pipeline instance'
             configuration = project.saagie
         }
     }
