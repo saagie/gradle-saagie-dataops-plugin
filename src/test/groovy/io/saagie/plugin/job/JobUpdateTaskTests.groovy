@@ -121,4 +121,55 @@ class JobUpdateTaskTests extends Specification {
         result == null
     }
 
+    def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
+        given:
+        def mockedJobUpdateResponse = new MockResponse()
+        mockedJobUpdateResponse.responseCode = 200
+        mockedJobUpdateResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
+        mockWebServer.enqueue(mockedJobUpdateResponse)
+
+        def mockedJobVersionResponse = new MockResponse()
+        mockedJobVersionResponse.responseCode = 200
+        mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
+        mockWebServer.enqueue(mockedJobVersionResponse)
+
+        def mockedJobFileUploadResponse = new MockResponse()
+        mockedJobFileUploadResponse.responseCode = 200
+        mockedJobFileUploadResponse.body = '''true'''
+        mockWebServer.enqueue(mockedJobFileUploadResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 4
+                }
+                
+                project {
+                    id = 'projectId'
+                }
+                
+                job {
+                    id = 'jobId'
+                }
+                
+                jobVersion {
+                    commandLine = "python {file} 1 2 3"
+                    releaseNote = "Feat: won't fail"
+                    runtimeVersion = "3.6"
+                    packageInfo {
+                        name = "${jobFile.absolutePath}"
+                    }
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsUpdateJob'
+
+        then:
+        result.output.contains('"id"')
+    }
 }
