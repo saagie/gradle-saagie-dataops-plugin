@@ -29,8 +29,9 @@ The following tasks are available:
 | projectsListJobs                  | Lists all jobs of a project                                             | Available    |
 | projectsCreateJob                 | Creates a new job in a project                                          | Available    |
 | projectsUpdateJob                 | Updates an existing job                                                 | Available    |
-| projectsRunJob                    | Run an existing job                                                     | To Do        |
+| projectsRunJob                    | Run an existing job                                                     | Available    |
 | projectsStopJob                   | Stops an existing job                                                   | To Do        |
+| projectsGetJobInstanceStatus      | List instances of a job                                                 | Available    |
 | projectsListJobInstances          | List instances of a job                                                 | To Do        |
 | projectsGetJobInstanceLog         | Get log of a job instance                                               | To Do        |
 | projectsExportJob                 | Exports an existing job                                                 | To Do        |
@@ -39,9 +40,9 @@ The following tasks are available:
 | projectsImportAllJobs             | Impact a set of jobs in a project                                       | To Do        |
 | projectsArchiveJob                | Archive an existing job                                                 | To Do        |
 | projectsListPipelines             | Lists all pipelines on the project                                      | To Do        |
-| projectsCreatePipeline            | Creates a new pipeline in a project                                     | To Do        |
-| projectsUpdatePipeline            | Updates an existing pipeline                                            | To Do        |
-| projectsRunPipeline               | Run an existing pipeline                                                | To Do        |
+| projectsCreatePipeline            | Creates a new pipeline in a project                                     | Available    |
+| projectsUpdatePipeline            | Updates an existing pipeline                                            | Available    |
+| projectsRunPipeline               | Run an existing pipeline                                                | Available    |
 | projectsStopPipeline              | Stops an existing pipeline                                              | To Do        |
 | projectsExportPipeline            | Exports an existing pipeline                                            | To Do        |
 | projectsExportAllPipelines        | Export all pipelines of project                                         | To Do        |
