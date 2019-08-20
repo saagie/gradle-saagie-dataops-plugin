@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops
 
+import io.saagie.plugin.dataops.tasks.ProjectArchiveJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreatePipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectGetJobInstanceStatus
@@ -28,6 +29,7 @@ class DataOpsModule {
     final static String PROJECT_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
     final static String PROJECT_RUN_PIPELINE_TASK = 'projectsRunPipeline'
     final static String PROJECT_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
+    final static String PROJECT_ARCHIVE_JOB_TASK = 'projectsArchiveJob'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -104,6 +106,12 @@ class DataOpsModule {
         project.task(PROJECT_STOP_JOB_INSTANCE_TASK, type: ProjectStopJobInstanceTask) {
             group = TASK_GROUP
             description = 'stop a job instance'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_ARCHIVE_JOB_TASK, type: ProjectArchiveJobTask) {
+            group = TASK_GROUP
+            description = 'archive a task'
             configuration = project.saagie
         }
     }

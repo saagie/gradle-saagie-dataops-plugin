@@ -571,6 +571,41 @@ class SaagieClient {
         }
     }
 
+    String archiveProjectJob() {
+        logger.info('Starting archiveProjectJob task')
+        if (configuration?.job?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
+        }
+
+        logger.debug('Using config [jobId={}]', configuration.job.id)
+
+        Request projectArchiveJobRequest = saagieUtils.getProjectArchiveJobRequest()
+        try {
+            client.newCall(projectArchiveJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.errors) {
+                    def message = "Something went wrong when archiving job: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String archivedJobStatus = parsedResult.data.archiveJob ? 'success' : 'failed'
+                    Map archiveJobResult = [status: archivedJobStatus]
+                    return JsonOutput.toJson(archiveJobResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in archiveProjectJob')
+            throw exception
+        }
+    }
+
     private handleErrors(Response response) {
         logger.debug('Checking server response')
         if (response.successful) {

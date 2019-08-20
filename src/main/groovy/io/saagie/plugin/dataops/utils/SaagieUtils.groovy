@@ -447,6 +447,26 @@ class SaagieUtils {
         buildRequestFromQuery getJobInstanceStatus
     }
 
+    Request getProjectArchiveJobRequest() {
+        Job job = configuration.job;
+        logger.debug('Generating getProjectArchiveJobRequest [jobId={}]', job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: job.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            mutation archiveJobMutation($jobId: UUID!) {
+                archiveJob(jobId: $jobId)
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getJobInstanceStatus
+    }
+
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
         new Request.Builder()
