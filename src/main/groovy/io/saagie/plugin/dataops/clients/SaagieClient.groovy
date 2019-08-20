@@ -14,7 +14,6 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
 import static io.saagie.plugin.dataops.DataOpsModule.*
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_STOP_JOB_INSTANCE_TASK
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -567,6 +566,41 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in stopJobInstance')
+            throw exception
+        }
+    }
+
+    String deleteProjectPipeline() {
+        logger.info('Starting deleteProjectPipeline task')
+        if (configuration?.pipeline?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
+        }
+
+        logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
+
+        Request projectDeletePipelineRequest = saagieUtils.getProjectDeletePipelineRequest()
+        try {
+            client.newCall(projectDeletePipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when deleting pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String deletedPipelineStatus = parsedResult.data.deletePipeline ? 'success' : 'failure'
+                    Map deletedPipeline = [status: deletedPipelineStatus]
+                    return JsonOutput.toJson(deletedPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in deleteProjectPipeline')
             throw exception
         }
     }

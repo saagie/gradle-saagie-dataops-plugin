@@ -3,6 +3,7 @@ package io.saagie.plugin.dataops
 import io.saagie.plugin.dataops.tasks.ProjectArchiveJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreatePipelineTask
+import io.saagie.plugin.dataops.tasks.ProjectDeletePipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectGetJobInstanceStatus
 import io.saagie.plugin.dataops.tasks.ProjectGetPipelineInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
@@ -32,6 +33,7 @@ class DataOpsModule {
     final static String PROJECT_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
     final static String PROJECT_ARCHIVE_JOB_TASK = 'projectsArchiveJob'
     final static String PROJECTS_STOP_PIPELINE_INSTANCE = 'projectsStopPipelineInstance'
+    final static String PROJECT_DELETE_PIPELINE_TASK = 'projectsDeletePipeline'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -120,6 +122,12 @@ class DataOpsModule {
         project.task(PROJECTS_STOP_PIPELINE_INSTANCE, type: ProjectStopPipelineInstanceTask) {
             group = TASK_GROUP
             description = 'stop a pipeline instance'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_DELETE_PIPELINE_TASK, type: ProjectDeletePipelineTask) {
+            group = TASK_GROUP
+            description = 'delete a pipeline'
             configuration = project.saagie
         }
     }
