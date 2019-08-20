@@ -30,7 +30,7 @@ The following tasks are available:
 | projectsCreateJob                 | Creates a new job in a project                                          | Available    |
 | projectsUpdateJob                 | Updates an existing job                                                 | Available    |
 | projectsRunJob                    | Run an existing job                                                     | Available    |
-| projectsStopJob                   | Stops an existing job                                                   | To Do        |
+| projectsStopJobInstance           | Stops an existing job instance                                          | To Do        |
 | projectsGetJobInstanceStatus      | List instances of a job                                                 | Available    |
 | projectsListJobInstances          | List instances of a job                                                 | To Do        |
 | projectsGetJobInstanceLog         | Get log of a job instance                                               | To Do        |
@@ -43,7 +43,7 @@ The following tasks are available:
 | projectsCreatePipeline            | Creates a new pipeline in a project                                     | Available    |
 | projectsUpdatePipeline            | Updates an existing pipeline                                            | Available    |
 | projectsRunPipeline               | Run an existing pipeline                                                | Available    |
-| projectsStopPipeline              | Stops an existing pipeline                                              | To Do        |
+| projectsStopPipelineInstance      | Stops an existing pipeline instance                                     | To Do        |
 | projectsExportPipeline            | Exports an existing pipeline                                            | To Do        |
 | projectsExportAllPipelines        | Export all pipelines of project                                         | To Do        |
 | projectsImportPipeline            | Import a pipeline                                                       | To Do        |
