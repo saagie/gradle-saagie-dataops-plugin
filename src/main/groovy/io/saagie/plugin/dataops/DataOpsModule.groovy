@@ -1,7 +1,9 @@
 package io.saagie.plugin.dataops
 
+import io.saagie.plugin.dataops.tasks.ProjectArchiveJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.ProjectCreatePipelineTask
+import io.saagie.plugin.dataops.tasks.ProjectDeletePipelineTask
 import io.saagie.plugin.dataops.tasks.ProjectGetJobInstanceStatus
 import io.saagie.plugin.dataops.tasks.ProjectGetPipelineInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
@@ -9,6 +11,8 @@ import io.saagie.plugin.dataops.tasks.ProjectListTask
 import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
 import io.saagie.plugin.dataops.tasks.ProjectRunJobTask
 import io.saagie.plugin.dataops.tasks.ProjectRunPipelineTask
+import io.saagie.plugin.dataops.tasks.ProjectStopJobInstanceTask
+import io.saagie.plugin.dataops.tasks.ProjectStopPipelineInstanceTask
 import io.saagie.plugin.dataops.tasks.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.ProjectUpdatePipelineTask
 import org.gradle.api.Project
@@ -26,6 +30,10 @@ class DataOpsModule {
     final static String PROJECTS_GET_PIPELINE_INSTANCE_STATUS = 'projectsGetPipelineInstanceStatus'
     final static String PROJECT_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
     final static String PROJECT_RUN_PIPELINE_TASK = 'projectsRunPipeline'
+    final static String PROJECT_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
+    final static String PROJECT_ARCHIVE_JOB_TASK = 'projectsArchiveJob'
+    final static String PROJECTS_STOP_PIPELINE_INSTANCE = 'projectsStopPipelineInstance'
+    final static String PROJECT_DELETE_PIPELINE_TASK = 'projectsDeletePipeline'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -96,6 +104,30 @@ class DataOpsModule {
         project.task(PROJECT_RUN_PIPELINE_TASK, type: ProjectRunPipelineTask) {
             group = TASK_GROUP
             description = 'run a pipeline'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_STOP_JOB_INSTANCE_TASK, type: ProjectStopJobInstanceTask) {
+            group = TASK_GROUP
+            description = 'stop a job instance'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_ARCHIVE_JOB_TASK, type: ProjectArchiveJobTask) {
+            group = TASK_GROUP
+            description = 'archive a task'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECTS_STOP_PIPELINE_INSTANCE, type: ProjectStopPipelineInstanceTask) {
+            group = TASK_GROUP
+            description = 'stop a pipeline instance'
+            configuration = project.saagie
+        }
+
+        project.task(PROJECT_DELETE_PIPELINE_TASK, type: ProjectDeletePipelineTask) {
+            group = TASK_GROUP
+            description = 'delete a pipeline'
             configuration = project.saagie
         }
     }

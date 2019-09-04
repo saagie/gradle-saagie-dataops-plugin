@@ -382,14 +382,14 @@ class SaagieUtils {
             pipeline: pipeline
         ])
 
-        def getPipelineInstanceStatus = gq('''
+        def editPipeline = gq('''
             mutation editPipelineMutation($pipeline: PipelineEditionInput!) {
                 editPipeline(pipeline: $pipeline) {
                     id
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery getPipelineInstanceStatus
+        buildRequestFromQuery editPipeline
     }
 
     Request getAddPipelineVersionRequest() {
@@ -437,11 +437,74 @@ class SaagieUtils {
             pipelineId: pipeline.id
         ])
 
-        def getJobInstanceStatus = gq('''
+        def runPipeline = gq('''
             mutation runPipelineMutation($pipelineId: UUID!) {
                 runPipeline(pipelineId: $pipelineId) {
                     id
                 }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery runPipeline
+    }
+
+    Request getProjectDeletePipelineRequest() {
+        Pipeline pipeline = configuration.pipeline;
+        logger.debug('Generating getProjectDeletePipelineRequest [pipelineId={}]', pipeline.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            id: pipeline.id
+        ])
+
+        def deletePipeline = gq('''
+            mutation deletePipelineMutation($id: UUID!) {
+                deletePipeline(id: $id)
+            }
+        ''', gqVariables)
+        buildRequestFromQuery deletePipeline
+    }
+
+    Request getProjectArchiveJobRequest() {
+        Job job = configuration.job;
+        logger.debug('Generating getProjectArchiveJobRequest [jobId={}]', job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: job.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            mutation archiveJobMutation($jobId: UUID!) {
+                archiveJob(jobId: $jobId)
+            }
+        ''', gqVariables)
+        buildRequestFromQuery getJobInstanceStatus
+    }
+
+    Request getProjectStopPipelineInstanceRequest() {
+        PipelineInstance pipelineInstance = configuration.pipelineInstance;
+        logger.debug('Generating getProjectStopPipelineInstanceRequest [pipelineInstanceId={}]', pipelineInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipelineInstanceId: pipelineInstance.id
+        ])
+
+        def getJobInstanceStatus = gq('''
+            mutation stopPipelineInstanceMutation($pipelineInstanceId: UUID!) {
+                stopPipelineInstance(pipelineInstanceId: $pipelineInstanceId) {
+                    id
+                    status
+                }  
             }
         ''', gqVariables)
         buildRequestFromQuery getJobInstanceStatus
@@ -454,6 +517,28 @@ class SaagieUtils {
             .addHeader('Authorization', getCredentials())
             .get()
             .build()
+    }
+
+    Request getStopJobInstanceRequest() {
+        JobInstance jobInstance = configuration.jobInstance
+        logger.debug('Generating getStopJobInstanceRequest for job instance [id={}]', jobInstance.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobInstanceId: jobInstance.id
+        ])
+
+        def runProjectJobRequest = gq('''
+            mutation stopJobMutation($jobInstanceId: UUID!) {
+                stopJobInstance(jobInstanceId: $jobInstanceId) {
+                    id
+                }
+            }
+        ''', gqVariables)
+        buildRequestFromQuery runProjectJobRequest
     }
 
     private Request buildRequestFromQuery(String query) {

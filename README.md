@@ -30,7 +30,7 @@ The following tasks are available:
 | projectsCreateJob                 | Creates a new job in a project                                          | Available    |
 | projectsUpdateJob                 | Updates an existing job                                                 | Available    |
 | projectsRunJob                    | Run an existing job                                                     | Available    |
-| projectsStopJob                   | Stops an existing job                                                   | To Do        |
+| projectsStopJobInstance           | Stops an existing job instance                                          | Available    |
 | projectsGetJobInstanceStatus      | List instances of a job                                                 | Available    |
 | projectsListJobInstances          | List instances of a job                                                 | To Do        |
 | projectsGetJobInstanceLog         | Get log of a job instance                                               | To Do        |
@@ -38,17 +38,17 @@ The following tasks are available:
 | projectsExportAllJobs             | Export all jobs of project                                              | To Do        |
 | projectsImportJob                 | Import a job                                                            | To Do        |
 | projectsImportAllJobs             | Impact a set of jobs in a project                                       | To Do        |
-| projectsArchiveJob                | Archive an existing job                                                 | To Do        |
+| projectsArchiveJob                | Archive an existing job                                                 | Available    |
 | projectsListPipelines             | Lists all pipelines on the project                                      | To Do        |
 | projectsCreatePipeline            | Creates a new pipeline in a project                                     | Available    |
 | projectsUpdatePipeline            | Updates an existing pipeline                                            | Available    |
 | projectsRunPipeline               | Run an existing pipeline                                                | Available    |
-| projectsStopPipeline              | Stops an existing pipeline                                              | To Do        |
+| projectsStopPipelineInstance      | Stops an existing pipeline instance                                     | Available    |
 | projectsExportPipeline            | Exports an existing pipeline                                            | To Do        |
 | projectsExportAllPipelines        | Export all pipelines of project                                         | To Do        |
 | projectsImportPipeline            | Import a pipeline                                                       | To Do        |
 | projectsImportAllPipelines        | Impact a set of pipelines in a project                                  | To Do        |
-| projectsDeletePipeline            | Delete an existing pipeline                                             | To Do        |
+| projectsDeletePipeline            | Delete an existing pipeline                                             | Available    |
 | projectsListGlobalVariables       | List all global variables                                               | To Do        |
 | projectsListProjectVariables      | List project variables                                                  | To Do        |
 | projectsCreateVariable            | Creates a variable                                                      | To Do        |

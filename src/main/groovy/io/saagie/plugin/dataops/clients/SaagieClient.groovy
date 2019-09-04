@@ -245,7 +245,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = 'Something went wrong when requesting the job to run.'
+                    def message = "Something went wrong when requesting the job to run: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -532,6 +532,144 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in runProjectPipeline')
+            throw exception
+        }
+    }
+
+    String stopJobInstance() {
+        logger.info('Starting stopJobInstance task')
+        if (configuration?.jobInstance?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
+        }
+
+        logger.debug('Using config [job={}]', configuration.job)
+
+        Request stopJobInstanceRequest = saagieUtils.getStopJobInstanceRequest()
+        try {
+            client.newCall(stopJobInstanceRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when stopping the job instance: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map stoppedJobInstance = parsedResult.data.stopJobInstance
+                    return JsonOutput.toJson(stoppedJobInstance)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in stopJobInstance')
+            throw exception
+        }
+    }
+
+    String deleteProjectPipeline() {
+        logger.info('Starting deleteProjectPipeline task')
+        if (configuration?.pipeline?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
+        }
+
+        logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
+
+        Request projectDeletePipelineRequest = saagieUtils.getProjectDeletePipelineRequest()
+        try {
+            client.newCall(projectDeletePipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when deleting pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String deletedPipelineStatus = parsedResult.data.deletePipeline ? 'success' : 'failure'
+                    Map deletedPipeline = [status: deletedPipelineStatus]
+                    return JsonOutput.toJson(deletedPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in deleteProjectPipeline')
+            throw exception
+        }
+    }
+
+    String archiveProjectJob() {
+        logger.info('Starting archiveProjectJob task')
+        if (configuration?.job?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
+        }
+
+        logger.debug('Using config [jobId={}]', configuration.job.id)
+
+        Request projectArchiveJobRequest = saagieUtils.getProjectArchiveJobRequest()
+        try {
+            client.newCall(projectArchiveJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.errors) {
+                    def message = "Something went wrong when archiving job: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String archivedJobStatus = parsedResult.data.archiveJob ? 'success' : 'failed'
+                    Map archiveJobResult = [status: archivedJobStatus]
+                    return JsonOutput.toJson(archiveJobResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in archiveProjectJob')
+            throw exception
+        }
+    }
+
+    String stopPipelineInstance() {
+        logger.info('Starting stopPipelineInstance task')
+        if (configuration?.pipelineInstance?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_STOP_PIPELINE_INSTANCE))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_STOP_PIPELINE_INSTANCE))
+        }
+
+        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
+
+        Request projectStopPipelineInstanceRequest = saagieUtils.getProjectStopPipelineInstanceRequest()
+        try {
+            client.newCall(projectStopPipelineInstanceRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when stoping pipeline instance: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map stoppedPipeline = parsedResult.data.stopPipelineInstance
+                    return JsonOutput.toJson(stoppedPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in stopPipelineInstance')
             throw exception
         }
     }
