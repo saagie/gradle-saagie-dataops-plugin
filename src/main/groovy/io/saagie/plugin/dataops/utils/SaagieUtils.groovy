@@ -3,6 +3,7 @@ package io.saagie.plugin.dataops.utils
 import groovy.json.JsonGenerator
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
@@ -17,6 +18,8 @@ import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.apache.tika.Tika
+import okhttp3.Response
+import okio.Buffer
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
@@ -42,16 +45,16 @@ class SaagieUtils {
         }
 
         def inlinedRequest = request.replaceAll('\\n', '')
-        def query = """{ "query": "$inlinedRequest\""""
+        def query = """{"query":"$inlinedRequest\""""
         if (vars != null) {
-            query += """, "variables": $vars"""
+            query += ""","variables":$vars"""
         }
 
         if (operationName) {
-            query += """, "operationName": "$operationName\""""
+            query += ""","operationName":"$operationName\""""
         }
 
-        query += """ }"""
+        query += """}"""
 
         logger.debug('Generated graphql query:\n{}', query)
         return query
@@ -179,15 +182,20 @@ class SaagieUtils {
         // quick hack needed because the toJson seems to update the converted object, even with a clone
         jobVersion.packageInfo.name = file.absolutePath
 
+        // Needed bacause wa can't exlude a field from the excludeNull() rule of the JsonGenerator
+        def nullFile = '},"file":null}'
+        def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
+
         def createProjectJob = gq('''
-            mutation createJob($job: JobInput!, $jobVersion: JobVersionInput!) {
-                createJob(job: $job, jobVersion: $jobVersion) {
+            mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) {
+                createJob(job: $job, jobVersion: $jobVersion, file: $file) {
                     id
+                    name
                 }
             }
-        ''', gqVariables)
+        ''', gqVariablesWithNullFile)
 
-        buildRequestFromQuery createProjectJob
+        buildMultipartRequestFromQuery createProjectJob
     }
 
     Request getProjectUpdateJobRequest() {
@@ -247,6 +255,7 @@ class SaagieUtils {
         buildRequestFromQuery updateProjectJob
     }
 
+    @Deprecated
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
         def file = new File(configuration.jobVersion.packageInfo.name)
@@ -256,7 +265,6 @@ class SaagieUtils {
         def fileType = MediaType.parse(fileMimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
-        // TODO: move to the new upload api
         RequestBody body = new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart('files', file.name, RequestBody.create(fileType, file))
@@ -557,6 +565,58 @@ class SaagieUtils {
         buildRequestFromQuery runProjectJobRequest
     }
 
+    private Request buildMultipartRequestFromQuery(String query) {
+        logger.debug('Generating multipart request from query="{}"', query)
+        def file = new File(configuration.jobVersion.packageInfo.name)
+        def fileName = file.name
+        Tika tika = new Tika()
+        String mimeType = tika.detect(file)
+        logger.debug('Mime type: {}', mimeType)
+        def fileType = MediaType.parse(mimeType)
+        logger.debug('Using [file={}] for upload', file.absolutePath)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def map = jsonGenerator.toJson([ "0": ["variables.file"] ])
+        def fileBody = RequestBody.Companion.newInstance().create(file, fileType)
+
+        RequestBody body = new MultipartBody.Builder("--graphql-multipart-upload-boundary-85763456--")
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("operations", null, RequestBody.create(query, JSON))
+            .addFormDataPart("map", null, RequestBody.create(map, JSON))
+            .addFormDataPart('0', fileName, fileBody)
+            .build()
+
+        Server server = configuration.server
+        if (server.jwt) {
+            logger.debug('Generating graphql request with JWT auth...')
+            def realm = server.realm
+            def jwtToken = server.token
+            return new Request.Builder()
+                .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/graphql")
+                .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
+                .addHeader("Accept", "application/json")
+                .addHeader("Content-Type", "multipart/form-data")
+                .post(body)
+                .build()
+        } else {
+            logger.debug('Generating graphql request with basic auth...')
+            Request newRequest = new Request.Builder()
+                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
+                .addHeader('Authorization', getCredentials())
+                .addHeader("Accept", "application/json")
+                .addHeader("Content-Type", "multipart/form-data")
+                .post(body)
+                .build()
+
+            debugRequest(newRequest)
+
+            return newRequest
+        }
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(JSON, query)
@@ -585,7 +645,7 @@ class SaagieUtils {
     }
 
     // From stackoverflow: https://stackoverflow.com/a/36072704/8543172
-    private def extractProperties(obj) {
+    private Map extractProperties(obj) {
         obj.getClass()
             .declaredFields
             .findAll { !it.synthetic }
@@ -594,16 +654,21 @@ class SaagieUtils {
             }
     }
 
-    // From stackoverflow: https://stackoverflow.com/a/14754409/12188726
-    def denull(obj) {
-        if(obj instanceof Map) {
-            obj.collectEntries {k, v ->
-                if(v) [(k): denull(v)] else [:]
-            }
-        } else if(obj instanceof List) {
-            obj.collect { denull(it) }.findAll { it != null }
-        } else {
-            obj
-        }
+    static debugRequest(Request request) {
+        logger.debug("====== Request ======")
+        logger.debug("${request.method} ${request.url.url().path}")
+        logger.debug("Host: ${request.url.url().host}")
+        request.headers().names().each { logger.debug("${it}: ${request.headers().get(it)}") }
+        logger.debug("Content-Length: ${request.body().contentLength()}")
+
+        final Buffer buffer = new Buffer()
+        request.body().writeTo(buffer)
+        logger.debug(buffer.readUtf8())
+    }
+
+    static debugResponse(Response response) {
+        logger.debug("====== Response ======")
+        logger.debug("${response.protocol().toString()} ${response.code} ${response.message}")
+        response.headers().names().each { logger.debug("${it}: ${response.headers().get(it)}") }
     }
 }

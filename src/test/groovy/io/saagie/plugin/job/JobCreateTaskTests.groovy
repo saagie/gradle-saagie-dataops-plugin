@@ -6,6 +6,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -32,7 +33,7 @@ class JobCreateTaskTests extends Specification {
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
 
         jobFile = testProjectDir.newFile('jobFile.py')
-        jobFile << """print('Hello World')"""
+        jobFile << 'print("Hello World")'
     }
 
     def cleanup() {
@@ -54,65 +55,14 @@ class JobCreateTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsCreateJob should create job and upload a file for a given project"() {
-        given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
-
-        def mockedFileUploadResponse = new MockResponse()
-        mockedFileUploadResponse.responseCode = 200
-        mockedFileUploadResponse.body = '''true'''
-        mockWebServer.enqueue(mockedFileUploadResponse)
-
-        buildFile << """
-            saagie {
-                server {
-                    url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
-                    environment = 2
-                }
-
-                project {
-                    id = 'projectId'
-                }
-
-                job {
-                    name = "My custom job"
-                    category = "Extraction"
-                    technology = "technologyId"
-                }
-
-                jobVersion {
-                    runtimeVersion = "3.6"
-                    commandLine = "python {file} arg1 arg2"
-                    releaseNote = "First job version"
-                    packageInfo {
-                        name = "${jobFile.absolutePath}"
-                    }
-                }
-            }
-        """
-
-        when:
-        def result = gradle 'projectsCreateJob'
-
-        then:
-        !result.output.contains('"data"')
-        result.output.contains('"id"')
-    }
-
     def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:
-
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
+                    login = 'user'
+                    password = 'password'
                     environment = 2
                 }
 
@@ -156,8 +106,8 @@ class JobCreateTaskTests extends Specification {
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
+                    login = 'user'
+                    password = 'password'
                     environment = 2
                 }
 
@@ -166,7 +116,7 @@ class JobCreateTaskTests extends Specification {
                 }
 
                 job {
-                    name = "My custom job"
+                    name = "Already taken name"
                     category = "Extraction"
                     technology = "technologyId"
                 }
@@ -189,5 +139,49 @@ class JobCreateTaskTests extends Specification {
         Exception e = thrown()
         result == null
         e.message.contains('''{"errors":[{"message":"Job not valid","extensions":{"name":"already used","classification":"ValidationError"}}],"data":null}''')
+    }
+
+    def "projectsCreateJob should create job and upload a file"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                }
+
+                project {
+                    id = 'projectId'
+                }
+
+                job {
+                    name = "jobname"
+                    category = "Extraction"
+                    technology = "technology-id"
+                }
+
+                jobVersion {
+                    runtimeVersion = "3.6"
+                    commandLine = "python {file} arg1 arg2"
+                    packageInfo {
+                        name = "${jobFile.absolutePath}"
+                    }
+                }
+            }
+        """
+
+        when:
+        def result = gradle('projectsCreateJob')
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{"id":"jobId","name":"Created Job"}')
     }
 }
