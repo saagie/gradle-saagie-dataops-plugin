@@ -105,7 +105,7 @@ class SaagieUtils {
                     cronScheduling
                     scheduleStatus
                     alerting {
-                        emails
+                        logins
                         statusList
                     }
                     isStreaming
