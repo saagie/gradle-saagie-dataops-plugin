@@ -21,22 +21,18 @@ before_install:
     - chmod 600 ~/.ssh/id_rsa
     - cp -fv config ~/.ssh/config
     - echo signing.password=$gpg_pass >> ~/.gradle/gradle.properties
-    - echo nexusName=$SONATYPE_USERNAME >> ~/.gradle/gradle.properties
+    - echo nexusUsername=$SONATYPE_USERNAME >> ~/.gradle/gradle.properties
     - echo nexusPassword=$SONATYPE_PASSWORD >> ~/.gradle/gradle.properties
     - echo gradle.publish.key=$GRADLE_PUBLISH_KEY >> ~/.gradle/gradle.properties
     - echo gradle.publish.secret=$GRADLE_PUBLISH_SECRET >> ~/.gradle/gradle.properties
-    - wget https://services.gradle.org/distributions/gradle-5.4.1-bin.zip
-    - unzip gradle-5.4.1-bin.zip
-    - export GRADLE_HOME=$PWD/gradle-5.4.1
-    - export PATH=$GRADLE_HOME/bin:$PATH
 script:
-  - gradle test --stacktrace
+  - ./gradlew test --stacktrace
   - if [ ${TRAVIS_BRANCH} = "master" ]; then
       git checkout master;
-      gradle release -Prelease.useAutomaticVersion=true --stacktrace --info;
-      gradle closeAndReleaseRepository --info;
+      ./gradlew release -Prelease.useAutomaticVersion=true --stacktrace --info;
+      ./gradlew closeAndReleaseRepository --info;
     else
-      gradle uploadArchive --stacktrace --info;
+      ./gradlew publish --stacktrace --info;
     fi
 env:
     global:
