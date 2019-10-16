@@ -13,7 +13,7 @@ plugins {
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
-    id("de.marcphilipp.nexus-publish") version "0.3.0"
+    id("de.marcphilipp.nexus-publish") version "0.4.0"
     groovy
     maven
     signing
