@@ -71,7 +71,7 @@ tasks {
     val prepareDocCommit by creating(Exec::class) {
         dependsOn(replaceVersionInFiles)
         description = "Checkout develop"
-        commandLine = listOf("git", "checkout", "develop")
+        commandLine = listOf("git", "add", "README.md", "gradle.properties")
     }
     val commitVersion by creating(Exec::class) {
         dependsOn(prepareDocCommit)
