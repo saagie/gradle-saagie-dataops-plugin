@@ -177,6 +177,7 @@ gradlePlugin {
             implementationClass = "io.saagie.plugin.DataOpsPlugin"
         }
     }
+    isAutomatedPublishing = false
 }
 
 pluginBundle {
