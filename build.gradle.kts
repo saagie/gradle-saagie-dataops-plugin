@@ -6,6 +6,9 @@ val nexusPassword: String by project
 val version: String by project
 val previousVersion: String by project
 
+val versionStr = version
+val artifactName = this.name
+
 plugins {
     id("net.researchgate.release") version "2.8.1"
     id("io.codearte.nexus-staging") version "0.21.1"
@@ -52,6 +55,16 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging.showStandardStreams = true
+}
+
+val sourcesJar = tasks.register<Jar>("sourcesJar") {
+    from(sourceSets.main.get().allJava)
+    archiveClassifier.set("sources")
+}
+
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    from(tasks.javadoc)
+    archiveClassifier.set("javadoc")
 }
 
 release {
@@ -112,8 +125,14 @@ nexusPublishing {
 
 publishing {
     publications {
-        val mavenPublication = create<MavenPublication>("maven") {
-            from(components["java"])
+        val plugin = create<MavenPublication>("pluginMaven") {
+            groupId = group.toString()
+            artifactId = artifactName
+            version = versionStr
+
+            artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
+
             pom {
                 url.set("https://github.com/saagie/gradle-saagie-dataops-plugin")
                 scm {
@@ -141,7 +160,7 @@ publishing {
         }
         signing {
             isRequired = signatory != null
-            sign(mavenPublication)
+            sign(plugin)
         }
     }
 }
