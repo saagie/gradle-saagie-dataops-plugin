@@ -130,6 +130,7 @@ publishing {
             artifactId = artifactName
             version = versionStr
 
+            from(components["java"])
             artifact(tasks["sourcesJar"])
             artifact(tasks["javadocJar"])
 
