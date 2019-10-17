@@ -168,7 +168,7 @@ publishing {
 nexusStaging {
     username = nexusUsername
     password = nexusPassword
-    delayBetweenRetriesInMillis = 100000
+    delayBetweenRetriesInMillis = 30000
 }
 
 gradlePlugin {
