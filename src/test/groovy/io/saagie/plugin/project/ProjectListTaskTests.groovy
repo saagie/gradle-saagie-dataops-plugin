@@ -59,9 +59,7 @@ class ProjectListTaskTests extends Specification {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """
-            {"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}
-        """
+        mockedResponse.body = """{"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}"""
 
         buildFile << """
             saagie {
@@ -80,7 +78,7 @@ class ProjectListTaskTests extends Specification {
 
         then:
         !result.output.contains('"data"')
-        result.output.contains('[{"id":"8321e13c')
+        result.output.contains("""[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]""")
     }
 
     def "projectsList task with bad config should fail"() {

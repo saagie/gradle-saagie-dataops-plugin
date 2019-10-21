@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class JobVersion {
+class JobVersion implements IMapable {
     String commandLine
     String releaseNote
     String runtimeVersion
@@ -18,5 +18,22 @@ class JobVersion {
 
     Object resources(Closure closure) {
         resources.with(closure)
+    }
+
+    @Override
+    Map toMap() {
+        if ((commandLine && releaseNote && runtimeVersion) ||
+            packageInfo.toMap() || dockerInfos.toMap() || resources.toMap()
+        ) {
+            return [
+                commandLine: commandLine,
+                releaseNote: releaseNote,
+                runtimeVersion: runtimeVersion,
+                packageInfo: packageInfo.toMap(),
+                dockerInfos: dockerInfos.toMap(),
+                resources: resources.toMap(),
+            ]
+        }
+        return null;
     }
 }

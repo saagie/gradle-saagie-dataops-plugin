@@ -170,8 +170,8 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job,
-            jobVersion: jobVersion
+            job: job.toMap(),
+            jobVersion: jobVersion.toMap()
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
@@ -583,5 +583,18 @@ class SaagieUtils {
             .collectEntries { field ->
                 [field.name, obj["$field.name"]]
             }
+    }
+
+    // From stackoverflow: https://stackoverflow.com/a/14754409/12188726
+    def denull(obj) {
+        if(obj instanceof Map) {
+            obj.collectEntries {k, v ->
+                if(v) [(k): denull(v)] else [:]
+            }
+        } else if(obj instanceof List) {
+            obj.collect { denull(it) }.findAll { it != null }
+        } else {
+            obj
+        }
     }
 }

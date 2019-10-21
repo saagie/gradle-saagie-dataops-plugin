@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class Pipeline {
+class Pipeline implements IMapable {
     String id = null
     String name
     String description = null
@@ -10,5 +10,20 @@ class Pipeline {
 
     Object alerting(Closure closure) {
         alerting.with(closure)
+    }
+
+    @Override
+    Map toMap() {
+        if (name) {
+            return [
+                id: id,
+                name: name,
+                description: description,
+                isScheduled: isScheduled,
+                cronScheduling: cronScheduling,
+                alerting: alerting.toMap(),
+            ]
+        }
+        return null
     }
 }

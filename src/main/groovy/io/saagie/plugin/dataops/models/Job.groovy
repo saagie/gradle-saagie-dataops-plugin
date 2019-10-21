@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class Job {
+class Job implements IMapable {
     String name
     String id
     String projectId
@@ -14,5 +14,24 @@ class Job {
 
     Object alerting(Closure closure) {
         alerting.with(closure)
+    }
+
+    @Override
+    Map toMap() {
+        if (name && id && projectId && description && category && technology && cronScheduling) {
+            return [
+                name: name,
+                id: id,
+                projectId: projectId,
+                description: description,
+                category: category,
+                technology: technology,
+                cronScheduling: cronScheduling,
+                isScheduled: isScheduled,
+                isStreaming: isStreaming,
+                alerting: alerting.toMap(),
+            ]
+        }
+        return null
     }
 }
