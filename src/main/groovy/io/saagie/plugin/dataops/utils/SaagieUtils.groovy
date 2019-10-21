@@ -611,9 +611,26 @@ class SaagieUtils {
         }
     }
 
+    Request getPlatformListRequest() {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get access rights by platforms')
+
+        String realm = server.realm
+        String jwtToken = server.token
+
+        logger.debug("Using realm=${realm} and jwt=${jwtToken}")
+
+        return new Request.Builder()
+            .url("${configuration.server.url}/security/api/rights")
+            .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=$jwtToken")
+            .addHeader('Saagie-Realm', realm)
+            .get()
+            .build()
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
-        RequestBody body = RequestBody.create(query, JSON)
+        RequestBody body = RequestBody.create(JSON, query)
         Server server = configuration.server
         if (server.jwt) {
             logger.debug('Generating graphql request with JWT auth...')

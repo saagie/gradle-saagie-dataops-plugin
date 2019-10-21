@@ -82,5 +82,6 @@ class DataOpsPluginTest extends Specification {
         result.output.contains 'projectsStopPipelineInstance - stop a pipeline instance'
         result.output.contains 'projectsUpdatePipeline - update a pipeline'
         result.output.contains 'projectsUpdateJob - update a existing job in a project'
+        result.output.contains 'platformList - list available platforms'
     }
 }
