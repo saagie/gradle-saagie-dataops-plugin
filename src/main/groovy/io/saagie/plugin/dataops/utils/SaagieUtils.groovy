@@ -32,8 +32,11 @@ class SaagieUtils {
     static String gq(String request, String vars = null, String operationName = null) {
         logger.debug("GraphQL Query:")
         logger.debug(request)
-        logger.debug("GraphQL Variables:")
-        logger.debug(vars)
+
+        if (vars) {
+            logger.debug("GraphQL Variables:")
+            logger.debug(vars)
+        }
 
         def inlinedRequest = request.replaceAll('\\n', '')
         def query = """{ "query": "$inlinedRequest\""""
