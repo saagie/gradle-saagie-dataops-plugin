@@ -3,7 +3,6 @@ package io.saagie.plugin.dataops.utils
 import groovy.json.JsonGenerator
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
@@ -31,6 +30,11 @@ class SaagieUtils {
     }
 
     static String gq(String request, String vars = null, String operationName = null) {
+        logger.debug("GraphQL Query:")
+        logger.debug(request)
+        logger.debug("GraphQL Variables:")
+        logger.debug(vars)
+
         def inlinedRequest = request.replaceAll('\\n', '')
         def query = """{ "query": "$inlinedRequest\""""
         if (vars != null) {
@@ -50,7 +54,7 @@ class SaagieUtils {
     Request getProjectsRequest() {
         logger.debug('Generating getProjectsRequest')
         def listProjectsRequest = gq('''
-            {
+            query getProjects {
                 projects {
                     id
                     name

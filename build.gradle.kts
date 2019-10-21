@@ -80,22 +80,13 @@ tasks {
     }
     val prepareDocCommit by creating(Exec::class) {
         dependsOn(replaceVersionInFiles)
-        description = "Checkout develop"
+        description = "Replace version number in documentation"
         commandLine = listOf("git", "add", "README.md", "gradle.properties")
     }
     val commitVersion by creating(Exec::class) {
         dependsOn(prepareDocCommit)
         description = "Commit version"
         commandLine = listOf("git", "commit", "-m", "[ci skip] replace readme version.")
-    }
-    val mergeToDevelop by creating(Exec::class) {
-        dependsOn(commitVersion)
-        description = "Merge master to develop"
-        commandLine = listOf("git", "merge", "master")
-    }
-    val switchToDevelop by creating(Exec::class) {
-        description = "Checkout develop"
-        commandLine = listOf("git", "checkout", "develop")
     }
     val updateVersion by getting {
         dependsOn(commitVersion)
@@ -168,7 +159,7 @@ publishing {
 nexusStaging {
     username = nexusUsername
     password = nexusPassword
-    delayBetweenRetriesInMillis = 100000
+    delayBetweenRetriesInMillis = 30000
 }
 
 gradlePlugin {
