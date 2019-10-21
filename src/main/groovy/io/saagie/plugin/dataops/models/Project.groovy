@@ -12,12 +12,12 @@ class Project implements IMapable {
     Map toMap() {
         if (id && name && creator && description && jobsCount && status) {
             return [
-                id: id,
-                name: name,
-                creator: creator,
+                id         : id,
+                name       : name,
+                creator    : creator,
                 description: description,
-                jobsCount: jobsCount,
-                status: status
+                jobsCount  : jobsCount,
+                status     : status
             ]
         }
         return null

@@ -18,20 +18,17 @@ class Job implements IMapable {
 
     @Override
     Map toMap() {
-        if (name && id && projectId && description && category && technology && cronScheduling) {
-            return [
-                name: name,
-                id: id,
-                projectId: projectId,
-                description: description,
-                category: category,
-                technology: technology,
-                cronScheduling: cronScheduling,
-                isScheduled: isScheduled,
-                isStreaming: isStreaming,
-                alerting: alerting.toMap(),
-            ]
-        }
-        return null
+        return [
+            name          : name,
+            id            : id,
+            projectId     : projectId,
+            description   : description,
+            category      : category,
+            technology    : [id: technology],
+            cronScheduling: cronScheduling,
+            isScheduled   : isScheduled,
+            isStreaming   : isStreaming,
+            alerting      : alerting.toMap(),
+        ]
     }
 }

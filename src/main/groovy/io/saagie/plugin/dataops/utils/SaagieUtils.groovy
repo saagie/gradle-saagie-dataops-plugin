@@ -22,7 +22,7 @@ import org.gradle.api.logging.Logging
 @TypeChecked
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
-    static final MediaType JSON = MediaType.parse 'application/json; charset=utf-8'
+    static final MediaType JSON = MediaType.parse('application/json; charset=utf-8')
     DataOpsExtension configuration
 
     SaagieUtils(DataOpsExtension configuration) {
@@ -162,7 +162,6 @@ class SaagieUtils {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfos') // TODO: remove this line when `dockerInfos` will be available
-            .addConverter(String) { String value, String key -> key == 'technology' ? [id: value] : value }
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -170,7 +169,7 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
+            job       : job.toMap(),
             jobVersion: jobVersion.toMap()
         ])
 
@@ -197,7 +196,7 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job,
+            job: job.toMap(),
         ])
 
         def updateProjectJob = gq('''
@@ -221,7 +220,6 @@ class SaagieUtils {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfos') // TODO: remove this line when `dockerInfos` will be available
-            .addConverter(String) { String value, String key -> key == 'technology' ? [id: value] : value }
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -229,8 +227,8 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            jobId: job.id,
-            jobVersion: jobVersion
+            jobId     : job.id,
+            jobVersion: jobVersion.toMap()
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
@@ -386,7 +384,7 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            pipeline: pipeline
+            pipeline: pipeline.toMap()
         ])
 
         def editPipeline = gq('''

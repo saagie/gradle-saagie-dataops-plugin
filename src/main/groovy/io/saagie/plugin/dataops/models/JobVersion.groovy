@@ -4,6 +4,11 @@ class JobVersion implements IMapable {
     String commandLine
     String releaseNote
     String runtimeVersion
+    Boolean usePreviousArtifact = false
+
+    List<String> volume = []
+    List<ExposedPort> exposedPorts = []
+
     PackageInfo packageInfo = new PackageInfo()
     DockerInfos dockerInfos = new DockerInfos()
     Resources resources = new Resources()
@@ -22,18 +27,16 @@ class JobVersion implements IMapable {
 
     @Override
     Map toMap() {
-        if ((commandLine && releaseNote && runtimeVersion) ||
-            packageInfo.toMap() || dockerInfos.toMap() || resources.toMap()
-        ) {
-            return [
-                commandLine: commandLine,
-                releaseNote: releaseNote,
-                runtimeVersion: runtimeVersion,
-                packageInfo: packageInfo.toMap(),
-                dockerInfos: dockerInfos.toMap(),
-                resources: resources.toMap(),
-            ]
-        }
-        return null;
+        return [
+            commandLine        : commandLine,
+            releaseNote        : releaseNote,
+            runtimeVersion     : runtimeVersion,
+            volume             : volume,
+            usePreviousArtifact: usePreviousArtifact,
+            exposedPorts       : exposedPorts,
+            packageInfo        : packageInfo.toMap(),
+            dockerInfos        : dockerInfos.toMap(),
+            resources          : resources.toMap(),
+        ]
     }
 }

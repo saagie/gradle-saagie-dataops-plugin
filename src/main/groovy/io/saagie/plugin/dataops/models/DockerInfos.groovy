@@ -9,8 +9,8 @@ class DockerInfos implements IMapable {
     Map toMap() {
         if (image && login && password) {
             return [
-                image: image,
-                login: login,
+                image   : image,
+                login   : login,
                 password: password,
             ]
         }

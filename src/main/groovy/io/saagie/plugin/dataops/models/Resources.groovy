@@ -8,8 +8,8 @@ class Resources implements IMapable {
     Map toMap() {
         if (cpu && disk && memory) {
             return [
-                cpu: cpu,
-                disk: disk,
+                cpu   : cpu,
+                disk  : disk,
                 memory: memory,
             ]
         }
