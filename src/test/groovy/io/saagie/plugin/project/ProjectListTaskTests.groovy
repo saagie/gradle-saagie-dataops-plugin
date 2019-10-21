@@ -110,4 +110,29 @@ class ProjectListTaskTests extends Specification {
         e.getBuildResult().task(':projectsList').outcome == FAILED
     }
 
+    def "projectsList task should print additional infos in info mode"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """{"data":{"projects":[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]}}"""
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def result = gradle ('projectsList', '-d')
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains("""[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]""")
+    }
 }

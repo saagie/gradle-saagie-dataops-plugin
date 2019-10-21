@@ -103,6 +103,9 @@ class SaagieClient {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
             throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getProjects')
+            throw exception
         }
     }
 
@@ -158,7 +161,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = 'Something went wrong when getting project technologies.'
+                    def message = "Something went wrong when getting project technologies: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
