@@ -182,7 +182,7 @@ class JobCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsCreateJob'
+        BuildResult result = gradle ('projectsCreateJob', '-d')
 
         then:
         Exception e = thrown()
