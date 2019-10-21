@@ -208,6 +208,7 @@ class SaagieClient {
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
+
                 if (parsedResult.data == null) {
                     def message = "Something went wrong when creating project job: $responseBody"
                     logger.error(message)
@@ -218,7 +219,15 @@ class SaagieClient {
                     Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
                     client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
                         handleErrors(uploadResponse)
-                        return JsonOutput.toJson(createdJob)
+                        String uploadResponseBody = uploadResponse.body().string()
+                        def uploadFileParsedResult = slurper.parseText(uploadResponseBody)
+                        if (!uploadFileParsedResult) {
+                            def message = "Something went wrong when uploading project file job: $uploadResponseBody"
+                            logger.error(message)
+                            throw new GradleException(message)
+                        } else {
+                            return JsonOutput.toJson(createdJob)
+                        }
                     }
                 }
             }

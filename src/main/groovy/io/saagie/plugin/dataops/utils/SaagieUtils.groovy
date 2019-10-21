@@ -19,6 +19,8 @@ import okhttp3.RequestBody
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
+import java.nio.file.Files
+
 @TypeChecked
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
@@ -247,6 +249,8 @@ class SaagieUtils {
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
         def file = new File(configuration.jobVersion.packageInfo.name)
+        def fileMimeType = Files.probeContentType(file.toPath())
+        logger.debug('Detected file mime type: ', fileMimeType)
         def fileType = MediaType.parse('text/text')
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
@@ -263,6 +267,8 @@ class SaagieUtils {
             new Request.Builder()
                 .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
                 .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
+                .addHeader('Accept', 'application/json')
+                .addHeader('Content-Type', 'multipart/form-data')
                 .post(body)
                 .build()
         } else {
@@ -270,6 +276,8 @@ class SaagieUtils {
             new Request.Builder()
                 .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/project/${configuration.project.id}/job/$jobId/version/$jobVersion/uploadArtifact")
                 .addHeader('Authorization', getCredentials())
+                .addHeader('Accept', 'application/json')
+                .addHeader('Content-Type', 'multipart/form-data')
                 .post(body)
                 .build()
         }

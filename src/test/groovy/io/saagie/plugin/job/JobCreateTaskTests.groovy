@@ -32,6 +32,7 @@ class JobCreateTaskTests extends Specification {
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
 
         jobFile = testProjectDir.newFile('jobFile.py')
+        jobFile << """print('Hello World')"""
     }
 
     def cleanup() {
@@ -148,7 +149,7 @@ class JobCreateTaskTests extends Specification {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"errorType":"ValidationError","locations":null,"message":"Job not valid","path":null,"localizedMessage":"Job not valid","suppressed":[]}]}'''
+        mockedJobCreationResponse.body = '''{"errors":[{"message":"Job not valid","extensions":{"name":"already used","classification":"ValidationError"}}],"data":null}'''
         mockWebServer.enqueue(mockedJobCreationResponse)
 
         buildFile << """
@@ -182,11 +183,11 @@ class JobCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle ('projectsCreateJob', '-d')
+        BuildResult result = gradle ('projectsCreateJob')
 
         then:
         Exception e = thrown()
         result == null
-        e.message.contains('''{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"errorType":"ValidationError","locations":null,"message":"Job not valid","path":null,"localizedMessage":"Job not valid","suppressed":[]}]}''')
+        e.message.contains('''{"errors":[{"message":"Job not valid","extensions":{"name":"already used","classification":"ValidationError"}}],"data":null}''')
     }
 }
