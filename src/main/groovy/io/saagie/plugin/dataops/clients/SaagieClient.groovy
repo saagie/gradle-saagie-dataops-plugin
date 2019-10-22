@@ -111,9 +111,7 @@ class SaagieClient {
 
     String getProjectJobs() {
         logger.info('Starting getProjectJob task')
-        if (configuration.project == null ||
-            configuration.project.id == null
-        ) {
+        if (!configuration.project?.id) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
         }
