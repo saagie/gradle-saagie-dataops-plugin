@@ -1,5 +1,6 @@
 val junitVersion = "5.5.1"
 val okthttp = "4.2.2"
+val apacheTika = "1.22"
 
 val nexusUsername: String by project
 val nexusPassword: String by project
@@ -37,6 +38,7 @@ configurations {
 dependencies {
     compileOnly(gradleApi())
     implementation("com.squareup.okhttp3:okhttp:$okthttp")
+    compile("org.apache.tika", "tika-core", apacheTika)
 
     testImplementation(gradleTestKit())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.4")
