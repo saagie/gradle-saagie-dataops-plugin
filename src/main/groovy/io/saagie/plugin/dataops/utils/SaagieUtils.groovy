@@ -251,10 +251,10 @@ class SaagieUtils {
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileMimeType = Files.probeContentType(file.toPath())
         logger.debug('Detected file mime type: ', fileMimeType)
-        def fileType = MediaType.parse('text/text')
+        def fileType = MediaType.parse(fileMimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
-        // here ==> do the refacto
+        // TODO: move to the new upload api
         RequestBody body = new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart('files', file.name, RequestBody.create(fileType, file))
@@ -338,48 +338,6 @@ class SaagieUtils {
         ''', gqVariables)
 
         buildRequestFromQuery runProjectJobRequest
-    }
-
-    Request getNewCreatePipelineRequest() {
-        Project project = configuration.project;
-        Pipeline pipeline = configuration.pipeline;
-        PipelineVersion pipelineVersion = configuration.pipelineVersion
-
-        logger.debug('Generating getNewCreatePipelineRequest for project [projectId={}, pipeline={}, pipelineVersion={}]', project.id, pipeline, pipelineVersion)
-
-        def jsonGenerator = new JsonGenerator.Options()
-            .excludeNulls()
-            .build()
-
-        def graphqlPipelineVar = [
-            *:extractProperties(pipeline),
-            projectId: project.id,
-            jobsId: pipelineVersion.jobs,
-            releaseNote: pipelineVersion.releaseNote
-        ]
-
-        def gqVariables = jsonGenerator.toJson([
-            pipeline: graphqlPipelineVar
-        ])
-
-        def runProjectJobRequest = gq('''
-            mutation createPipelineMutation($pipeline: PipelineInput!) {
-                createPipeline(pipeline: $pipeline) {
-                    id
-                }
-            }
-        ''', gqVariables)
-
-        def requestParams = [
-            operations: runProjectJobRequest,
-            *:buildFilesToUpload()
-        ]
-
-        buildRequestFromQuery runProjectJobRequest
-    }
-
-    private buildFilesToUpload() {
-       // map: '{ "0": ["variables.file"] }',
     }
 
     Request getProjectJobInstanceStatusRequest() {
