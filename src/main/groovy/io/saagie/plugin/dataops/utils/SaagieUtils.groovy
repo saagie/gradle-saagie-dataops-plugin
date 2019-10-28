@@ -351,12 +351,12 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            id: jobInstance.id
+            jobId: jobInstance.id
         ])
 
         def getJobInstanceStatus = gq('''
             query getJobInstanceStatus($jobId: UUID!) {
-                jobInstance(id: $id) {
+                jobInstance(id: $jobId) {
                     status
                 }
             }
