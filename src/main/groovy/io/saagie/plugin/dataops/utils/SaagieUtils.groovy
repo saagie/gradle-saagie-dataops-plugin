@@ -16,6 +16,7 @@ import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody
+import org.apache.tika.Tika
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
@@ -249,11 +250,13 @@ class SaagieUtils {
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
         def file = new File(configuration.jobVersion.packageInfo.name)
-        def fileMimeType = Files.probeContentType(file.toPath())
+        Tika tika = new Tika();
+        String fileMimeType = tika.detect(file);
         logger.debug('Detected file mime type: ', fileMimeType)
-        def fileType = MediaType.parse('text/text')
+        def fileType = MediaType.parse(fileMimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
+        // TODO: move to the new upload api
         RequestBody body = new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart('files', file.name, RequestBody.create(fileType, file))
@@ -340,7 +343,7 @@ class SaagieUtils {
     }
 
     Request getProjectJobInstanceStatusRequest() {
-        JobInstance jobInstance = configuration.jobInstance;
+        JobInstance jobInstance = configuration.jobinstance;
         logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -533,7 +536,7 @@ class SaagieUtils {
     }
 
     Request getStopJobInstanceRequest() {
-        JobInstance jobInstance = configuration.jobInstance
+        JobInstance jobInstance = configuration.jobinstance
         logger.debug('Generating getStopJobInstanceRequest for job instance [id={}]', jobInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
