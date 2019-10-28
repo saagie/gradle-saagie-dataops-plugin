@@ -367,12 +367,12 @@ class SaagieClient {
 
     String getJobInstanceStatus() {
         logger.info('Starting getJobInstanceStatus task')
-        if (configuration?.jobInstance?.id == null        ) {
+        if (configuration?.jobinstance?.id == null        ) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
         }
 
-        logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobInstance)
+        logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobinstance)
 
         Request projectJobInstanceStatusRequest = saagieUtils.getProjectJobInstanceStatusRequest()
         try {
@@ -548,7 +548,7 @@ class SaagieClient {
 
     String stopJobInstance() {
         logger.info('Starting stopJobInstance task')
-        if (configuration?.jobInstance?.id == null) {
+        if (configuration?.jobinstance?.id == null) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
         }

@@ -68,7 +68,7 @@ class JobGetInstanceStatusTaskTests extends Specification {
                     environment = 2
                 }
 
-                jobInstance {
+                jobinstance {
                     id = "jobInstanceId"
                 }
             }

@@ -55,7 +55,7 @@ class SaagieClientTest extends Specification {
                 name = tempFile.absolutePath
             }
         }
-        configuration.jobInstance {
+        configuration.jobinstance {
             id = 'jobInstanceId'
         }
         configuration.pipeline {
@@ -341,7 +341,7 @@ class SaagieClientTest extends Specification {
         enqueueToken()
 
         client = new SaagieClient(configuration)
-        client.configuration.jobInstance.id = null
+        client.configuration.jobinstance.id = null
 
         when:
         String getJobInstanceStatusResult = client.getJobInstanceStatus()

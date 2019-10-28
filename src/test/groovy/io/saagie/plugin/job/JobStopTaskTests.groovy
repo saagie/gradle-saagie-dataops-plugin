@@ -68,7 +68,7 @@ class JobStopTaskTests extends Specification {
                     environment = 4
                 }
                 
-                jobInstance {
+                jobinstance {
                     id = 'job-instance-id'
                 }
             }
@@ -119,7 +119,7 @@ class JobStopTaskTests extends Specification {
                     environment = 2
                 }
                 
-                jobInstance {
+                jobinstance {
                     id = 'bad-id'
                 }
             }
