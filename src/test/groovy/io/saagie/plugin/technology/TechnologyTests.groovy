@@ -81,4 +81,33 @@ class TechnologyTests extends Specification {
         result.output.contains('"label"')
         result.output.contains('"features"')
     }
+
+    def "listed technologies should not whow duplicated entries"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """{"data":{"technologies":[{"id":"python-id","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"bash-id","label":"Bash","isAvailable":true,"icon":"bash","features":[]},{"id":"bash-id","label":"Bash","isAvailable":true,"icon":"bash","features":[]}]}}"""
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+
+                project {
+                    id = 'dezdezjiodjei-892a-2342-8552-5be4b6de5df4'
+                }
+            }
+        """
+        mockWebServer.enqueue(mockedResponse)
+
+        when:
+        def result = gradle 'projectsListTechnologies'
+
+        then:
+        result.output.count('bash-id') == 1
+        result.output.count('python-id') == 1
+    }
 }

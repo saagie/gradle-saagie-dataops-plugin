@@ -159,12 +159,19 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting project technologies: $responseBody"
+                    def message = "Something went wrong when getting project technologies.\n${responseBody}"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
                     List technologies = parsedResult.data.technologies
-                    return JsonOutput.toJson(technologies)
+                    List uniqueTechnologies = technologies.inject([], { uniqueIds, technology ->
+                        if (uniqueIds.any { technology.id == it.id }) {
+                            return uniqueIds
+                        } else {
+                            return uniqueIds << technology
+                        }
+                    })
+                    return JsonOutput.toJson(uniqueTechnologies)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
