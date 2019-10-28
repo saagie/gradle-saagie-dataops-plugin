@@ -343,7 +343,7 @@ class SaagieUtils {
     }
 
     Request getProjectJobInstanceStatusRequest() {
-        JobInstance jobInstance = configuration.jobInstance;
+        JobInstance jobInstance = configuration.jobinstance;
         logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -536,7 +536,7 @@ class SaagieUtils {
     }
 
     Request getStopJobInstanceRequest() {
-        JobInstance jobInstance = configuration.jobInstance
+        JobInstance jobInstance = configuration.jobinstance
         logger.debug('Generating getStopJobInstanceRequest for job instance [id={}]', jobInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
