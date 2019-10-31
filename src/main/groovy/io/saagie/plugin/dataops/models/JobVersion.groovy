@@ -9,20 +9,30 @@ class JobVersion implements IMapable {
     List<String> volume = []
     List<ExposedPort> exposedPorts = []
 
+    @Deprecated
     PackageInfo packageInfo = new PackageInfo()
-    DockerInfos dockerInfos = new DockerInfos()
+
+    DockerInfos dockerInfo = new DockerInfos()
+
     Resources resources = new Resources()
 
+    ExtraTechnology extraTechnology = new ExtraTechnology()
+
+    @Deprecated
     Object packageInfo(Closure closure) {
         packageInfo.with(closure)
     }
 
-    Object dockerInfos(Closure closure) {
-        dockerInfos.with(closure)
+    Object dockerInfo(Closure closure) {
+        dockerInfo.with(closure)
     }
 
     Object resources(Closure closure) {
         resources.with(closure)
+    }
+
+    Object extraTechnology(Closure closure) {
+        extraTechnology.with(closure)
     }
 
     @Override
@@ -33,10 +43,11 @@ class JobVersion implements IMapable {
             runtimeVersion     : runtimeVersion,
             volume             : volume,
             usePreviousArtifact: usePreviousArtifact,
-            exposedPorts       : exposedPorts,
+            exposedPorts       : exposedPorts.collect { it.toMap() },
             packageInfo        : packageInfo.toMap(),
-            dockerInfos        : dockerInfos.toMap(),
+            dockerInfo         : dockerInfo.toMap(),
             resources          : resources.toMap(),
+            extraTechnology    : extraTechnology.toMap(),
         ]
     }
 }

@@ -3,7 +3,6 @@ package io.saagie.plugin.dataops.utils
 import groovy.json.JsonGenerator
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
@@ -22,8 +21,6 @@ import okhttp3.Response
 import okio.Buffer
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-
-import java.nio.file.Files
 
 @TypeChecked
 class SaagieUtils {
@@ -75,7 +72,7 @@ class SaagieUtils {
             }
         ''')
 
-        buildRequestFromQuery listProjectsRequest
+        return buildRequestFromQuery(listProjectsRequest)
     }
 
     Request getProjectJobsRequest() {
@@ -86,9 +83,7 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            projectId: project.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
 
         def listProjectJobs = gq('''
             query jobs($projectId: UUID!) {
@@ -121,7 +116,7 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery listProjectJobs
+        return buildRequestFromQuery(listProjectJobs)
     }
 
     Request getProjectTechnologiesRequest() {
@@ -132,9 +127,7 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            projectId: project.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
 
         def listProjectTechnologies = gq('''
             query technologiesQuery($projectId: UUID!) {
@@ -153,7 +146,8 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery listProjectTechnologies
+
+        return buildRequestFromQuery(listProjectTechnologies)
     }
 
     Request getProjectCreateJobRequest() {
@@ -167,7 +161,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfos') // TODO: remove this line when `dockerInfos` will be available
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -195,7 +189,7 @@ class SaagieUtils {
             }
         ''', gqVariablesWithNullFile)
 
-        buildMultipartRequestFromQuery createProjectJob
+        return buildMultipartRequestFromQuery(createProjectJob)
     }
 
     Request getProjectUpdateJobRequest() {
@@ -217,7 +211,8 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery updateProjectJob
+
+        return buildRequestFromQuery(updateProjectJob)
     }
 
     Request getAddJobVersionRequest() {
@@ -230,7 +225,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfos') // TODO: remove this line when `dockerInfos` will be available
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -252,22 +247,23 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery updateProjectJob
+
+        return buildRequestFromQuery(updateProjectJob)
     }
 
     @Deprecated
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
         def file = new File(configuration.jobVersion.packageInfo.name)
-        Tika tika = new Tika();
-        String fileMimeType = tika.detect(file);
+        Tika tika = new Tika()
+        String fileMimeType = tika.detect(file)
         logger.debug('Detected file mime type: ', fileMimeType)
         def fileType = MediaType.parse(fileMimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
         RequestBody body = new MultipartBody.Builder()
             .setType(MultipartBody.FORM)
-            .addFormDataPart('files', file.name, RequestBody.create(fileType, file))
+            .addFormDataPart('files', file.name, RequestBody.create(file, fileType))
             .build()
 
         Server server = configuration.server
@@ -302,9 +298,7 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            jobId: job.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
 
         def runProjectJobRequest = gq('''
             mutation editJobMutation($jobId: UUID!) {
@@ -314,12 +308,13 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery runProjectJobRequest
+
+        return buildRequestFromQuery(runProjectJobRequest)
     }
 
     Request getCreatePipelineRequest() {
-        Project project = configuration.project;
-        Pipeline pipeline = configuration.pipeline;
+        Project project = configuration.project
+        Pipeline pipeline = configuration.pipeline
         PipelineVersion pipelineVersion = configuration.pipelineVersion
 
         logger.debug('Generating getCreatePipelineRequest for project [projectId={}, pipeline={}, pipelineVersion={}]', project.id, pipeline, pipelineVersion)
@@ -347,20 +342,18 @@ class SaagieUtils {
             }
         ''', gqVariables)
 
-        buildRequestFromQuery runProjectJobRequest
+        return buildRequestFromQuery(runProjectJobRequest)
     }
 
     Request getProjectJobInstanceStatusRequest() {
-        JobInstance jobInstance = configuration.jobinstance;
+        JobInstance jobInstance = configuration.jobinstance
         logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            jobId: jobInstance.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ jobId: jobInstance.id ])
 
         def getJobInstanceStatus = gq('''
             query getJobInstanceStatus($jobId: UUID!) {
@@ -369,7 +362,7 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery getJobInstanceStatus
+        return buildRequestFromQuery(getJobInstanceStatus)
     }
 
     Request getProjectPipelineInstanceStatusRequest() {
@@ -380,9 +373,7 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            id: pipelineInstance.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ id: pipelineInstance.id ])
 
         def getPipelineInstanceStatus = gq('''
             query getPipelineInstanceStatus($id: UUID!) {
@@ -391,20 +382,19 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery getPipelineInstanceStatus
+
+        return buildRequestFromQuery(getPipelineInstanceStatus)
     }
 
     Request getProjectUpdatePipelineRequest() {
-        Pipeline pipeline = configuration.pipeline;
+        Pipeline pipeline = configuration.pipeline
         logger.debug('Generating getProjectUpdatePipelineRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            pipeline: pipeline.toMap()
-        ])
+        def gqVariables = jsonGenerator.toJson([ pipeline: pipeline.toMap() ])
 
         def editPipeline = gq('''
             mutation editPipelineMutation($pipeline: PipelineEditionInput!) {
@@ -413,12 +403,13 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery editPipeline
+
+        return buildRequestFromQuery(editPipeline)
     }
 
     Request getAddPipelineVersionRequest() {
-        Pipeline pipeline = configuration.pipeline;
-        PipelineVersion pipelineVersion = configuration.pipelineVersion;
+        Pipeline pipeline = configuration.pipeline
+        PipelineVersion pipelineVersion = configuration.pipelineVersion
         logger.debug('Generating getAddPipelineVersionRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -446,20 +437,19 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery addPipelineVersionRequest
+
+        return buildRequestFromQuery(addPipelineVersionRequest)
     }
 
     Request getProjectRunPipelineRequest() {
-        Pipeline pipeline = configuration.pipeline;
+        Pipeline pipeline = configuration.pipeline
         logger.debug('Generating getProjectRunPipelineRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            pipelineId: pipeline.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ pipelineId: pipeline.id ])
 
         def runPipeline = gq('''
             mutation runPipelineMutation($pipelineId: UUID!) {
@@ -468,51 +458,50 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery runPipeline
+
+        return buildRequestFromQuery(runPipeline)
     }
 
     Request getProjectDeletePipelineRequest() {
-        Pipeline pipeline = configuration.pipeline;
+        Pipeline pipeline = configuration.pipeline
         logger.debug('Generating getProjectDeletePipelineRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            id: pipeline.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ id: pipeline.id ])
 
         def deletePipeline = gq('''
             mutation deletePipelineMutation($id: UUID!) {
                 deletePipeline(id: $id)
             }
         ''', gqVariables)
-        buildRequestFromQuery deletePipeline
+
+        return buildRequestFromQuery(deletePipeline)
     }
 
     Request getProjectArchiveJobRequest() {
-        Job job = configuration.job;
+        Job job = configuration.job
         logger.debug('Generating getProjectArchiveJobRequest [jobId={}]', job.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([
-            jobId: job.id
-        ])
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
 
         def getJobInstanceStatus = gq('''
             mutation archiveJobMutation($jobId: UUID!) {
                 archiveJob(jobId: $jobId)
             }
         ''', gqVariables)
-        buildRequestFromQuery getJobInstanceStatus
+
+        return buildRequestFromQuery(getJobInstanceStatus)
     }
 
     Request getProjectStopPipelineInstanceRequest() {
-        PipelineInstance pipelineInstance = configuration.pipelineInstance;
+        PipelineInstance pipelineInstance = configuration.pipelineInstance
         logger.debug('Generating getProjectStopPipelineInstanceRequest [pipelineInstanceId={}]', pipelineInstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -531,7 +520,8 @@ class SaagieUtils {
                 }  
             }
         ''', gqVariables)
-        buildRequestFromQuery getJobInstanceStatus
+
+        return buildRequestFromQuery(getJobInstanceStatus)
     }
 
     Request getJwtTokenRequest() {
@@ -562,7 +552,8 @@ class SaagieUtils {
                 }
             }
         ''', gqVariables)
-        buildRequestFromQuery runProjectJobRequest
+
+        return buildRequestFromQuery(runProjectJobRequest)
     }
 
     private Request buildMultipartRequestFromQuery(String query) {
@@ -619,7 +610,7 @@ class SaagieUtils {
 
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
-        RequestBody body = RequestBody.create(JSON, query)
+        RequestBody body = RequestBody.create(query, JSON)
         Server server = configuration.server
         if (server.jwt) {
             logger.debug('Generating graphql request with JWT auth...')
@@ -645,7 +636,7 @@ class SaagieUtils {
     }
 
     // From stackoverflow: https://stackoverflow.com/a/36072704/8543172
-    private Map extractProperties(obj) {
+    private static Map extractProperties(obj) {
         obj.getClass()
             .declaredFields
             .findAll { !it.synthetic }

@@ -329,6 +329,7 @@ class SaagieClient {
         }
     }
 
+    @Deprecated
     String updateProjectJob() {
         logger.info('Starting updateProjectJob task')
         if (configuration?.job?.id == null ||
@@ -383,6 +384,62 @@ class SaagieClient {
             logger.error('Unknown error in updateProjectJob')
             throw exception
         }
+    }
+
+    String updateProjectJobWithGraphQL() {
+        logger.info('Starting updateProjectJob task')
+        if (configuration?.job?.id == null ||
+            (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling)
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+        }
+
+        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
+
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
+        try {
+            client.newCall(projectsUpdateJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when updating project job: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map updatedJob = parsedResult.data.editJob
+                    return JsonOutput.toJson(updatedJob)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in updateProjectJob')
+            throw exception
+        }
+
+        // 2. add jobVersion id there is a jobVersion config
+        //if (configuration?.jobVersion?.runtimeVersion) {
+//            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+//            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+//                handleErrors(updateResponse)
+//                String updateResponseBody = updateResponse.body().string()
+//                def updatedJobVersion = slurper.parseText(updateResponseBody)
+//
+//                String newJobVersion = updatedJobVersion.data.addJobVersion.number
+//                Request uploadRequest = saagieUtils.getUploadFileToJobRequest(
+//                    configuration.job.id,
+//                    newJobVersion
+//                )
+//                client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+//                    handleErrors(uploadResponse)
+//                    return JsonOutput.toJson(updatedJob)
+//                }
+//            }
+       // }
     }
 
     String createProjectPipelineJob() {

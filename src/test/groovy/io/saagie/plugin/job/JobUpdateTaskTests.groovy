@@ -6,6 +6,8 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
+import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
@@ -68,10 +70,6 @@ class JobUpdateTaskTests extends Specification {
                     environment = 2
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
                 job {
                     id = 'jobId'
                     name = 'Updated from gradle'
@@ -85,10 +83,11 @@ class JobUpdateTaskTests extends Specification {
         '''
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle('projectsUpdateJob')
 
         then:
-        result.output.contains('"id"')
+        notThrown(Exception)
+        result.output.contains('{"id":"jobId"}')
     }
 
     def "projectsUpdateJob should fail if job id is missing"() {
@@ -121,6 +120,7 @@ class JobUpdateTaskTests extends Specification {
         result == null
     }
 
+    @Ignore
     def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
         given:
         def mockedJobUpdateResponse = new MockResponse()
