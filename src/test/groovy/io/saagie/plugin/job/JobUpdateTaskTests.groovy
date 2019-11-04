@@ -6,6 +6,8 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
+import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
@@ -68,10 +70,6 @@ class JobUpdateTaskTests extends Specification {
                     environment = 2
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
                 job {
                     id = 'jobId'
                     name = 'Updated from gradle'
@@ -85,10 +83,11 @@ class JobUpdateTaskTests extends Specification {
         '''
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle('projectsUpdateJob')
 
         then:
-        result.output.contains('"id"')
+        notThrown(Exception)
+        result.output.contains('{"id":"jobId"}')
     }
 
     def "projectsUpdateJob should fail if job id is missing"() {
@@ -133,11 +132,6 @@ class JobUpdateTaskTests extends Specification {
         mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
         mockWebServer.enqueue(mockedJobVersionResponse)
 
-        def mockedJobFileUploadResponse = new MockResponse()
-        mockedJobFileUploadResponse.responseCode = 200
-        mockedJobFileUploadResponse.body = '''true'''
-        mockWebServer.enqueue(mockedJobFileUploadResponse)
-
         buildFile << """
             saagie {
                 server {
@@ -147,16 +141,12 @@ class JobUpdateTaskTests extends Specification {
                     environment = 4
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
                 job {
                     id = 'jobId'
                 }
                 
                 jobVersion {
-                    commandLine = "python {file} 1 2 3"
+                    commandLine = "python {file}"
                     releaseNote = "Feat: won't fail"
                     runtimeVersion = "3.6"
                     packageInfo {

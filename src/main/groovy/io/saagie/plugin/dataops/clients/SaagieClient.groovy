@@ -184,6 +184,7 @@ class SaagieClient {
         }
     }
 
+    @Deprecated
     String createProjectJob() {
         logger.info('Starting createProjectJob task')
         if (configuration?.project?.id == null ||
@@ -246,6 +247,54 @@ class SaagieClient {
         }
     }
 
+    String createProjectJobWithGraphQL() {
+        logger.info('Starting createProjectJob task')
+        if (configuration?.project?.id == null ||
+            configuration?.job?.name == null ||
+            configuration?.job?.technology == null ||
+            configuration?.job?.category == null ||
+            configuration?.jobVersion?.runtimeVersion == null ||
+            configuration?.jobVersion?.resources == null
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+        }
+
+        if (configuration.jobVersion.packageInfo?.name != null) {
+            File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
+            if (!scriptToUpload.exists()) {
+                logger.error(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
+                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
+            }
+        }
+
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
+
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
+        try {
+            client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating project job: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdJob = parsedResult.data.createJob
+                    return JsonOutput.toJson(createdJob)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in createProjectJob')
+            throw exception
+        }
+    }
+
     String runProjectJob() {
         logger.info('Starting runProjectJob task')
         if (configuration?.job?.id == null) {
@@ -280,6 +329,7 @@ class SaagieClient {
         }
     }
 
+    @Deprecated
     String updateProjectJob() {
         logger.info('Starting updateProjectJob task')
         if (configuration?.job?.id == null ||
@@ -334,6 +384,63 @@ class SaagieClient {
             logger.error('Unknown error in updateProjectJob')
             throw exception
         }
+    }
+
+    String updateProjectJobWithGraphQL() {
+        logger.info('Starting updateProjectJob task')
+        if (configuration?.job?.id == null ||
+            (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling)
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+        }
+
+        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
+
+        def returnData = null
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
+        try {
+            client.newCall(projectsUpdateJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when updating project job: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map updatedJob = parsedResult.data.editJob
+                    returnData = JsonOutput.toJson(updatedJob)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in updateProjectJob')
+            throw exception
+        }
+
+        // 2. add jobVersion id there is a jobVersion config
+        if (configuration?.jobVersion?.runtimeVersion) {
+            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+                handleErrors(updateResponse)
+                String updateResponseBody = updateResponse.body().string()
+                def updatedJobVersion = slurper.parseText(updateResponseBody)
+                if (updatedJobVersion.data == null) {
+                    def message = "Something went wrong when adding new job version: $updateResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String newJobVersion = updatedJobVersion.data.addJobVersion.number
+                    logger.info('Added new version: {}', newJobVersion)
+                }
+            }
+        }
+
+        return returnData
     }
 
     String createProjectPipelineJob() {
@@ -698,6 +805,9 @@ class SaagieClient {
             return
         }
         String body = response.body().string()
+
+        SaagieUtils.debugResponse(response)
+
         String status = "${response.code()}"
         def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
         logger.error(message)
