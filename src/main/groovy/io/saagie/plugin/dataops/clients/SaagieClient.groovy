@@ -397,6 +397,7 @@ class SaagieClient {
 
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
 
+        def returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
         try {
             client.newCall(projectsUpdateJobRequest).execute().withCloseable { response ->
@@ -409,7 +410,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map updatedJob = parsedResult.data.editJob
-                    return JsonOutput.toJson(updatedJob)
+                    returnData = JsonOutput.toJson(updatedJob)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -422,24 +423,24 @@ class SaagieClient {
         }
 
         // 2. add jobVersion id there is a jobVersion config
-        //if (configuration?.jobVersion?.runtimeVersion) {
-//            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
-//            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
-//                handleErrors(updateResponse)
-//                String updateResponseBody = updateResponse.body().string()
-//                def updatedJobVersion = slurper.parseText(updateResponseBody)
-//
-//                String newJobVersion = updatedJobVersion.data.addJobVersion.number
-//                Request uploadRequest = saagieUtils.getUploadFileToJobRequest(
-//                    configuration.job.id,
-//                    newJobVersion
-//                )
-//                client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
-//                    handleErrors(uploadResponse)
-//                    return JsonOutput.toJson(updatedJob)
-//                }
-//            }
-       // }
+        if (configuration?.jobVersion?.runtimeVersion) {
+            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+                handleErrors(updateResponse)
+                String updateResponseBody = updateResponse.body().string()
+                def updatedJobVersion = slurper.parseText(updateResponseBody)
+                if (updatedJobVersion.data == null) {
+                    def message = "Something went wrong when adding new job version: $updateResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String newJobVersion = updatedJobVersion.data.addJobVersion.number
+                    logger.info('Added new version: {}', newJobVersion)
+                }
+            }
+        }
+
+        return returnData
     }
 
     String createProjectPipelineJob() {

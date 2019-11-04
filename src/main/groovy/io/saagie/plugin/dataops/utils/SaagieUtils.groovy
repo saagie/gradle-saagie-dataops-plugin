@@ -240,15 +240,18 @@ class SaagieUtils {
         // quick hack needed because the toJson seems to update the converted object, even with a clone
         jobVersion.packageInfo.name = file.absolutePath
 
+        def nullFile = '},"file":null}'
+        def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
+
         def updateProjectJob = gq('''
             mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
                 addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
                     number
                 }
             }
-        ''', gqVariables)
+        ''', gqVariablesWithNullFile)
 
-        return buildRequestFromQuery(updateProjectJob)
+        return buildMultipartRequestFromQuery(updateProjectJob)
     }
 
     @Deprecated

@@ -120,7 +120,6 @@ class JobUpdateTaskTests extends Specification {
         result == null
     }
 
-    @Ignore
     def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
         given:
         def mockedJobUpdateResponse = new MockResponse()
@@ -133,11 +132,6 @@ class JobUpdateTaskTests extends Specification {
         mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
         mockWebServer.enqueue(mockedJobVersionResponse)
 
-        def mockedJobFileUploadResponse = new MockResponse()
-        mockedJobFileUploadResponse.responseCode = 200
-        mockedJobFileUploadResponse.body = '''true'''
-        mockWebServer.enqueue(mockedJobFileUploadResponse)
-
         buildFile << """
             saagie {
                 server {
@@ -147,16 +141,12 @@ class JobUpdateTaskTests extends Specification {
                     environment = 4
                 }
                 
-                project {
-                    id = 'projectId'
-                }
-                
                 job {
                     id = 'jobId'
                 }
                 
                 jobVersion {
-                    commandLine = "python {file} 1 2 3"
+                    commandLine = "python {file}"
                     releaseNote = "Feat: won't fail"
                     runtimeVersion = "3.6"
                     packageInfo {
