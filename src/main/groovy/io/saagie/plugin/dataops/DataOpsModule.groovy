@@ -1,20 +1,20 @@
 package io.saagie.plugin.dataops
 
-import io.saagie.plugin.dataops.tasks.ProjectArchiveJobTask
-import io.saagie.plugin.dataops.tasks.ProjectCreateJobTask
-import io.saagie.plugin.dataops.tasks.ProjectCreatePipelineTask
-import io.saagie.plugin.dataops.tasks.ProjectDeletePipelineTask
-import io.saagie.plugin.dataops.tasks.ProjectGetJobInstanceStatus
-import io.saagie.plugin.dataops.tasks.ProjectGetPipelineInstanceStatusTask
-import io.saagie.plugin.dataops.tasks.ProjectListJobsTask
-import io.saagie.plugin.dataops.tasks.ProjectListTask
-import io.saagie.plugin.dataops.tasks.ProjectListTechnologiesTask
-import io.saagie.plugin.dataops.tasks.ProjectRunJobTask
-import io.saagie.plugin.dataops.tasks.ProjectRunPipelineTask
-import io.saagie.plugin.dataops.tasks.ProjectStopJobInstanceTask
-import io.saagie.plugin.dataops.tasks.ProjectStopPipelineInstanceTask
-import io.saagie.plugin.dataops.tasks.ProjectUpdateJob
-import io.saagie.plugin.dataops.tasks.ProjectUpdatePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectArchiveJobTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectDeletePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectGetJobInstanceStatus
+import io.saagie.plugin.dataops.tasks.projects.ProjectGetPipelineInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectListJobsTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectListTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectListTechnologiesTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectRunJobTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectRunPipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectStopJobInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectStopPipelineInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
+import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import org.gradle.api.Project
 
