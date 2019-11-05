@@ -798,6 +798,34 @@ class SaagieClient {
         }
     }
 
+    String listPlatforms() {
+        logger.info('Starting stopPipelineInstance task')
+
+        Request platformListRequest = saagieUtils.getPlatformListRequest()
+        try {
+            client.newCall(platformListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.authorizations == null) {
+                    def message = "Something went wrong when getting platform list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List platformListResult = parsedResult.authorizations
+                    return JsonOutput.toJson(platformListResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in listPlatforms')
+            throw exception
+        }
+    }
+
     private handleErrors(Response response) {
         logger.debug('Checking server response')
         if (response.successful) {
