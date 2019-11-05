@@ -105,7 +105,11 @@ class SaagieUtils {
                     cronScheduling
                     scheduleStatus
                     alerting {
-                        logins
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
                         statusList
                     }
                     isStreaming
@@ -520,7 +524,7 @@ class SaagieUtils {
                 stopPipelineInstance(pipelineInstanceId: $pipelineInstanceId) {
                     id
                     status
-                }  
+                }
             }
         ''', gqVariables)
 
