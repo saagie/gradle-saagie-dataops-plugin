@@ -105,6 +105,10 @@ class SaagieUtils {
                     cronScheduling
                     scheduleStatus
                     alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
                         emails
                         statusList
                     }
@@ -169,14 +173,14 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job       : job.toMap(),
+            job: job.toMap(),
             jobVersion: jobVersion.toMap()
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
         jobVersion.packageInfo.name = file.absolutePath
 
-        // Needed bacause wa can't exlude a field from the excludeNull() rule of the JsonGenerator
+        // Needed because we can't exlude a field from the excludeNull() rule of the JsonGenerator
         def nullFile = '},"file":null}'
         def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
 
@@ -520,7 +524,7 @@ class SaagieUtils {
                 stopPipelineInstance(pipelineInstanceId: $pipelineInstanceId) {
                     id
                     status
-                }  
+                }
             }
         ''', gqVariables)
 
