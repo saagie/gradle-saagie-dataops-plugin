@@ -80,6 +80,13 @@ saagie {
 ```
 Then launch command ```gradle projectsListJobs```
 
+## Debug
+```
+gradle projectsList -w # launch in warn mode
+gradle projectsList -i # launch in info mode
+gradle projectsList -d # launch in debug mode
+```
+
 ## Documentation
 Full documentation is available on the [wiki](https://github.com/saagie/gradle-saagie-dataops-plugin/wiki)
 
