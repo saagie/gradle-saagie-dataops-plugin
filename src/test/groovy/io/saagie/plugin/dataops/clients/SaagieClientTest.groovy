@@ -1,12 +1,11 @@
 package io.saagie.plugin.dataops.clients
 
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.clients.SaagieClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
-import org.gradle.api.invocation.Gradle
-import org.gradle.api.logging.Logger
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.*
@@ -92,11 +91,11 @@ class SaagieClientTest extends Specification {
         }
 
         when:
-        new SaagieClient(badConfig)
+        new SaagieClient(badConfig, 'projectsList')
 
         then:
         InvalidUserDataException e = thrown()
-        e.message.contains('Missing params in plugin configuration')
+        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
     }
 
     def "class instance with a jwt option have to request a jwtToken"() {
@@ -117,7 +116,7 @@ class SaagieClientTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def client = new SaagieClient(config)
+        def client = new SaagieClient(config, 'projectsList')
 
         then:
         client.configuration.server.realm == 'USERREALM'
@@ -142,14 +141,14 @@ class SaagieClientTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        new SaagieClient(badConfig)
+        new SaagieClient(badConfig, 'projectsList')
 
         then:
         GradleException e = thrown()
         e.message.contains('Error 401 when requesting on http://localhost:9000:\nBad credentials')
     }
 
-    def "class instance with a config with a trailing / in the url must succeed"() {
+    def "class instance with a config with a trailing slash in the url must succeed"() {
         given:
         DataOpsExtension badConfig = new DataOpsExtension()
         badConfig.server {
@@ -167,7 +166,7 @@ class SaagieClientTest extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        SaagieClient client = new SaagieClient(badConfig)
+        SaagieClient client = new SaagieClient(badConfig, 'projectsList')
 
         then:
         !client.configuration.server.url.endsWith('/')
@@ -183,7 +182,7 @@ class SaagieClientTest extends Specification {
             {"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}
         """
         mockWebServer.enqueue(mockedResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         def projects = client.getProjects()
@@ -205,7 +204,7 @@ class SaagieClientTest extends Specification {
             {"data":{"jobs":[{"name":"test2","description":"","countJobInstance":1,"versions":[{"number":1}],"category":"Processing","technology":{"id":"djeuzhduze-c18b-4ecd-b61f-dezdezdddez","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-15T14:06:49.053Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true},{"name":"test 2.4","description":"","countJobInstance":3,"versions":[{"number":2},{"number":1}],"category":"Processing","technology":{"id":"dezddedz-26bd-4f7d-a3a5-d5dcba3935c8","label":"Spark","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-11T09:32:46.424Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}]}}
         """
         mockWebServer.enqueue(mockedResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         def jobs = client.getProjectJobs()
@@ -227,7 +226,7 @@ class SaagieClientTest extends Specification {
             {"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}
         """
         mockWebServer.enqueue(mockedResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         def technologies = client.getProjectTechnologies()
@@ -252,7 +251,7 @@ class SaagieClientTest extends Specification {
         mockedFileUploadResponse.responseCode = 200
         mockedFileUploadResponse.body = '''true'''
         mockWebServer.enqueue(mockedFileUploadResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         def createdJobConfig = client.createProjectJob()
@@ -275,7 +274,7 @@ class SaagieClientTest extends Specification {
         mockedFileUploadResponse.responseCode = 500
         mockedFileUploadResponse.body = '''true'''
         mockWebServer.enqueue(mockedFileUploadResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         def createdJobConfig = client.createProjectJob()
@@ -290,7 +289,7 @@ class SaagieClientTest extends Specification {
         given:
         enqueueToken()
 
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
         client.configuration.job.id = null
 
         when:
@@ -299,7 +298,7 @@ class SaagieClientTest extends Specification {
         then:
         InvalidUserDataException exception = thrown()
         runJobConfig == null
-        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsRunJob')
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
     }
 
     def "runProjectJob should run the provided job and return instance id of the job"() {
@@ -310,7 +309,7 @@ class SaagieClientTest extends Specification {
         mockedRunJobResponse.responseCode = 200
         mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
         mockWebServer.enqueue(mockedRunJobResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         String runJobConfig = client.runProjectJob()
@@ -327,7 +326,7 @@ class SaagieClientTest extends Specification {
         mockedRunJobResponse.responseCode = 200
         mockedRunJobResponse.body = '''{"data":{"jobInstance":{"status":"SUCCEEDED"}}}'''
         mockWebServer.enqueue(mockedRunJobResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         String getJobInstanceStatusResult = client.getJobInstanceStatus()
@@ -340,7 +339,7 @@ class SaagieClientTest extends Specification {
         given:
         enqueueToken()
 
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
         client.configuration.jobinstance.id = null
 
         when:
@@ -349,7 +348,7 @@ class SaagieClientTest extends Specification {
         then:
         InvalidUserDataException exception = thrown()
         getJobInstanceStatusResult == null
-        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsGetJobInstanceStatus')
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
     }
 
     def "getJobInstanceStatus should fail if bad response is returned"() {
@@ -360,7 +359,7 @@ class SaagieClientTest extends Specification {
         mockedRunJobResponse.responseCode = 200
         mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
         mockWebServer.enqueue(mockedRunJobResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         String getJobInstanceStatusResult = client.getJobInstanceStatus()
@@ -379,7 +378,7 @@ class SaagieClientTest extends Specification {
         mockedCreatePipelineResponse.responseCode = 200
         mockedCreatePipelineResponse.body = '''{"data":{"createPipeline":{"id":"pipeline-instance-id"}}}'''
         mockWebServer.enqueue(mockedCreatePipelineResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         String createPipelineJobConfig = client.createProjectPipelineJob()
@@ -392,7 +391,7 @@ class SaagieClientTest extends Specification {
         given:
         enqueueToken()
 
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
         client.configuration.pipelineInstance.id = null
 
         when:
@@ -401,7 +400,7 @@ class SaagieClientTest extends Specification {
         then:
         InvalidUserDataException exception = thrown()
         getPipelineInstanceStatusResult == null
-        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsGetPipelineInstanceStatus')
+        exception.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsList')
     }
 
     def "getPipelineInstanceStatus should fail if bad response is returned"() {
@@ -412,7 +411,7 @@ class SaagieClientTest extends Specification {
         mockedGetPipelineStatusResponse.responseCode = 200
         mockedGetPipelineStatusResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
         mockWebServer.enqueue(mockedGetPipelineStatusResponse)
-        client = new SaagieClient(configuration)
+        client = new SaagieClient(configuration, 'projectsList')
 
         when:
         String getPipelineInstanceStatusResult = client.getPipelineInstanceStatus()

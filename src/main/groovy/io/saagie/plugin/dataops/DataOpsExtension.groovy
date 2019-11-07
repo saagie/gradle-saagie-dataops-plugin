@@ -10,17 +10,26 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
 
+import javax.validation.constraints.NotNull
+
 @TypeChecked
 class DataOpsExtension {
+
+    @NotNull(message = 'server config cannot be empty')
     Server server = new Server()
+
     Project project = new Project()
 
     Job job = new Job()
+
     JobVersion jobVersion = new JobVersion()
+
     JobInstance jobinstance = new JobInstance()
+
     PipelineInstance pipelineInstance = new PipelineInstance()
 
     Pipeline pipeline = new Pipeline()
+
     PipelineVersion pipelineVersion = new PipelineVersion()
 
     Object server(Closure closure) {

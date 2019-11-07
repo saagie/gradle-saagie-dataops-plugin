@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('projectsStopJobInstance task tests')
 class JobStopTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsStopJobInstance'
 
     File buildFile
     File jobFile
@@ -67,7 +71,7 @@ class JobStopTaskTests extends Specification {
                     password = 'password'
                     environment = 4
                 }
-                
+
                 jobinstance {
                     id = 'job-instance-id'
                 }
@@ -75,7 +79,7 @@ class JobStopTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsStopJobInstance'
+        BuildResult result = gradle(taskName)
 
         then:
         result.output.contains('{"id":"stopped-job-id"}')
@@ -95,12 +99,13 @@ class JobStopTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsStopJobInstance'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsStopJobInstance")
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsStopJobInstance should fail if job instance doesn't exists"() {
@@ -118,7 +123,7 @@ class JobStopTaskTests extends Specification {
                     password = 'password'
                     environment = 2
                 }
-                
+
                 jobinstance {
                     id = 'bad-id'
                 }
@@ -126,11 +131,12 @@ class JobStopTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsStopJobInstance'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
         e.message.contains('Something went wrong when stopping the job instance: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

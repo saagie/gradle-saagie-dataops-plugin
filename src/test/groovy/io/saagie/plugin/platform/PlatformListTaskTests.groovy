@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('platformList task tests')
 class PlatformListTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'platformList'
 
     File buildFile
     File jobFile
@@ -78,7 +82,7 @@ class PlatformListTaskTests extends Specification {
         '''
 
         when:
-        def result = gradle 'platformList'
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
@@ -86,4 +90,25 @@ class PlatformListTaskTests extends Specification {
         result.output.contains('"platformName"')
     }
 
+    def "platformList task should fail if the jwt option is not provided"() {
+        buildFile << '''
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+            }
+        '''
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
 }

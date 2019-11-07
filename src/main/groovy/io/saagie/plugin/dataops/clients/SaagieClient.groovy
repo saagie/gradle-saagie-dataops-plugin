@@ -13,7 +13,10 @@ import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
-import static io.saagie.plugin.dataops.DataOpsModule.*
+import javax.validation.ConstraintViolation
+import javax.validation.Validation
+import javax.validation.Validator
+import javax.validation.ValidatorFactory
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -22,14 +25,21 @@ class SaagieClient {
 
     DataOpsExtension configuration
 
+    String taskName
+
     SaagieUtils saagieUtils
 
     OkHttpClient client = new OkHttpClient()
 
     JsonSlurper slurper = new JsonSlurper()
 
-    SaagieClient(DataOpsExtension configuration) {
+    ValidatorFactory factory = Validation.buildDefaultValidatorFactory()
+
+    Validator validator = factory.getValidator()
+
+    SaagieClient(DataOpsExtension configuration, String taskName) {
         this.configuration = configuration
+        this.taskName = taskName
 
         // TODO: remember to parameterize that once it will be available
         this.configuration.jobVersion.resources {
@@ -46,16 +56,17 @@ class SaagieClient {
     private checkBaseConfiguration() {
         logger.debug('Checking for a valid server configuration')
         Server server = configuration.server
-        if (server?.url == null ||
-            server?.environment == null ||
-            server?.login == null ||
-            server?.password == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TASK))
+
+        Set<ConstraintViolation<Server>> serverViolations = validator.validate(server)
+
+        if (!serverViolations.isEmpty()) {
+            for (ConstraintViolation<Server> violation : serverViolations) {
+                logger.error(violation.getMessage());
+            }
+            logger.error('Missing required params in plugin configuration, check that you have url, environment, login and password defined in your server object.')
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
-        server.url = server.url.trim()
         if (server.url.endsWith('/')) {
             server.url = server.url.substring(0, server.url.length() - 1)
         }
@@ -112,8 +123,8 @@ class SaagieClient {
     String getProjectJobs() {
         logger.info('Starting getProjectJob task')
         if (!configuration.project?.id) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_JOBS_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [project={}]', configuration.project)
@@ -146,8 +157,8 @@ class SaagieClient {
     String getProjectTechnologies() {
         logger.info('Starting getProjectTechnologies task')
         if (configuration?.project?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_LIST_TECHNOLOGIES_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [project={}]', configuration.project)
@@ -194,8 +205,8 @@ class SaagieClient {
             configuration?.jobVersion?.runtimeVersion == null ||
             configuration?.jobVersion?.resources == null
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         if (configuration.jobVersion.packageInfo?.name != null) {
@@ -256,8 +267,8 @@ class SaagieClient {
             configuration?.jobVersion?.runtimeVersion == null ||
             configuration?.jobVersion?.resources == null
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_JOB_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         if (configuration.jobVersion.packageInfo?.name != null) {
@@ -298,8 +309,8 @@ class SaagieClient {
     String runProjectJob() {
         logger.info('Starting runProjectJob task')
         if (configuration?.job?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_JOB_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [job={}]', configuration.job)
@@ -335,8 +346,8 @@ class SaagieClient {
         if (configuration?.job?.id == null ||
             configuration?.project?.id == null
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
@@ -391,8 +402,8 @@ class SaagieClient {
         if (configuration?.job?.id == null ||
             (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling)
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_JOB_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
@@ -448,8 +459,8 @@ class SaagieClient {
         if (configuration?.project?.id == null ||
             configuration?.pipeline?.name == null
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_PIPELINE_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_CREATE_PIPELINE_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, configuration.pipeline, configuration.pipelineVersion)
@@ -482,8 +493,8 @@ class SaagieClient {
     String getJobInstanceStatus() {
         logger.info('Starting getJobInstanceStatus task')
         if (configuration?.jobinstance?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_JOB_INSTANCE_STATUS))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobinstance)
@@ -521,16 +532,16 @@ class SaagieClient {
             configuration?.pipeline &&
             configuration?.pipeline?.id == null
         ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
         def pipelineResult = updatePipelineInfos();
 
         // 2. try to update pipeline version
         if (configuration?.pipelineVersion) {
             if (configuration?.pipelineVersion && configuration?.pipelineVersion?.jobs?.isEmpty()) {
-                logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
-                throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_UPDATE_PIPELINE_TASK))
+                logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+                throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             }
             updatePipelineVersion()
         }
@@ -596,8 +607,8 @@ class SaagieClient {
     String getPipelineInstanceStatus() {
         logger.info('Starting getPipelineInstanceStatus task')
         if (configuration?.pipelineInstance?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_PIPELINE_INSTANCE_STATUS))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_GET_PIPELINE_INSTANCE_STATUS))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
@@ -629,8 +640,8 @@ class SaagieClient {
     String runProjectPipeline() {
         logger.info('Starting runProjectPipeline task')
         if (configuration?.pipeline?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_PIPELINE_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_RUN_PIPELINE_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
@@ -663,8 +674,8 @@ class SaagieClient {
     String stopJobInstance() {
         logger.info('Starting stopJobInstance task')
         if (configuration?.jobinstance?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_STOP_JOB_INSTANCE_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [job={}]', configuration.job)
@@ -697,8 +708,8 @@ class SaagieClient {
     String deleteProjectPipeline() {
         logger.info('Starting deleteProjectPipeline task')
         if (configuration?.pipeline?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_DELETE_PIPELINE_TASK))
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
@@ -731,9 +742,9 @@ class SaagieClient {
 
     String archiveProjectJob() {
         logger.info('Starting archiveProjectJob task')
-        if (configuration?.job?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECT_ARCHIVE_JOB_TASK))
+        if (configuration?.job?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [jobId={}]', configuration.job.id)
@@ -766,9 +777,9 @@ class SaagieClient {
 
     String stopPipelineInstance() {
         logger.info('Starting stopPipelineInstance task')
-        if (configuration?.pipelineInstance?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_STOP_PIPELINE_INSTANCE))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', PROJECTS_STOP_PIPELINE_INSTANCE))
+        if (configuration?.pipelineInstance?.id == null) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
@@ -800,6 +811,13 @@ class SaagieClient {
 
     String listPlatforms() {
         logger.info('Starting stopPipelineInstance task')
+        if (
+            !configuration.server?.jwt ||
+            !configuration.server?.realm
+        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+        }
 
         Request platformListRequest = saagieUtils.getPlatformListRequest()
         try {

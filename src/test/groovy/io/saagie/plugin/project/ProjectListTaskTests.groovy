@@ -17,6 +17,7 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class ProjectListTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsList'
 
     File buildFile
     File jobFile
@@ -74,7 +75,7 @@ class ProjectListTaskTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectsList'
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown()
@@ -100,7 +101,7 @@ class ProjectListTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsList'
+        BuildResult result = gradle(taskName)
 
         then:
         UnexpectedBuildFailure e = thrown()
@@ -128,7 +129,7 @@ class ProjectListTaskTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle ('projectsList', '-d')
+        BuildResult result = gradle (taskName, '-d')
 
         then:
         !result.output.contains('"data"')

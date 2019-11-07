@@ -1,6 +1,10 @@
 val junitVersion = "5.5.1"
 val okthttp = "4.2.2"
 val apacheTika = "1.22"
+val validationApiVersion = "2.0.0.Final"
+val hibernateValidatorVersion = "6.0.2.Final"
+val javaxElVersion = "3.0.0"
+val glassfishElVersion = "2.2.6"
 
 val nexusUsername: String by project
 val nexusPassword: String by project
@@ -39,6 +43,11 @@ dependencies {
     compileOnly(gradleApi())
     implementation("com.squareup.okhttp3:okhttp:$okthttp")
     compile("org.apache.tika", "tika-core", apacheTika)
+    implementation("javax.validation:validation-api:$validationApiVersion")
+    implementation("org.hibernate.validator:hibernate-validator:$hibernateValidatorVersion")
+    implementation("org.hibernate.validator:hibernate-validator-annotation-processor:$hibernateValidatorVersion")
+    implementation("javax.el:javax.el-api:$javaxElVersion")
+    implementation("org.glassfish.web:javax.el:$glassfishElVersion")
 
     testImplementation(gradleTestKit())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.4")

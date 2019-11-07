@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-@Title('projectsCreatePipelineJob task tests')
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
+@Title('projectsCreatePipeline task tests')
 class PipelineCreateTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsCreatePipeline'
 
     File buildFile
     File jobFile
@@ -67,15 +71,15 @@ class PipelineCreateTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
                     id = 'projectId'
                 }
-                
+
                 pipeline {
                     name = 'Pipeline name'
                 }
-                
+
                 pipelineVersion {
                     releaseNote = 'Release note'
                     jobs = ['jobId-1', 'jobId-2']
@@ -84,7 +88,7 @@ class PipelineCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsCreatePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
         result.output.contains('{"id":"pipeline-instance-id"}')
@@ -100,7 +104,7 @@ class PipelineCreateTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
                     id = 'projectId'
                 }
@@ -108,11 +112,13 @@ class PipelineCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsCreatePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
         result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsCreatePipelineJob should fail if there is already a pipeline with the same name"() {
@@ -130,15 +136,15 @@ class PipelineCreateTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
                     id = 'projectId'
                 }
-                
+
                 pipeline {
                     name = 'Pipeline name already used'
                 }
-                
+
                 pipelineVersion {
                     releaseNote = 'Release note'
                     jobs = ['jobId-1', 'jobId-2']
@@ -147,11 +153,12 @@ class PipelineCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsCreatePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
+        result == null
         e.message.contains('{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"locations":null,"errorType":"ValidationError","message":"Pipeline not valid","path":null,"localizedMessage":"Pipeline not valid","suppressed":[]}]}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
-
 }
