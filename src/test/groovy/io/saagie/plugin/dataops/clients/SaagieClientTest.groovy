@@ -119,7 +119,7 @@ class SaagieClientTest extends Specification {
         def client = new SaagieClient(config, 'projectsList')
 
         then:
-        client.configuration.server.realm == 'USERREALM'
+        client.configuration.server.realm == 'userrealm'
         client.configuration.server.token == 'a very long token'
     }
 
