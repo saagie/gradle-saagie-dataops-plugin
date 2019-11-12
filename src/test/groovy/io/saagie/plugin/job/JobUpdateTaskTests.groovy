@@ -4,18 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Ignore
-import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
+
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsUpdateJob task tests')
 class JobUpdateTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsUpdateJob'
 
     File buildFile
     File jobFile
@@ -69,7 +71,7 @@ class JobUpdateTaskTests extends Specification {
                     password = 'password'
                     environment = 2
                 }
-                
+
                 job {
                     id = 'jobId'
                     name = 'Updated from gradle'
@@ -83,7 +85,7 @@ class JobUpdateTaskTests extends Specification {
         '''
 
         when:
-        BuildResult result = gradle('projectsUpdateJob')
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
@@ -100,7 +102,7 @@ class JobUpdateTaskTests extends Specification {
                     password = 'password'
                     environment = 2
                 }
-                
+
                 job {
                     name = 'Updated from gradle'
                     description = 'updated description'
@@ -113,11 +115,13 @@ class JobUpdateTaskTests extends Specification {
         '''
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
         result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
@@ -140,11 +144,11 @@ class JobUpdateTaskTests extends Specification {
                     password = 'password'
                     environment = 4
                 }
-                
+
                 job {
                     id = 'jobId'
                 }
-                
+
                 jobVersion {
                     commandLine = "python {file}"
                     releaseNote = "Feat: won't fail"
@@ -157,7 +161,7 @@ class JobUpdateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsUpdateJob'
+        BuildResult result = gradle(taskName)
 
         then:
         result.output.contains('"id"')

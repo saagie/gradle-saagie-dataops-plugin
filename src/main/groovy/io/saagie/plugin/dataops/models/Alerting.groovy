@@ -1,6 +1,7 @@
 package io.saagie.plugin.dataops.models
 
 class Alerting implements IMapable {
+    @Deprecated
     List<String> emails = []
     List<String> logins = []
     List<String> statusList = []
@@ -8,8 +9,12 @@ class Alerting implements IMapable {
     @Override
     Map toMap() {
         if (emails.empty || logins.empty || statusList.empty) return null
+
+        if (emails) {
+            logins = emails
+        }
+
         return [
-            emails    : emails,
             logins    : logins,
             statusList: statusList
         ]

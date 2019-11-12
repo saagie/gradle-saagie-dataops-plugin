@@ -13,10 +13,11 @@ import spock.lang.Title
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsListJob task tests')
+@Title('projectsListJobs task tests')
 class JobListTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsListJobs'
 
     File buildFile
     File jobFile
@@ -68,7 +69,7 @@ class JobListTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
                     id = 'projectId'
                 }
@@ -77,7 +78,7 @@ class JobListTaskTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectsListJobs'
+        BuildResult result = gradle(taskName)
 
         then:
         !result.output.contains('"data"')
@@ -96,20 +97,21 @@ class JobListTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
-                
+
                 }
             }
         """
 
         when:
-        gradle 'projectsListJobs'
+        BuildResult result = gradle(taskName)
 
         then:
         UnexpectedBuildFailure e = thrown()
-        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsListJobs')
-        e.getBuildResult().task(':projectsListJobs').outcome == FAILED
+        result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsListJobs task should fail if a wrong project id is provided"() {
@@ -126,7 +128,7 @@ class JobListTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 project {
                     id = 'wrong id'
                 }
@@ -135,11 +137,12 @@ class JobListTaskTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        gradle 'projectsListJobs'
+        BuildResult result = gradle(taskName)
 
         then:
         UnexpectedBuildFailure e = thrown()
-        e.message.contains('Something went wrong when getting project jobs: ')
-        e.getBuildResult().task(':projectsListJobs').outcome == FAILED
+        result == null
+        e.message.contains('Something went wrong when getting project jobs: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

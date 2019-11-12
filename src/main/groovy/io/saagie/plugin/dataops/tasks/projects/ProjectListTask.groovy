@@ -9,11 +9,14 @@ import org.gradle.api.tasks.TaskAction
 
 class ProjectListTask extends DefaultTask {
     @Input DataOpsExtension configuration
+
+    @Input String taskName
+
     @Internal SaagieClient saagieClient
 
     @TaskAction
     def projectList() {
-        saagieClient = new SaagieClient(configuration)
+        saagieClient = new SaagieClient(configuration, taskName)
         logger.quiet(saagieClient.getProjects())
     }
 }

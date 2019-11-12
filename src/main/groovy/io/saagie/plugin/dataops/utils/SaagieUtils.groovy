@@ -105,6 +105,10 @@ class SaagieUtils {
                     cronScheduling
                     scheduleStatus
                     alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
                         emails
                         statusList
                     }
@@ -520,7 +524,7 @@ class SaagieUtils {
                 stopPipelineInstance(pipelineInstanceId: $pipelineInstanceId) {
                     id
                     status
-                }  
+                }
             }
         ''', gqVariables)
 
@@ -619,7 +623,6 @@ class SaagieUtils {
         String jwtToken = server.token
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
-
         return new Request.Builder()
             .url("${configuration.server.url}/security/api/rights")
             .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=$jwtToken")

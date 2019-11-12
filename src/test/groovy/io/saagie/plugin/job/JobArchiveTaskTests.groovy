@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('projectsArchiveJob task tests')
 class JobArchiveTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsArchiveJob'
 
     File buildFile
     File jobFile
@@ -75,7 +79,7 @@ class JobArchiveTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsArchiveJob'
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
@@ -97,12 +101,13 @@ class JobArchiveTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsArchiveJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsArchiveJob')
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsArchiveJob should fail if job id doesn't exists"() {
@@ -120,7 +125,7 @@ class JobArchiveTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 job {
                     id = 'bad-id'
                 }
@@ -128,12 +133,12 @@ class JobArchiveTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsArchiveJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
         e.message.contains('Something went wrong when archiving job: {"data":{"archiveJob":null},"errors":[{"cause":null,"extensions":{"job":"NOT_EXISTS"},"errorType":"ValidationError","locations":null,"message":"Job not valid","path":null,"localizedMessage":"Job not valid","suppressed":[]}]}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
-
 }

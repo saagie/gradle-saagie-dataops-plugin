@@ -10,6 +10,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('projectsGetJobInstanceStatus task tests')
 class JobGetInstanceStatusTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
