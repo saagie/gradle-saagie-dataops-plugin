@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('projectsRunJob task tests')
 class JobRunTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsRunJob'
 
     File buildFile
     File jobFile
@@ -75,7 +79,7 @@ class JobRunTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsRunJob'
+        BuildResult result = gradle(taskName)
 
         then:
         !result.output.contains('"data"')
@@ -97,11 +101,13 @@ class JobRunTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsRunJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
         result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsRunJob should fail if job id doesn't exists"() {
@@ -119,7 +125,7 @@ class JobRunTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
-                
+
                 job {
                     id = 'bad-id'
                 }
@@ -127,10 +133,12 @@ class JobRunTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsRunJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
         result == null
+        e.message.contains('Something went wrong when requesting the job to run: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

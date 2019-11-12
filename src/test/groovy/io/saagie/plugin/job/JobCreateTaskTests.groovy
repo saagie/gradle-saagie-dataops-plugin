@@ -4,18 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Ignore
-import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
+
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsCreateJob task tests')
 class JobCreateTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsCreateJob'
 
     File buildFile
     File jobFile
@@ -88,11 +90,13 @@ class JobCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsCreateJob'
+        BuildResult result = gradle(taskName)
 
         then:
-        thrown(Exception)
+        UnexpectedBuildFailure e = thrown()
         result == null
+        e.message.contains("Check that there is a file to upload in 'bad/path/to-file.sh'. Be sure that 'bad/path/to-file.sh' is a correct file path.")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsCreateJob should fail if the job name is already taken"() {
@@ -133,12 +137,13 @@ class JobCreateTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle ('projectsCreateJob')
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('''{"errors":[{"message":"Job not valid","extensions":{"name":"already used","classification":"ValidationError"}}],"data":null}''')
+        e.message.contains('Something went wrong when creating project job: {"errors":[{"message":"Job not valid","extensions":{"name":"already used","classification":"ValidationError"}}],"data":null}')
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsCreateJob should create job and upload a file"() {
@@ -178,7 +183,7 @@ class JobCreateTaskTests extends Specification {
         """
 
         when:
-        def result = gradle('projectsCreateJob')
+        def result = gradle(taskName)
 
         then:
         notThrown(Exception)

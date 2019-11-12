@@ -4,16 +4,20 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title('projectsDeletePipeline task tests')
 class PipelineDeleteTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsDeletePipeline'
 
     File buildFile
     File jobFile
@@ -75,7 +79,7 @@ class PipelineDeleteTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsDeletePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
@@ -97,12 +101,13 @@ class PipelineDeleteTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsDeletePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/projectsDeletePipeline')
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "projectsDeletePipeline should fail if pipeline id doesn't exists"() {
@@ -120,7 +125,7 @@ class PipelineDeleteTaskTests extends Specification {
                     password = 'password'
                     environment = 2
                 }
-                
+
                 pipeline {
                     id = 'bad-id'
                 }
@@ -128,12 +133,12 @@ class PipelineDeleteTaskTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle 'projectsDeletePipeline'
+        BuildResult result = gradle(taskName)
 
         then:
-        Exception e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
         e.message.contains('Something went wrong when deleting pipeline: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
-
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

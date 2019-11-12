@@ -51,7 +51,7 @@ class DataOpsPluginTest extends Specification {
         gradle(true, arguments)
     }
 
-    def "./gradlew tasks should show all tasks under a Saagie group"() {
+    def "gradle tasks should show all tasks under a Saagie group"() {
         given:
         buildFile << """
             saagie {
@@ -83,5 +83,27 @@ class DataOpsPluginTest extends Specification {
         result.output.contains 'projectsUpdatePipeline - update a pipeline'
         result.output.contains 'projectsUpdateJob - update a existing job in a project'
         result.output.contains 'platformList - list available platforms'
+    }
+
+    def "all requests must fail if none of the required params are not provided"() {
+        given:
+        buildFile << '''
+            saagie {
+                server {
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                }
+            }
+        '''
+
+        when:
+        def result = gradle 'platformList'
+
+        then:
+        Exception e = thrown()
+        result == null
+        e.message.contains('environment cannot be empty')
+        e.message.contains('url cannot be empty')
+        e.message.contains('Missing required params in plugin configuration, check that you have url, environment, login and password defined in your server object.')
     }
 }

@@ -10,10 +10,13 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
 @Title("projectsListTechnologies task tests")
 class TechnologyTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String taskName = 'projectsListTechnologies'
 
     File buildFile
     File jobFile
@@ -74,7 +77,7 @@ class TechnologyTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectsListTechnologies'
+        def result = gradle(taskName)
 
         then:
         !result.output.contains('"data"')
@@ -82,7 +85,7 @@ class TechnologyTests extends Specification {
         result.output.contains('"features"')
     }
 
-    def "listed technologies should not whow duplicated entries"() {
+    def "listed technologies should not show duplicated entries"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
@@ -104,7 +107,7 @@ class TechnologyTests extends Specification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        def result = gradle 'projectsListTechnologies'
+        def result = gradle(taskName)
 
         then:
         result.output.count('bash-id') == 1
