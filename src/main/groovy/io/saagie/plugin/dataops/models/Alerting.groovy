@@ -19,7 +19,6 @@ class Alerting implements IMapable {
         if ((emails.empty && logins.empty) || statusList.empty) return null
 
         if (emails && (!logins || logins.empty)) {
-            logger.warn('[Deprecation warning] You should use the field logins instead of emails')
             return [
                 emails    : emails,
                 statusList: statusList
