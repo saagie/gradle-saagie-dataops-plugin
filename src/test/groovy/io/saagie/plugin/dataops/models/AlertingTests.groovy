@@ -24,7 +24,7 @@ class AlertingTests extends Specification {
         mappedResult.statusList == statusList
     }
 
-    def "given an email list, the toMap method should return a list of logins"() {
+    def "given an email list, the toMap method should return a list of emails"() {
         given:
         def emails = ['email@mail.com']
         def statusList = ['FAILED']
@@ -37,7 +37,30 @@ class AlertingTests extends Specification {
         Map mappedResult = alerting.toMap()
 
         then:
-        mappedResult.logins == emails
+        notThrown(Exception)
+        mappedResult.logins == null
+        mappedResult.emails == emails
+        mappedResult.statusList == statusList
+    }
+
+    def "given an email list and a logins list, the toMap method should use logins"() {
+        given:
+        def emails = ['email@mail.com']
+        def logins = ['login.test']
+        def statusList = ['FAILED']
+        Alerting alerting = new Alerting(
+            emails:     emails,
+            logins:     logins,
+            statusList: statusList
+        )
+
+        when:
+        Map mappedResult = alerting.toMap()
+
+        then:
+        notThrown(Exception)
+        mappedResult.emails == null
+        mappedResult.logins == logins
         mappedResult.statusList == statusList
     }
 }

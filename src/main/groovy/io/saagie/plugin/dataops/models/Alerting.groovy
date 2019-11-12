@@ -18,10 +18,12 @@ class Alerting implements IMapable {
     Map toMap() {
         if ((emails.empty && logins.empty) || statusList.empty) return null
 
-        if (emails) {
+        if (emails && (!logins || logins.empty)) {
             logger.warn('[Deprecation warning] You should use the field logins instead of emails')
-            logger.warn('[Deprecation warning] Using logins with the content of emails')
-            logins = emails
+            return [
+                emails    : emails,
+                statusList: statusList
+            ]
         }
 
         return [
