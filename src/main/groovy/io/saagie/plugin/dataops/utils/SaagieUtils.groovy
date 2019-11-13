@@ -533,11 +533,14 @@ class SaagieUtils {
 
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
-        new Request.Builder()
+        Request newRequest = new Request.Builder()
             .url("${configuration.server.url}/data-fabric/api/auth")
             .addHeader('Authorization', getCredentials())
             .get()
             .build()
+
+        debugRequest(newRequest)
+        return newRequest
     }
 
     Request getStopJobInstanceRequest() {
@@ -588,11 +591,12 @@ class SaagieUtils {
             .build()
 
         Server server = configuration.server
+        Request newRequest
         if (server.jwt) {
             logger.debug('Generating graphql request with JWT auth...')
             def realm = server.realm
             def jwtToken = server.token
-            return new Request.Builder()
+            newRequest = new Request.Builder()
                 .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/graphql")
                 .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
                 .addHeader("Accept", "application/json")
@@ -601,57 +605,62 @@ class SaagieUtils {
                 .build()
         } else {
             logger.debug('Generating graphql request with basic auth...')
-            Request newRequest = new Request.Builder()
+            newRequest = new Request.Builder()
                 .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
                 .addHeader('Authorization', getCredentials())
                 .addHeader("Accept", "application/json")
                 .addHeader("Content-Type", "multipart/form-data")
                 .post(body)
                 .build()
-
-            debugRequest(newRequest)
-
-            return newRequest
         }
+        debugRequest(newRequest)
+        return newRequest
     }
 
     Request getPlatformListRequest() {
         Server server = configuration.server
         logger.debug('Generating request in order to get access rights by platforms')
 
-        String realm = server.realm.toLowerCase()
+        String realm = server.realm
         String jwtToken = server.token
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
-        return new Request.Builder()
+        Request newRequest = new Request.Builder()
             .url("${configuration.server.url}/security/api/rights")
-            .addHeader('Cookie', "SAAGIETOKEN${realm}=${jwtToken}")
-            .addHeader('Saagie-Realm', realm)
+            .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=${jwtToken}")
+            .addHeader('Saagie-Realm', realm.toLowerCase())
             .get()
             .build()
+
+        debugRequest(newRequest)
+        return newRequest
     }
 
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
-        RequestBody body = RequestBody.create(JSON, query)
+        RequestBody body = RequestBody.create(query, JSON)
         Server server = configuration.server
+        Request newRequest;
         if (server.jwt) {
             logger.debug('Generating graphql request with JWT auth...')
             def realm = server.realm
             def jwtToken = server.token
-            return new Request.Builder()
+            newRequest = new Request.Builder()
                 .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/graphql")
                 .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
                 .post(body)
                 .build()
         } else {
             logger.debug('Generating graphql request with basic auth...')
-            return new Request.Builder()
+            newRequest = new Request.Builder()
                 .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
                 .addHeader('Authorization', getCredentials())
                 .post(body)
                 .build()
         }
+
+        debugRequest(newRequest)
+        return newRequest
     }
 
     private String getCredentials() {
@@ -673,11 +682,13 @@ class SaagieUtils {
         logger.debug("${request.method} ${request.url.url().path}")
         logger.debug("Host: ${request.url.url().host}")
         request.headers().names().each { logger.debug("${it}: ${request.headers().get(it)}") }
-        logger.debug("Content-Length: ${request.body().contentLength()}")
+        if (request.body()) {
+            logger.debug("Content-Length: ${request.body().contentLength()}")
 
-        final Buffer buffer = new Buffer()
-        request.body().writeTo(buffer)
-        logger.debug(buffer.readUtf8())
+            final Buffer buffer = new Buffer()
+            request.body().writeTo(buffer)
+            logger.debug(buffer.readUtf8())
+        }
     }
 
     static debugResponse(Response response) {

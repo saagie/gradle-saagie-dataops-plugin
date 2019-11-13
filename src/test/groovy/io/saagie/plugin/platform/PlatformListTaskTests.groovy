@@ -11,6 +11,7 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Ignore
+import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
@@ -116,7 +117,7 @@ class PlatformListTaskTests extends Specification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "platformList task should use a lowercased realm"() {
+    def "platformList task should use a realm"() {
         DataOpsExtension configuration = new DataOpsExtension()
         configuration.server {
             url = 'http://localhost:9000'
@@ -132,10 +133,10 @@ class PlatformListTaskTests extends Specification {
 
         then:
         req.header('Cookie') != null
-        req.header('Cookie').contains("SAAGIETOKEN${configuration.server.realm.toLowerCase()}")
+        req.header('Cookie').contains("SAAGIETOKEN${configuration.server.realm.toUpperCase()}")
     }
 
-    def "platformList should have a Saagie-Realm header set to the realm value"() {
+    def "platformList should have a Saagie-Realm header set to the lowered cased realm value"() {
         given:
         DataOpsExtension configuration = new DataOpsExtension()
         configuration.server {
