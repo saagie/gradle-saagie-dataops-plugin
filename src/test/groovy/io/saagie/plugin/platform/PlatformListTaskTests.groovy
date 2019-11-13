@@ -1,5 +1,8 @@
 package io.saagie.plugin.platform
 
+import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.utils.SaagieUtils
+import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
@@ -7,6 +10,7 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
@@ -110,5 +114,43 @@ class PlatformListTaskTests extends Specification {
         result == null
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "platformList task should use a lowercased realm"() {
+        DataOpsExtension configuration = new DataOpsExtension()
+        configuration.server {
+            url = 'http://localhost:9000'
+            login = 'user'
+            password = 'password'
+            jwt = true
+            realm = 'UserRealm' // for test only
+        }
+        SaagieUtils saagieUtils = new SaagieUtils(configuration)
+
+        when:
+        Request req = saagieUtils.getPlatformListRequest()
+
+        then:
+        req.header('Cookie') != null
+        req.header('Cookie').contains("SAAGIETOKEN${configuration.server.realm.toLowerCase()}")
+    }
+
+    def "platformList should have a Saagie-Realm header set to the realm value"() {
+        given:
+        DataOpsExtension configuration = new DataOpsExtension()
+        configuration.server {
+            url = 'http://localhost:9000'
+            login = 'user'
+            password = 'password'
+            jwt = true
+            realm = 'UserRealm' // For test
+        }
+        SaagieUtils saagieUtils = new SaagieUtils(configuration)
+
+        when:
+        Request req = saagieUtils.getPlatformListRequest()
+
+        then:
+        req.header('Saagie-Realm') == configuration.server.realm.toLowerCase()
     }
 }

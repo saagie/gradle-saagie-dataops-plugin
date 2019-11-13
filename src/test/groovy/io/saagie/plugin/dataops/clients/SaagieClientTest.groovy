@@ -1,7 +1,6 @@
 package io.saagie.plugin.dataops.clients
 
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.clients.SaagieClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.api.GradleException
@@ -119,7 +118,7 @@ class SaagieClientTest extends Specification {
         def client = new SaagieClient(config, 'projectsList')
 
         then:
-        client.configuration.server.realm == 'userrealm'
+        client.configuration.server.realm == 'USERREALM'
         client.configuration.server.token == 'a very long token'
     }
 
@@ -422,4 +421,17 @@ class SaagieClientTest extends Specification {
         exception.message.contains('Something went wrong when requesting pipeline instance status: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
     }
 
+    def "realm must be uppercased"() {
+        given:
+        enqueueToken()
+        configuration.server.realm = 'userrealm'
+        configuration.server.jwt = true
+
+        when:
+        client = new SaagieClient(configuration, 'projectsList')
+
+        then:
+        notThrown(Exception)
+        client.configuration.server.realm == 'USERREALM'
+    }
 }

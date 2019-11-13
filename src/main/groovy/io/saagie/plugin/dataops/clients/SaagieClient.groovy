@@ -79,6 +79,7 @@ class SaagieClient {
                 String customerRealm = urlWithoutPrefix.split('-')[0]
                 configuration.server.realm = customerRealm
             }
+            configuration.server.realm = configuration.server.realm.toUpperCase()
             logger.debug('Using {} as customer realm', configuration.server.realm)
 
             logger.debug('Starting jwt authentication')

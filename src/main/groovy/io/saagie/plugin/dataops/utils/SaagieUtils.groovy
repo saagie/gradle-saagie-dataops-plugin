@@ -619,13 +619,13 @@ class SaagieUtils {
         Server server = configuration.server
         logger.debug('Generating request in order to get access rights by platforms')
 
-        String realm = server.realm
+        String realm = server.realm.toLowerCase()
         String jwtToken = server.token
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
         return new Request.Builder()
             .url("${configuration.server.url}/security/api/rights")
-            .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=$jwtToken")
+            .addHeader('Cookie', "SAAGIETOKEN${realm}=${jwtToken}")
             .addHeader('Saagie-Realm', realm)
             .get()
             .build()
