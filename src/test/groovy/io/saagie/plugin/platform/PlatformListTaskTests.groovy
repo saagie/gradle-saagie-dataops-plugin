@@ -79,7 +79,6 @@ class PlatformListTaskTests extends Specification {
                     url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
-                    environment = 2
                     realm = 'saagie'
                     jwt = true
                 }
@@ -102,7 +101,6 @@ class PlatformListTaskTests extends Specification {
                     url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
-                    environment = 2
                 }
             }
         '''
