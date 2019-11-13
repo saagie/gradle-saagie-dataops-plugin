@@ -373,14 +373,14 @@ class SaagieUtils {
     }
 
     Request getProjectPipelineInstanceStatusRequest() {
-        PipelineInstance pipelineInstance = configuration.pipelineInstance
-        logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineInstance.id)
+        PipelineInstance pipelineinstance = configuration.pipelineinstance
+        logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineinstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ id: pipelineInstance.id ])
+        def gqVariables = jsonGenerator.toJson([ id: pipelineinstance.id ])
 
         def getPipelineInstanceStatus = gq('''
             query getPipelineInstanceStatus($id: UUID!) {
@@ -508,15 +508,15 @@ class SaagieUtils {
     }
 
     Request getProjectStopPipelineInstanceRequest() {
-        PipelineInstance pipelineInstance = configuration.pipelineInstance
-        logger.debug('Generating getProjectStopPipelineInstanceRequest [pipelineInstanceId={}]', pipelineInstance.id)
+        PipelineInstance pipelineinstance = configuration.pipelineinstance
+        logger.debug('Generating getProjectStopPipelineInstanceRequest [pipelineinstanceId={}]', pipelineinstance.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            pipelineInstanceId: pipelineInstance.id
+            pipelineInstanceId: pipelineinstance.id
         ])
 
         def getJobInstanceStatus = gq('''
