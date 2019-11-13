@@ -72,7 +72,7 @@ class PipelineGetInstanceStatusTaskTests extends Specification {
                     environment = 2
                 }
 
-                pipelineInstance {
+                pipelineinstance {
                     id = "pipelineInstanceId"
                 }
             }

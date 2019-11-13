@@ -606,12 +606,12 @@ class SaagieClient {
 
     String getPipelineInstanceStatus() {
         logger.info('Starting getPipelineInstanceStatus task')
-        if (configuration?.pipelineInstance?.id == null) {
+        if (configuration?.pipelineinstance?.id == null) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
-        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
+        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
         Request projectPipelineInstanceStatusRequest = saagieUtils.getProjectPipelineInstanceStatusRequest()
         try {
             client.newCall(projectPipelineInstanceStatusRequest).execute().withCloseable { response ->
@@ -777,12 +777,12 @@ class SaagieClient {
 
     String stopPipelineInstance() {
         logger.info('Starting stopPipelineInstance task')
-        if (configuration?.pipelineInstance?.id == null) {
+        if (configuration?.pipelineinstance?.id == null) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
 
-        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineInstance.id)
+        logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
 
         Request projectStopPipelineInstanceRequest = saagieUtils.getProjectStopPipelineInstanceRequest()
         try {

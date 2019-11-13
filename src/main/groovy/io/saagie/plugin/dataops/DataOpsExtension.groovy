@@ -26,7 +26,7 @@ class DataOpsExtension {
 
     JobInstance jobinstance = new JobInstance()
 
-    PipelineInstance pipelineInstance = new PipelineInstance()
+    PipelineInstance pipelineinstance = new PipelineInstance()
 
     Pipeline pipeline = new Pipeline()
 
@@ -60,7 +60,7 @@ class DataOpsExtension {
         pipelineVersion.with(closure)
     }
 
-    Object pipelineInstance(Closure closure) {
-        pipelineInstance.with(closure)
+    Object pipelineinstance(Closure closure) {
+        pipelineinstance.with(closure)
     }
 }
