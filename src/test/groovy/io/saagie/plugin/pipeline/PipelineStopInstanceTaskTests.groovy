@@ -72,7 +72,7 @@ class PipelineStopInstanceTaskTests extends Specification {
                     environment = 2
                 }
 
-                pipelineInstance {
+                pipelineinstance {
                     id = 'pipeline-instance-id'
                 }
             }
@@ -126,7 +126,7 @@ class PipelineStopInstanceTaskTests extends Specification {
                     environment = 2
                 }
 
-                pipelineInstance {
+                pipelineinstance {
                     id = 'pipeline-instance-id'
                 }
 

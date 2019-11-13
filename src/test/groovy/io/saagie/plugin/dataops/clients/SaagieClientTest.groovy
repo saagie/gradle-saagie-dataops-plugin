@@ -63,7 +63,7 @@ class SaagieClientTest extends Specification {
             releaseNote = 'Release note'
             jobs = ['jobId-1', 'jobId-2']
         }
-        configuration.pipelineInstance {
+        configuration.pipelineinstance {
             id = 'pipelineInstanceId'
         }
     }
@@ -391,7 +391,7 @@ class SaagieClientTest extends Specification {
         enqueueToken()
 
         client = new SaagieClient(configuration, 'projectsList')
-        client.configuration.pipelineInstance.id = null
+        client.configuration.pipelineinstance.id = null
 
         when:
         String getPipelineInstanceStatusResult = client.getPipelineInstanceStatus()
