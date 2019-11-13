@@ -102,7 +102,6 @@ class DataOpsPluginTest extends Specification {
         then:
         Exception e = thrown()
         result == null
-        e.message.contains('environment cannot be empty')
         e.message.contains('url cannot be empty')
         e.message.contains('Missing required params in plugin configuration, check that you have url, environment, login and password defined in your server object.')
     }

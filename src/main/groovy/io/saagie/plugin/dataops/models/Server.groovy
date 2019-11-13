@@ -15,7 +15,6 @@ class Server {
     @NotNull(message = 'password cannot be null')
     String password
 
-    @NotBlank(message = 'environment cannot be empty')
     String environment
 
     String proxyHost = null
