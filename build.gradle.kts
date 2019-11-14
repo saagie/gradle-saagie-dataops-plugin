@@ -5,6 +5,7 @@ val validationApiVersion = "2.0.0.Final"
 val hibernateValidatorVersion = "6.0.2.Final"
 val javaxElVersion = "3.0.0"
 val glassfishElVersion = "2.2.6"
+val byteBuddyVersion = "1.10.3"
 
 val nexusUsername: String by project
 val nexusPassword: String by project
@@ -48,6 +49,7 @@ dependencies {
     implementation("org.hibernate.validator:hibernate-validator-annotation-processor:$hibernateValidatorVersion")
     implementation("javax.el:javax.el-api:$javaxElVersion")
     implementation("org.glassfish.web:javax.el:$glassfishElVersion")
+    implementation("net.bytebuddy:byte-buddy:$byteBuddyVersion")
 
     testImplementation(gradleTestKit())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.4")

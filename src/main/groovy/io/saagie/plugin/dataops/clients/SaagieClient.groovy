@@ -400,7 +400,8 @@ class SaagieClient {
     String updateProjectJobWithGraphQL() {
         logger.info('Starting updateProjectJob task')
         if (configuration?.job?.id == null ||
-            (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling)
+            (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling) ||
+            (configuration?.jobVersion?.exists() && !configuration?.jobVersion?.runtimeVersion)
         ) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
