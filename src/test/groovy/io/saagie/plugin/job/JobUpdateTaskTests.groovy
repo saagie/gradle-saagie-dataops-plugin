@@ -1,6 +1,9 @@
 package io.saagie.plugin.job
 
+import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
@@ -172,6 +175,7 @@ class JobUpdateTaskTests extends Specification {
         given:
         JobVersion jobVersion = new JobVersion()
         jobVersion.with {
+            runtimeVersion = '1'
             releaseNote = 'release note'
             volume = []
             exposedPorts = []
@@ -184,4 +188,36 @@ class JobUpdateTaskTests extends Specification {
         jobVersionMap.volume == null
         jobVersionMap.exposedPorts == null
     }
+
+    def "projectsUpdateJob should fail if jobVersion is provided without a runtimeVersion"() {
+        given: "Build file without jobVersion.runtimeVersion"
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 4
+                }
+
+                job {
+                    id = 'jobId'
+                }
+
+                jobVersion {
+                    releaseNote = 'test release note'
+                }
+            }
+        """
+
+        when: "gradle ${taskName}"
+        BuildResult result = gradle(taskName)
+
+        then: "Expect an error to be thrown, and a link to the corresponding task doc"
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
 }
