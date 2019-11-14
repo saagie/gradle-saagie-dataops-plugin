@@ -597,12 +597,6 @@ class SaagieUtils {
         logger.debug('Generating multipart request from query="{}"', query)
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileName = file.name
-        Tika tika = new Tika()
-
-        String mimeType = tika.detect(file)
-        logger.debug('Mime type: {}', mimeType)
-
-        def fileType = MediaType.parse(mimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -610,7 +604,7 @@ class SaagieUtils {
             .build()
 
         def map = jsonGenerator.toJson([ "0": ["variables.file"] ])
-        def fileBody = RequestBody.create(file, fileType)
+        def fileBody = RequestBody.create(file, MediaType.parse('application/octet-stream'))
 
         RequestBody body = new MultipartBody.Builder("--graphql-multipart-upload-boundary-85763456--")
             .setType(MultipartBody.FORM)
