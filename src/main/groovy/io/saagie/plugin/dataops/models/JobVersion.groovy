@@ -48,7 +48,6 @@ class JobVersion implements IMapable, IExists {
                 volume             : volume ? volume : null,
                 usePreviousArtifact: usePreviousArtifact,
                 exposedPorts       : exposedPorts ? exposedPorts.collect({ it.toMap() }) : null,
-                packageInfo        : packageInfo.toMap(),
                 dockerInfo         : dockerInfo.toMap(),
                 resources          : resources.toMap(),
                 extraTechnology    : extraTechnology.toMap(),
