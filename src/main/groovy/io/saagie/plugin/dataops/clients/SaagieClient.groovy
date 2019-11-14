@@ -852,13 +852,12 @@ class SaagieClient {
 
     private handleErrors(Response response) {
         logger.debug('Checking server response')
+        String body = response.body().string()
+        SaagieUtils.debugResponse(response)
         if (response.successful) {
             logger.debug('No error in server response.')
             return
         }
-        String body = response.body().string()
-
-        SaagieUtils.debugResponse(response)
 
         String status = "${response.code()}"
         def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
