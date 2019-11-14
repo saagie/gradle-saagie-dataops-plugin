@@ -1,12 +1,15 @@
 package io.saagie.plugin.dataops.models
 
-class Resources implements IMapable {
+import groovy.transform.TypeChecked
+
+@TypeChecked
+class Resources implements IMapable, IExists {
     Float cpu
     Integer disk
     Integer memory
 
     Map toMap() {
-        if (cpu && disk && memory) {
+        if (exists()) {
             return [
                 cpu   : cpu,
                 disk  : disk,
@@ -14,5 +17,10 @@ class Resources implements IMapable {
             ]
         }
         return null
+    }
+
+    @Override
+    boolean exists() {
+        return cpu && disk && memory
     }
 }

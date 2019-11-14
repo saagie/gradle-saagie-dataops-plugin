@@ -1,6 +1,9 @@
 package io.saagie.plugin.dataops.models
 
-class ExposedPort implements IMapable {
+import groovy.transform.TypeChecked
+
+@TypeChecked
+class ExposedPort implements IMapable, IExists {
     String name
     Integer port
     Boolean isRewriteUrl
@@ -9,7 +12,7 @@ class ExposedPort implements IMapable {
 
     @Override
     Map toMap() {
-        if (!port) return null
+        if (!exists()) return null
         return [
             name                    : name,
             port                    : port,
@@ -17,5 +20,10 @@ class ExposedPort implements IMapable {
             basePathVariableName    : basePathVariableName,
             isAuthenticationRequired: isAuthenticationRequired,
         ]
+    }
+
+    @Override
+    boolean exists() {
+        return port
     }
 }

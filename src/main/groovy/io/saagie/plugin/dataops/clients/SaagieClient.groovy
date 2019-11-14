@@ -434,9 +434,14 @@ class SaagieClient {
         }
 
         // 2. add jobVersion id there is a jobVersion config
-        if (configuration?.jobVersion?.runtimeVersion) {
-            Request updateJobVersionRequest = saagieUtils.getAddJobVersionRequest()
-            client.newCall(updateJobVersionRequest).execute().withCloseable { updateResponse ->
+        if (configuration?.jobVersion?.exists()) {
+            Request addJobVersionRequest
+            if (configuration.jobVersion.packageInfo?.name) {
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+            } else {
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
+            }
+            client.newCall(addJobVersionRequest).execute().withCloseable { updateResponse ->
                 handleErrors(updateResponse)
                 String updateResponseBody = updateResponse.body().string()
                 def updatedJobVersion = slurper.parseText(updateResponseBody)

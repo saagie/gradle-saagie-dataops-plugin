@@ -97,7 +97,7 @@ class JobUpdateTaskTests extends Specification {
         buildFile << '''
             saagie {
                 server {
-                    url = 'http://localhost'
+                    url = 'http://localhost:9000'
                     login = 'user.user'
                     password = 'password'
                     environment = 2

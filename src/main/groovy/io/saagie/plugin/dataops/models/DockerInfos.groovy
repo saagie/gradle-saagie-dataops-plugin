@@ -1,19 +1,25 @@
 package io.saagie.plugin.dataops.models
 
-class DockerInfos implements IMapable {
+import groovy.transform.TypeChecked
+
+@TypeChecked
+class DockerInfos implements IMapable, IExists {
     String image
-    String login
-    String password
+    String dockerCredentialsId
 
     @Override
     Map toMap() {
-        if (image && login && password) {
+        if (exists()) {
             return [
-                image   : image,
-                login   : login,
-                password: password,
+                image : image,
+                dockerCredentialsId: dockerCredentialsId,
             ]
         }
         return null
+    }
+
+    @Override
+    boolean exists() {
+        return image
     }
 }

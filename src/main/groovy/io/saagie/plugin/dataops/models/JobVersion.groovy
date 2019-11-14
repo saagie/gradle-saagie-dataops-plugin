@@ -1,6 +1,9 @@
 package io.saagie.plugin.dataops.models
 
-class JobVersion implements IMapable {
+import groovy.transform.TypeChecked
+
+@TypeChecked
+class JobVersion implements IMapable, IExists {
     String commandLine
     String releaseNote
     String runtimeVersion
@@ -37,17 +40,42 @@ class JobVersion implements IMapable {
 
     @Override
     Map toMap() {
-        return [
-            commandLine        : commandLine,
-            releaseNote        : releaseNote,
-            runtimeVersion     : runtimeVersion,
-            volume             : volume,
-            usePreviousArtifact: usePreviousArtifact,
-            exposedPorts       : exposedPorts.collect { it.toMap() },
-            packageInfo        : packageInfo.toMap(),
-            dockerInfo         : dockerInfo.toMap(),
-            resources          : resources.toMap(),
-            extraTechnology    : extraTechnology.toMap(),
-        ]
+        if (exists()) {
+            return [
+                commandLine        : commandLine,
+                releaseNote        : releaseNote,
+                runtimeVersion     : runtimeVersion,
+                volume             : volume,
+                usePreviousArtifact: usePreviousArtifact,
+                exposedPorts       : exposedPorts.collect { it.toMap() },
+                packageInfo        : packageInfo.toMap(),
+                dockerInfo         : dockerInfo.toMap(),
+                resources          : resources.toMap(),
+                extraTechnology    : extraTechnology.toMap(),
+            ]
+        }
+        return null
+    }
+
+    @Override
+    boolean exists() {
+        return (
+            commandLine ||
+            releaseNote ||
+            runtimeVersion ||
+            usePreviousArtifact ||
+
+            // NOTE: empty lists evaluate to false in groovy
+            volume ||
+
+            // Check that exposedPorts isn't empty and that it contains valid ExposedPorts
+            exposedPorts && exposedPorts.every { it.exists() } ||
+            packageInfo.exists() ||
+            dockerInfo.exists() ||
+
+            // TODO: uncomment this check once it will be available in the API
+            // resources.exists() ||
+            extraTechnology.exists()
+        )
     }
 }

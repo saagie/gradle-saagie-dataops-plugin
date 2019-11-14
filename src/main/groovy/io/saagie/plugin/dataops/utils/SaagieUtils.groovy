@@ -258,6 +258,33 @@ class SaagieUtils {
         return buildMultipartRequestFromQuery(updateProjectJob)
     }
 
+    Request getAddJobVersionRequestWithoutFile() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .excludeFieldsByName('packageInfo')
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId     : job.id,
+            jobVersion: jobVersion.toMap()
+        ])
+
+        def updateProjectJob = gq('''
+            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
+                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
+                    number
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(updateProjectJob)
+    }
+
     @Deprecated
     Request getUploadFileToJobRequest(String jobId, String jobVersion = '1') {
         logger.debug('Generating getUploadFileToJobRequest [jobId={}, jobVersion={}]', jobId, jobVersion)
@@ -571,8 +598,10 @@ class SaagieUtils {
         def file = new File(configuration.jobVersion.packageInfo.name)
         def fileName = file.name
         Tika tika = new Tika()
+
         String mimeType = tika.detect(file)
         logger.debug('Mime type: {}', mimeType)
+
         def fileType = MediaType.parse(mimeType)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
@@ -581,7 +610,7 @@ class SaagieUtils {
             .build()
 
         def map = jsonGenerator.toJson([ "0": ["variables.file"] ])
-        def fileBody = RequestBody.Companion.newInstance().create(file, fileType)
+        def fileBody = RequestBody.create(file, fileType)
 
         RequestBody body = new MultipartBody.Builder("--graphql-multipart-upload-boundary-85763456--")
             .setType(MultipartBody.FORM)
