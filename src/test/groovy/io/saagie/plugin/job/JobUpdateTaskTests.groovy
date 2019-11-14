@@ -1,5 +1,6 @@
 package io.saagie.plugin.job
 
+import io.saagie.plugin.dataops.models.JobVersion
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
@@ -165,5 +166,22 @@ class JobUpdateTaskTests extends Specification {
 
         then:
         result.output.contains('"id"')
+    }
+
+    def "JobVersion object DSL should return null values on empty array"() {
+        given:
+        JobVersion jobVersion = new JobVersion()
+        jobVersion.with {
+            releaseNote = 'release note'
+            volume = []
+            exposedPorts = []
+        }
+
+        when:
+        Map jobVersionMap = jobVersion.toMap()
+
+        then:
+        jobVersionMap.volume == null
+        jobVersionMap.exposedPorts == null
     }
 }
