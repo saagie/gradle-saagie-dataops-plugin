@@ -1,11 +1,9 @@
 package io.saagie.plugin.dataops.models
 
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
+import groovy.transform.TypeChecked
 
+@TypeChecked
 class Alerting implements IMapable {
-
-    static final Logger logger = Logging.getLogger(Alerting.class)
 
     @Deprecated
     List<String> emails = []

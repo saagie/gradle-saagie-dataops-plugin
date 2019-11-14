@@ -1,13 +1,21 @@
 package io.saagie.plugin.dataops.models
 
-class PackageInfo implements IMapable {
+import groovy.transform.TypeChecked
+
+@TypeChecked
+class PackageInfo implements IMapable, IExists {
     String name
 
     @Override
     Map toMap() {
-        if (name) {
+        if (exists()) {
             return [name: name]
         }
         return null
+    }
+
+    @Override
+    boolean exists() {
+        return name
     }
 }
