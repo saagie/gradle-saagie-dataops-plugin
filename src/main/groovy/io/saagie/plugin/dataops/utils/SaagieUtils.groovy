@@ -718,10 +718,5 @@ class SaagieUtils {
         logger.debug("====== Response ======")
         logger.debug("${response.protocol().toString()} ${response.code} ${response.message}")
         response.headers().names().each { logger.debug("${it}: ${response.headers().get(it)}") }
-
-        if (response.body()) {
-            logger.debug("Content-Length: ${response.body().contentLength()}")
-            logger.debug(response.body().string())
-        }
     }
 }
