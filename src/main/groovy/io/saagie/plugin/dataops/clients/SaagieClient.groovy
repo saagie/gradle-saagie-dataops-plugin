@@ -440,6 +440,7 @@ class SaagieClient {
             if (configuration.jobVersion.packageInfo?.name) {
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequest()
             } else {
+                configuration.jobVersion.usePreviousArtifact = true
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
             }
             client.newCall(addJobVersionRequest).execute().withCloseable { updateResponse ->
