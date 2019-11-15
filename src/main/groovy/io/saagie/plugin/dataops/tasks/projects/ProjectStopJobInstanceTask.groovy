@@ -17,6 +17,8 @@ class ProjectStopJobInstanceTask extends DefaultTask {
     @TaskAction
     def stopPipelineInstance() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.stopJobInstance())
+        def result = saagieClient.stopJobInstance()
+        logger.quiet(result)
+        return result
     }
 }

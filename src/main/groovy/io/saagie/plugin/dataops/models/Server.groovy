@@ -16,6 +16,7 @@ class Server {
 
     String environment
 
+    // TODO: implement these options
     String proxyHost = null
 
     String proxyPort = null

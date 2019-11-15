@@ -17,6 +17,8 @@ class ProjectArchiveJobTask extends DefaultTask {
     @TaskAction
     def archiveProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.archiveProjectJob())
+        def result = saagieClient.archiveProjectJob()
+        logger.quiet(result)
+        return result
     }
 }

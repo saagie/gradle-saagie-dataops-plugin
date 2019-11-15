@@ -17,6 +17,8 @@ class ProjectGetPipelineInstanceStatusTask extends DefaultTask {
     @TaskAction
     def getJobInstanceStatus() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.getPipelineInstanceStatus())
+        def result = saagieClient.getPipelineInstanceStatus()
+        logger.quiet(result)
+        return result
     }
 }

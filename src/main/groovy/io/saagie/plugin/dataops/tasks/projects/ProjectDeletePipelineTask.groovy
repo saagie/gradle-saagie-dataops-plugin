@@ -17,6 +17,8 @@ class ProjectDeletePipelineTask extends DefaultTask {
     @TaskAction
     def deleteProjectPipeline() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.deleteProjectPipeline())
+        def result = saagieClient.deleteProjectPipeline()
+        logger.quiet(result)
+        return result
     }
 }
