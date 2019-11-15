@@ -1,9 +1,6 @@
 package io.saagie.plugin.job
 
-import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.clients.SaagieClient
 import io.saagie.plugin.dataops.models.JobVersion
-import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
@@ -140,6 +137,7 @@ class JobUpdateTaskTests extends Specification {
         mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
         mockWebServer.enqueue(mockedJobVersionResponse)
 
+        jobFile << 'println("Hello gradle")'
         buildFile << """
             saagie {
                 server {
@@ -154,8 +152,6 @@ class JobUpdateTaskTests extends Specification {
                 }
 
                 jobVersion {
-                    commandLine = "python {file}"
-                    releaseNote = "Feat: won't fail"
                     runtimeVersion = "3.6"
                     packageInfo {
                         name = "${jobFile.absolutePath}"
@@ -168,7 +164,7 @@ class JobUpdateTaskTests extends Specification {
         BuildResult result = gradle(taskName)
 
         then:
-        result.output.contains('"id"')
+        result.output.contains('{"id":"jobId"}')
     }
 
     def "JobVersion object DSL should return null values on empty array"() {

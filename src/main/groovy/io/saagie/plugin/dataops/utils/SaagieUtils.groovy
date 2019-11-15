@@ -230,10 +230,6 @@ class SaagieUtils {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
-            .addConverter(JobVersion) { JobVersion value ->
-                value.packageInfo.name = file.name
-                return value
-            }
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -248,8 +244,8 @@ class SaagieUtils {
         def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
 
         def updateProjectJob = gq('''
-            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
-                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
+            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!, $file: Upload) {
+                addJobVersion(jobId: $jobId, jobVersion: $jobVersion, file: $file) {
                     number
                 }
             }
