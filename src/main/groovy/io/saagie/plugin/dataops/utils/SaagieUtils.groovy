@@ -354,7 +354,7 @@ class SaagieUtils {
             .build()
 
         def graphqlPipelineVar = [
-            *:extractProperties(pipeline),
+            *:pipeline.toMap(),
             projectId: project.id,
             jobsId: pipelineVersion.jobs,
             releaseNote: pipelineVersion.releaseNote
