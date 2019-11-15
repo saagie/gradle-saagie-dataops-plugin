@@ -1,7 +1,11 @@
 package io.saagie.plugin.pipeline
 
+import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.utils.SaagieUtils
+import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
@@ -160,5 +164,83 @@ class PipelineCreateTaskTests extends Specification {
         result == null
         e.message.contains('{"data":null,"errors":[{"cause":null,"extensions":{"name":"already used"},"locations":null,"errorType":"ValidationError","message":"Pipeline not valid","path":null,"localizedMessage":"Pipeline not valid","suppressed":[]}]}')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "projectsCreatePipelineJob should not add empty alerting if no alerting config is provided"() {
+        given:
+        DataOpsExtension config = new DataOpsExtension()
+        config.with {
+            server {
+                url = 'http://localhost:9000'
+                login = 'login'
+                password = 'password'
+                environment = 1
+            }
+
+            project {
+                id = 'projectId'
+            }
+
+            pipeline {
+                name = 'Pipeline name'
+            }
+
+            pipelineVersion {
+                releaseNote = 'Release note'
+                jobs = ['jobId-1', 'jobId-2']
+            }
+        }
+        SaagieUtils saagieUtils = new SaagieUtils(config)
+
+        when:
+        Request request = saagieUtils.getCreatePipelineRequest()
+        final Buffer buffer = new Buffer()
+        request.body().writeTo(buffer)
+        String body = buffer.readUtf8()
+
+        then:
+        notThrown(Exception)
+        !body.contains('"alerting":{"emails":[],"statusList":[],"logins":[]}')
+    }
+
+    def "projectsCreatePipelineJob should contain alerting if alerting config is provided"() {
+        given:
+        DataOpsExtension config = new DataOpsExtension()
+        config.with {
+            server {
+                url = 'http://localhost:9000'
+                login = 'login'
+                password = 'password'
+                environment = 1
+            }
+
+            project {
+                id = 'projectId'
+            }
+
+            pipeline {
+                name = 'Pipeline name'
+                alerting {
+                    logins = ['login']
+                    statusList = ['FAILED']
+                }
+            }
+
+            pipelineVersion {
+                releaseNote = 'Release note'
+                jobs = ['jobId-1', 'jobId-2']
+            }
+        }
+        SaagieUtils saagieUtils = new SaagieUtils(config)
+
+        when:
+        Request request = saagieUtils.getCreatePipelineRequest()
+        final Buffer buffer = new Buffer()
+        request.body().writeTo(buffer)
+        String body = buffer.readUtf8()
+
+        then:
+        notThrown(Exception)
+        body.contains('"alerting":{"logins":["login"],"statusList":["FAILED"]}')
     }
 }
