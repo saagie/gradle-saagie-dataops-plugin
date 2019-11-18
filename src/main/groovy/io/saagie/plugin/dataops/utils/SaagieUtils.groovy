@@ -14,6 +14,7 @@ import io.saagie.plugin.dataops.models.Server
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.apache.tika.Tika
