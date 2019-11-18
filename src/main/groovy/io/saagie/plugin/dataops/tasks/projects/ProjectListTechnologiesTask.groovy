@@ -17,6 +17,8 @@ class ProjectListTechnologiesTask extends DefaultTask {
     @TaskAction
     def getProjectTechnologies() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.getProjectTechnologies())
+        def result = saagieClient.getProjectTechnologies()
+        logger.quiet(result)
+        return result
     }
 }

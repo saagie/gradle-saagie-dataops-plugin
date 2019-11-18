@@ -4,6 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,7 +30,7 @@ class SaagieClient {
 
     SaagieUtils saagieUtils
 
-    OkHttpClient client = new OkHttpClient()
+    OkHttpClient client
 
     JsonSlurper slurper = new JsonSlurper()
 
@@ -49,6 +50,7 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
+        client = HttpClientBuilder.getHttpClient(configuration)
 
         this.checkBaseConfiguration()
     }
