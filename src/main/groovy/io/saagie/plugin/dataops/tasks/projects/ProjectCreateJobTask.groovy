@@ -24,6 +24,7 @@ class ProjectCreateJobTask extends DefaultTask {
 
         def result
         if (server.useLegacy) {
+            logger.info("Using deprecated version of projectsCreateJob")
             result = saagieClient.createProjectJob()
         } else {
             result = saagieClient.createProjectJobWithGraphQL()
