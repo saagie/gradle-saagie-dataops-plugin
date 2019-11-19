@@ -165,6 +165,7 @@ class SaagieUtils {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .excludeFieldsByName('usePreviousArtifact')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
