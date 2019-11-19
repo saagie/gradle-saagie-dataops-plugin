@@ -154,7 +154,37 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectTechnologies)
     }
 
+    @Deprecated
     Request getProjectCreateJobRequest() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
+
+        job.projectId = configuration.project.id
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            job: job.toMap(),
+            jobVersion: jobVersion.toMap()
+        ])
+
+        def createProjectJob = gq('''
+            mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!) {
+                createJob(job: $job, jobVersion: $jobVersion) {
+                    id
+                    name
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(createProjectJob)
+    }
+
+    Request getProjectCreateJobRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
@@ -219,7 +249,34 @@ class SaagieUtils {
         return buildRequestFromQuery(updateProjectJob)
     }
 
+    @Deprecated
     Request getAddJobVersionRequest() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId     : job.id,
+            jobVersion: jobVersion.toMap()
+        ])
+
+        def updateProjectJob = gq('''
+            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
+                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
+                    number
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(updateProjectJob)
+    }
+
+    Request getAddJobVersionRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)

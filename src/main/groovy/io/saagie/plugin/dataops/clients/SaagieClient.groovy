@@ -283,7 +283,7 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
-        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
         try {
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -440,7 +440,7 @@ class SaagieClient {
         if (configuration?.jobVersion?.exists()) {
             Request addJobVersionRequest
             if (configuration.jobVersion.packageInfo?.name) {
-                addJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL()
             } else {
                 configuration.jobVersion.usePreviousArtifact = true
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
