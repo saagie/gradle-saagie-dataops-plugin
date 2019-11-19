@@ -199,7 +199,7 @@ class SaagieClient {
 
     @Deprecated
     String createProjectJob() {
-        logger.info('Starting createProjectJob task')
+        logger.info('Starting deprecated createProjectJob task')
         if (configuration?.project?.id == null ||
             configuration?.job?.name == null ||
             configuration?.job?.technology == null ||

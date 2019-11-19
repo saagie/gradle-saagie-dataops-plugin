@@ -1,12 +1,15 @@
 package io.saagie.plugin.dataops.tasks.projects
 
+import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
+import io.saagie.plugin.dataops.models.Server
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
+@TypeChecked
 class ProjectCreateJobTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
@@ -16,8 +19,16 @@ class ProjectCreateJobTask extends DefaultTask {
 
     @TaskAction
     def createProjectJob() {
+        Server server = configuration.server
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.createProjectJobWithGraphQL()
+
+        def result
+        if (server.useLegacy) {
+            result = saagieClient.createProjectJob()
+        } else {
+            result = saagieClient.createProjectJobWithGraphQL()
+        }
+
         logger.quiet(result)
         return result
     }
