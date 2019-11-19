@@ -246,7 +246,7 @@ class JobCreateTaskTests extends Specification {
         result.output.contains('{"id":"jobId","name":"Created Job"}')
     }
 
-    def "deprecated projectsCreateJob should fail if the first task is missing required params"() {
+    def "deprecated projectsCreateJob should fail if job config is missing required params"() {
         buildFile << """
             saagie {
                 server {
@@ -277,12 +277,7 @@ class JobCreateTaskTests extends Specification {
         error.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "deprecated projectsCreateJob should fail if version if no jobVersion is provided"() {
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
-
+    def "deprecated projectsCreateJob should fail if no jobVersion is provided"() {
         buildFile << """
             saagie {
                 server {
