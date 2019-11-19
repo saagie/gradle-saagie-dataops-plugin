@@ -7,6 +7,8 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Ignore
+import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
@@ -188,5 +190,179 @@ class JobCreateTaskTests extends Specification {
         then:
         notThrown(Exception)
         result.output.contains('{"id":"jobId","name":"Created Job"}')
+    }
+
+    def "projectsCreateJob should use the deprecated api if useLegacy is provided"() {
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedAddJobVersionResponse = new MockResponse()
+        mockedAddJobVersionResponse.responseCode = 200
+        mockedAddJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":3}}}'''
+        mockWebServer.enqueue(mockedAddJobVersionResponse)
+
+        def mockedFileUploadResponse = new MockResponse()
+        mockedFileUploadResponse.responseCode = 200
+        mockedFileUploadResponse.body = 'true'
+        mockWebServer.enqueue(mockedFileUploadResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    useLegacy = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+
+                job {
+                    name = "jobname"
+                    category = "Extraction"
+                    technology = "technology-id"
+                }
+
+                jobVersion {
+                    runtimeVersion = "3.6"
+                    commandLine = "python {file} arg1 arg2"
+                    packageInfo {
+                        name = "${jobFile.absolutePath}"
+                    }
+                }
+            }
+        """
+
+        when:
+        def result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{"id":"jobId","name":"Created Job"}')
+    }
+
+    def "deprecated projectsCreateJob should fail if the first task is missing required params"() {
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    useLegacy = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+
+                job {
+                    description = "description"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure error = thrown()
+        result == null
+        error.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        error.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "deprecated projectsCreateJob should fail if version if no jobVersion is provided"() {
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    useLegacy = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+
+                job {
+                    name = "jobname"
+                    category = "Extraction"
+                    technology = "technology-id"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure error = thrown()
+        result == null
+        error.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        error.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "deprecated projectsCreateJob should not add version if the file is invalid"() {
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        def mockedAddJobVersionResponse = new MockResponse()
+        mockedAddJobVersionResponse.responseCode = 200
+        mockedAddJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":3}}}'''
+        mockWebServer.enqueue(mockedAddJobVersionResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    useLegacy = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+
+                job {
+                    name = "jobname"
+                    category = "Extraction"
+                    technology = "technology-id"
+                }
+
+                jobVersion {
+                    runtimeVersion = "3.6"
+                    commandLine = "python {file} arg1 arg2"
+                    packageInfo {
+                        name = "invalid-file/path"
+                    }
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure error = thrown()
+        result == null
+        error.message.contains("Check that there is a file to upload in 'invalid-file/path'. Be sure that 'invalid-file/path' is a correct file path.")
+        error.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }
