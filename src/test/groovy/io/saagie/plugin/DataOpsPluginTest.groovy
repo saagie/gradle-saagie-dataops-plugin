@@ -83,9 +83,10 @@ class DataOpsPluginTest extends Specification {
         result.output.contains 'projectsUpdatePipeline - update a pipeline'
         result.output.contains 'projectsUpdateJob - update a existing job in a project'
         result.output.contains 'platformList - list available platforms'
+        result.output.contains 'projectsListAllPipelines - list all pipelines of a project'
     }
 
-    def "all requests must fail if none of the required params are not provided"() {
+    def "all requests must fail if the required params are not provided"() {
         given:
         buildFile << '''
             saagie {
