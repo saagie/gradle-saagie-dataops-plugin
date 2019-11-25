@@ -16,7 +16,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectStopPipelineInstanceTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsListAllPipelinesTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
 import org.gradle.api.Project
 
 class DataOpsModule {
@@ -37,7 +37,7 @@ class DataOpsModule {
     final static String PROJECTS_STOP_PIPELINE_INSTANCE = 'projectsStopPipelineInstance'
     final static String PROJECT_DELETE_PIPELINE_TASK = 'projectsDeletePipeline'
     final static String PLATFORM_LIST_TASK = 'platformList'
-    final static String PROJECTS_LIST_ALL_PIPELINES = 'projectsListAllPipelines'
+    final static String PROJECTS_LIST_PIPELINES = 'projectsListPipelines'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -157,11 +157,11 @@ class DataOpsModule {
             taskName = PLATFORM_LIST_TASK
         }
 
-        project.task(PROJECTS_LIST_ALL_PIPELINES, type: ProjectsListAllPipelinesTask) {
+        project.task(PROJECTS_LIST_PIPELINES, type: ProjectsListPipelinesTask) {
             group = TASK_GROUP
             description = 'list all pipelines of a project'
             configuration = project.saagie
-            taskName = PROJECTS_LIST_ALL_PIPELINES
+            taskName = PROJECTS_LIST_PIPELINES
         }
     }
 }
