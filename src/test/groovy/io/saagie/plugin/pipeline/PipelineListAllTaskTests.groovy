@@ -106,4 +106,40 @@ class PipelineListAllTaskTests extends Specification {
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
+
+    def "the task should list all projects pipelines in jwt mode"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = 'token'
+        mockWebServer.enqueue(mockedResponse)
+
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '{"data":{"pipelines":[{"id":"pipelineId","name":"Pipeline"}]}}'
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    jwt = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('[{"id":"pipelineId","name":"Pipeline"}]')
+    }
 }
