@@ -11,14 +11,14 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_ALL_PIPELINES
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_PIPELINES
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsListAllPipelinesTask task tests")
 class PipelineListAllTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = PROJECTS_LIST_ALL_PIPELINES
+    @Shared String taskName = PROJECTS_LIST_PIPELINES
 
     File buildFile
 
