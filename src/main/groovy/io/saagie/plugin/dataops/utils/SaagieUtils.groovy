@@ -165,6 +165,7 @@ class SaagieUtils {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .excludeFieldsByName('id')
             .excludeFieldsByName('usePreviousArtifact')
             .build()
 
@@ -711,6 +712,31 @@ class SaagieUtils {
 
         debugRequest(newRequest)
         return newRequest
+    }
+
+    Request getListAllPipelinesRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getListAllPipelinesRequest for project [id={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            projectId: project.id
+        ])
+
+        def listAllPipelineRequest = gq('''
+            query getAllPipelines($projectId: UUID!) {
+                pipelines(projectId: $projectId) {
+                    id
+                    name
+                    description
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listAllPipelineRequest)
     }
 
     private Request buildRequestFromQuery(String query) {
