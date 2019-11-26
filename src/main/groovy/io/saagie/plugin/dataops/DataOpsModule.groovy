@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops
 
+import io.saagie.plugin.dataops.tasks.group.GroupListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectArchiveJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask
@@ -40,6 +41,7 @@ class DataOpsModule {
     final static String PLATFORM_LIST_TASK = 'platformList'
     final static String PROJECTS_LIST_PIPELINES = 'projectsListPipelines'
     final static String TECHNOLOGY_LIST = 'technologyList'
+    final static String GROUP_LIST = 'groupList'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -171,6 +173,13 @@ class DataOpsModule {
             description = 'list all technologies for the user'
             configuration = project.saagie
             taskName = TECHNOLOGY_LIST
+        }
+
+        project.task(GROUP_LIST, type: GroupListTask) {
+            group = TASK_GROUP
+            description = 'list all groups for the user'
+            configuration = project.saagie
+            taskName = GROUP_LIST
         }
     }
 }
