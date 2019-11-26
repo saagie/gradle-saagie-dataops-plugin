@@ -739,6 +739,22 @@ class SaagieUtils {
         return buildRequestFromQuery(listAllPipelineRequest)
     }
 
+    Request getListAllTechnologiesRequest() {
+        logger.debug('Generating getListAllTechnologiesRequest')
+
+        def listAllPipelineRequest = gq('''
+            query getAllTechnologies {
+                technologies {
+                    id
+                    label
+                    isAvailable
+                }
+            }
+        ''')
+
+        return buildRequestFromQuery(listAllPipelineRequest)
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
