@@ -755,6 +755,10 @@ class SaagieUtils {
         return buildRequestFromQuery(listAllPipelineRequest)
     }
 
+    Request getGroupListRequest() {
+        return getPlatformListRequest()
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)

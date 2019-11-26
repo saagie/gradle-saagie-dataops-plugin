@@ -764,7 +764,7 @@ class SaagieClient {
     }
 
     String listPlatforms() {
-        logger.info('Starting stopPipelineInstance task')
+        logger.info('Starting platformList task')
 
         checkRequiredConfig(
             !configuration.server?.jwt ||
@@ -849,6 +849,39 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in listTechnologies')
+            throw exception
+        }
+    }
+
+    String listGroups() {
+        logger.info('Starting groupList task')
+
+        checkRequiredConfig(
+            !configuration.server?.jwt ||
+            !configuration.server?.realm
+        )
+
+        Request groupListRequest = saagieUtils.getGroupListRequest()
+        try {
+            client.newCall(groupListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.groups == null) {
+                    def message = "Something went wrong when getting group list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List groupListResult = parsedResult.groups
+                    return JsonOutput.toJson(groupListResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in groupList')
             throw exception
         }
     }
