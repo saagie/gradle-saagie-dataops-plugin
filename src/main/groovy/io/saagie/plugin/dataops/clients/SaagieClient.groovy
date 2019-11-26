@@ -825,6 +825,34 @@ class SaagieClient {
         }
     }
 
+    String listTechnologies() {
+        logger.info('Starting technologyList task')
+
+        Request technologyListRequest = saagieUtils.getListAllTechnologiesRequest()
+        try {
+            client.newCall(technologyListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting technology list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List technologyList = parsedResult.data.technologies
+                    return JsonOutput.toJson(technologyList)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in listTechnologies')
+            throw exception
+        }
+    }
+
     private checkRequiredConfig(boolean conditions) {
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))

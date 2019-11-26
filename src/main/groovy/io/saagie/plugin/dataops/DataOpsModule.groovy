@@ -17,6 +17,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
+import io.saagie.plugin.dataops.tasks.projects.TechnologyListTask
 import org.gradle.api.Project
 
 class DataOpsModule {
@@ -38,6 +39,7 @@ class DataOpsModule {
     final static String PROJECT_DELETE_PIPELINE_TASK = 'projectsDeletePipeline'
     final static String PLATFORM_LIST_TASK = 'platformList'
     final static String PROJECTS_LIST_PIPELINES = 'projectsListPipelines'
+    final static String TECHNOLOGY_LIST = 'technologyList'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -162,6 +164,13 @@ class DataOpsModule {
             description = 'list all pipelines of a project'
             configuration = project.saagie
             taskName = PROJECTS_LIST_PIPELINES
+        }
+
+        project.task(TECHNOLOGY_LIST, type: TechnologyListTask) {
+            group = TASK_GROUP
+            description = 'list all technologies for the user'
+            configuration = project.saagie
+            taskName = TECHNOLOGY_LIST
         }
     }
 }
