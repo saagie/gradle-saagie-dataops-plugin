@@ -1,4 +1,4 @@
-package io.saagie.plugin.pipeline
+package io.saagie.plugin.tasks.pipeline
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.utils.SaagieUtils

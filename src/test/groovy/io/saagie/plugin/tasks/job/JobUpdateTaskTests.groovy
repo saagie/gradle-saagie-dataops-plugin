@@ -1,4 +1,4 @@
-package io.saagie.plugin.job
+package io.saagie.plugin.tasks.job
 
 import io.saagie.plugin.dataops.models.JobVersion
 import okhttp3.mockwebserver.MockResponse

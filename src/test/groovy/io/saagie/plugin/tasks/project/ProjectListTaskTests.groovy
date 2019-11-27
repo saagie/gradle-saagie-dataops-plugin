@@ -1,4 +1,4 @@
-package io.saagie.plugin.pipeline
+package io.saagie.plugin.tasks.project
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -11,16 +11,16 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_PIPELINES
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title("projectsListAllPipelinesTask task tests")
-class PipelineListAllTaskTests extends Specification {
+@Title("projectsList task tests")
+class ProjectListTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = PROJECTS_LIST_PIPELINES
+    @Shared String taskName = 'projectsList'
 
     File buildFile
+    File jobFile
 
     def setupSpec() {
         mockWebServer.start(9000)
@@ -33,6 +33,8 @@ class PipelineListAllTaskTests extends Specification {
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
+
+        jobFile = testProjectDir.newFile('jobFile.py')
     }
 
     def cleanup() {
@@ -54,44 +56,45 @@ class PipelineListAllTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "the task should list all projects pipelines"() {
+    def "projectsList task should return a list of project"() {
         given:
-        def mockedCreatePipelineResponse = new MockResponse()
-        mockedCreatePipelineResponse.responseCode = 200
-        mockedCreatePipelineResponse.body = '{"data":{"pipelines":[{"id":"pipelineId","name":"Pipeline"}]}}'
-        mockWebServer.enqueue(mockedCreatePipelineResponse)
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """{"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}"""
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'user'
-                    password = 'password'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
                     environment = 2
-                }
-
-                project {
-                    id = 'projectId'
                 }
             }
         """
+        mockWebServer.enqueue(mockedResponse)
 
         when:
         BuildResult result = gradle(taskName)
 
         then:
-        notThrown(Exception)
-        result.output.contains('[{"id":"pipelineId","name":"Pipeline"}]')
+        notThrown()
+        !result.output.contains('"data"')
+        result.output.contains('[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]')
     }
 
-    def "the task should fail if the required parameters are missing"() {
+    def "projectsList task with bad config should fail"() {
         given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 400
+        mockWebServer.enqueue(mockedResponse)
+
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'user'
-                    password = 'password'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
             }
@@ -103,43 +106,33 @@ class PipelineListAllTaskTests extends Specification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
+        e.message.contains('Error 400 when requesting on http://localhost:9000')
+        e.getBuildResult().task(':projectsList').outcome == FAILED
     }
 
-    def "the task should list all projects pipelines in jwt mode"() {
+    def "projectsList task should print additional infos in info mode"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = 'token'
-        mockWebServer.enqueue(mockedResponse)
-
-        def mockedCreatePipelineResponse = new MockResponse()
-        mockedCreatePipelineResponse.responseCode = 200
-        mockedCreatePipelineResponse.body = '{"data":{"pipelines":[{"id":"pipelineId","name":"Pipeline"}]}}'
-        mockWebServer.enqueue(mockedCreatePipelineResponse)
+        mockedResponse.body = """{"data":{"projects":[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]}}"""
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'user'
-                    password = 'password'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
                     environment = 2
-                    jwt = true
-                }
-
-                project {
-                    id = 'projectId'
                 }
             }
         """
+        mockWebServer.enqueue(mockedResponse)
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle (taskName, '-d')
 
         then:
-        notThrown(Exception)
-        result.output.contains('[{"id":"pipelineId","name":"Pipeline"}]')
+        !result.output.contains('"data"')
+        result.output.contains("""[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]""")
     }
 }

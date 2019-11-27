@@ -1,4 +1,4 @@
-package io.saagie.plugin.job
+package io.saagie.plugin.tasks.job
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -13,11 +13,11 @@ import spock.lang.Title
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsRunJob task tests')
-class JobRunTaskTests extends Specification {
+@Title('projectsListJobs task tests')
+class JobListTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsRunJob'
+    @Shared String taskName = 'projectsListJobs'
 
     File buildFile
     File jobFile
@@ -56,14 +56,12 @@ class JobRunTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsRunJob should run a job and return the job instance id and status"() {
+    def "projectsListJobs task should list jobs on a project"() {
         given:
-        def mockedRunJobResponse = new MockResponse()
-        mockedRunJobResponse.responseCode = 200
-        mockedRunJobResponse.body = '''{"data":{"runJob":{"id":"job-instance-id","status":"REQUESTED"}}}'''
-        mockWebServer.enqueue(mockedRunJobResponse)
-
-        buildFile << """
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """{"data":{"jobs":[{"name":"test2","description":"","countJobInstance":1,"versions":[{"number":1}],"category":"Processing","technology":{"id":"frefref-c18b-4ecd-b61f-frefefreff","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-15T14:06:49.053Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true},{"name":"test 2","description":"","countJobInstance":4,"versions":[{"number":2},{"number":0}],"category":"Processing","technology":{"id":"dezded-26bd-4f7d-a3a5-dezdedzdz","label":"Spark","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-03-11T09:32:46.424Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}]}}"""
+        buildFile << '''
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -72,22 +70,24 @@ class JobRunTaskTests extends Specification {
                     environment = 2
                 }
 
-                job {
-                    id = "jobId"
+                project {
+                    id = 'projectId'
                 }
             }
-        """
+        '''
+        mockWebServer.enqueue(mockedResponse)
 
         when:
         BuildResult result = gradle(taskName)
 
         then:
         !result.output.contains('"data"')
+        result.output.contains('"name"')
         result.output.contains('"id"')
-        result.output.contains('"status"')
+        result.output.contains('"countJobInstance"')
     }
 
-    def "projectsRunJob should fail if job or job id is null"() {
+    def "projectsListJobs task should fail if bad project config is provided"() {
         given:
         buildFile << """
             saagie {
@@ -96,6 +96,10 @@ class JobRunTaskTests extends Specification {
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
                     environment = 2
+                }
+
+                project {
+
                 }
             }
         """
@@ -110,12 +114,11 @@ class JobRunTaskTests extends Specification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsRunJob should fail if job id doesn't exists"() {
+    def "projectsListJobs task should fail if a wrong project id is provided"() {
         given:
-        def mockedRunJobResponse = new MockResponse()
-        mockedRunJobResponse.responseCode = 200
-        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
-        mockWebServer.enqueue(mockedRunJobResponse)
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = """{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}"""
 
         buildFile << """
             saagie {
@@ -126,11 +129,12 @@ class JobRunTaskTests extends Specification {
                     environment = 2
                 }
 
-                job {
-                    id = 'bad-id'
+                project {
+                    id = 'wrong id'
                 }
             }
         """
+        mockWebServer.enqueue(mockedResponse)
 
         when:
         BuildResult result = gradle(taskName)
@@ -138,7 +142,7 @@ class JobRunTaskTests extends Specification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Something went wrong when requesting the job to run: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.message.contains('Something went wrong when getting project jobs: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

@@ -1,23 +1,20 @@
-package io.saagie.plugin.project
+package io.saagie.plugin.tasks.technology
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
-
-@Title("projectsList task tests")
-class ProjectListTaskTests extends Specification {
+@Title("projectsListTechnologies task tests")
+class TechnologyTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsList'
+    @Shared String taskName = 'projectsListTechnologies'
 
     File buildFile
     File jobFile
@@ -56,12 +53,11 @@ class ProjectListTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsList task should return a list of project"() {
+    def "projectsListTechnologies task should list technologies of a project"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """{"data":{"projects":[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]}}"""
-
+        mockedResponse.body = """{"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}"""
         buildFile << """
             saagie {
                 server {
@@ -70,52 +66,28 @@ class ProjectListTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
+
+                project {
+                    id = 'dezdezjiodjei-892a-2342-8552-5be4b6de5df4'
+                }
             }
         """
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        BuildResult result = gradle(taskName)
+        def result = gradle(taskName)
 
         then:
-        notThrown()
         !result.output.contains('"data"')
-        result.output.contains('[{"id":"8321e13c-892a-4481-8552-dekzdjeijzd","name":"Test new Project"},{"id":"7f5e0374-0c45-45a3-a2f3-dkjezoijdizd","name":"Test Spark config"},{"id":"bba3511b-7b7f-44f0-9f69-djeizjdoijzj","name":"For tests"},{"id":"9feae78d-1cc0-49bd-9e63-deozjiodjeiz","name":"Test simon"}]')
+        result.output.contains('"label"')
+        result.output.contains('"features"')
     }
 
-    def "projectsList task with bad config should fail"() {
-        given:
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 400
-        mockWebServer.enqueue(mockedResponse)
-
-        buildFile << """
-            saagie {
-                server {
-                    url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
-                    environment = 2
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains('Error 400 when requesting on http://localhost:9000')
-        e.getBuildResult().task(':projectsList').outcome == FAILED
-    }
-
-    def "projectsList task should print additional infos in info mode"() {
+    def "listed technologies should not show duplicated entries"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = """{"data":{"projects":[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]}}"""
-
+        mockedResponse.body = """{"data":{"technologies":[{"id":"python-id","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"bash-id","label":"Bash","isAvailable":true,"icon":"bash","features":[]},{"id":"bash-id","label":"Bash","isAvailable":true,"icon":"bash","features":[]}]}}"""
         buildFile << """
             saagie {
                 server {
@@ -124,15 +96,19 @@ class ProjectListTaskTests extends Specification {
                     password = 'ThisPasswordIsWrong'
                     environment = 2
                 }
+
+                project {
+                    id = 'dezdezjiodjei-892a-2342-8552-5be4b6de5df4'
+                }
             }
         """
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        BuildResult result = gradle (taskName, '-d')
+        def result = gradle(taskName)
 
         then:
-        !result.output.contains('"data"')
-        result.output.contains("""[{"id":"projectId","name":"Test new Project"},{"id":"projectId2","name":"Test Spark config"}]""")
+        result.output.count('bash-id') == 1
+        result.output.count('python-id') == 1
     }
 }

@@ -1,4 +1,4 @@
-package io.saagie.plugin.job
+package io.saagie.plugin.tasks.job
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -11,13 +11,14 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_ARCHIVE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsArchiveJob task tests')
 class JobArchiveTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsArchiveJob'
+    @Shared String taskName = PROJECT_ARCHIVE_JOB_TASK
 
     File buildFile
     File jobFile

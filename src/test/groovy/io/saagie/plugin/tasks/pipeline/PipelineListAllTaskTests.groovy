@@ -1,26 +1,26 @@
-package io.saagie.plugin.pipeline
+package io.saagie.plugin.tasks.pipeline
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.testkit.runner.UnexpectedBuildResultException
+import org.gradle.testkit.runner.UnexpectedBuildFailure
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_PIPELINES
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsGetPipelineInstanceStatus task tests')
-class PipelineGetInstanceStatusTaskTests extends Specification {
+@Title("projectsListAllPipelinesTask task tests")
+class PipelineListAllTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsGetPipelineInstanceStatus'
+    @Shared String taskName = PROJECTS_LIST_PIPELINES
 
     File buildFile
-    File jobFile
 
     def setupSpec() {
         mockWebServer.start(9000)
@@ -33,8 +33,6 @@ class PipelineGetInstanceStatusTaskTests extends Specification {
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
-
-        jobFile = testProjectDir.newFile('jobFile.py')
     }
 
     def cleanup() {
@@ -56,24 +54,24 @@ class PipelineGetInstanceStatusTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsGetPipelineInstanceStatus should return the status of the pipelineInstance"() {
+    def "the task should list all projects pipelines"() {
         given:
-        def mockedRunJobResponse = new MockResponse()
-        mockedRunJobResponse.responseCode = 200
-        mockedRunJobResponse.body = '''{"data":{"pipelineInstance":{"status":"SUCCEEDED"}}}'''
-        mockWebServer.enqueue(mockedRunJobResponse)
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '{"data":{"pipelines":[{"id":"pipelineId","name":"Pipeline"}]}}'
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
+                    login = 'user'
+                    password = 'password'
                     environment = 2
                 }
 
-                pipelineinstance {
-                    id = "pipelineInstanceId"
+                project {
+                    id = 'projectId'
                 }
             }
         """
@@ -82,19 +80,18 @@ class PipelineGetInstanceStatusTaskTests extends Specification {
         BuildResult result = gradle(taskName)
 
         then:
-        !result.output.contains('"data"')
-        result.output.contains('"status"')
+        notThrown(Exception)
+        result.output.contains('[{"id":"pipelineId","name":"Pipeline"}]')
     }
 
-    def "projectsGetPipelineInstanceStatus should fail if no pipelineInstance id was provided"() {
+    def "the task should fail if the required parameters are missing"() {
         given:
-
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
+                    login = 'user'
+                    password = 'password'
                     environment = 2
                 }
             }
@@ -104,9 +101,45 @@ class PipelineGetInstanceStatusTaskTests extends Specification {
         BuildResult result = gradle(taskName)
 
         then:
-        UnexpectedBuildResultException e = thrown()
+        UnexpectedBuildFailure e = thrown()
         result == null
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "the task should list all projects pipelines in jwt mode"() {
+        given:
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = 200
+        mockedResponse.body = 'token'
+        mockWebServer.enqueue(mockedResponse)
+
+        def mockedCreatePipelineResponse = new MockResponse()
+        mockedCreatePipelineResponse.responseCode = 200
+        mockedCreatePipelineResponse.body = '{"data":{"pipelines":[{"id":"pipelineId","name":"Pipeline"}]}}'
+        mockWebServer.enqueue(mockedCreatePipelineResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 2
+                    jwt = true
+                }
+
+                project {
+                    id = 'projectId'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('[{"id":"pipelineId","name":"Pipeline"}]')
     }
 }

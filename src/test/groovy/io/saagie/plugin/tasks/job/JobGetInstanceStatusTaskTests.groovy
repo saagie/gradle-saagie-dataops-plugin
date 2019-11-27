@@ -1,4 +1,4 @@
-package io.saagie.plugin.technology
+package io.saagie.plugin.tasks.job
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -6,16 +6,14 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Title
 
-@Title("technologyList task tests")
-class TechnologyListTests extends Specification {
+@Title('projectsGetJobInstanceStatus task tests')
+class JobGetInstanceStatusTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'technologyList'
 
     File buildFile
     File jobFile
@@ -31,12 +29,13 @@ class TechnologyListTests extends Specification {
     def setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
+
+        jobFile = testProjectDir.newFile('jobFile.py')
     }
 
     def cleanup() {
         mockWebServer.dispatcher.peek()
     }
-
 
     private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
         arguments += '--stacktrace'
@@ -53,12 +52,38 @@ class TechnologyListTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "the task should return a list of all technologies"() {
+    def "projectsGetJobInstanceStatus should return the status of the jobInstance"() {
         given:
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 200
-        mockedResponse.body = '{"data":{"technologies":[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]}}'
-        mockWebServer.enqueue(mockedResponse)
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"jobInstance":{"status":"SUCCEEDED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'fake.user'
+                    password = 'ThisPasswordIsWrong'
+                    environment = 2
+                }
+
+                jobinstance {
+                    id = "jobInstanceId"
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle 'projectsGetJobInstanceStatus'
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"status"')
+    }
+
+    def "projectsGetJobInstanceStatus should fail if no jobInstance id was provided"() {
+        given:
 
         buildFile << """
             saagie {
@@ -72,42 +97,11 @@ class TechnologyListTests extends Specification {
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle 'projectsGetJobInstanceStatus'
 
         then:
-        notThrown(Exception)
-        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]')
+        thrown(Exception)
+        result == null
     }
 
-    def "the task should be working in jwt mode"() {
-        given:
-        def tokenResponse = new MockResponse()
-        tokenResponse.responseCode = 200
-        tokenResponse.body = 'token'
-        mockWebServer.enqueue(tokenResponse)
-
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 200
-        mockedResponse.body = '{"data":{"technologies":[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]}}'
-        mockWebServer.enqueue(mockedResponse)
-
-        buildFile << """
-            saagie {
-                server {
-                    url = 'http://localhost:9000'
-                    login = 'fake.user'
-                    password = 'ThisPasswordIsWrong'
-                    environment = 2
-                    jwt = true
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]')
-    }
 }

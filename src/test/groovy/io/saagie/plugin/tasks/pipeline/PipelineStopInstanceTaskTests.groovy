@@ -1,4 +1,4 @@
-package io.saagie.plugin.pipeline
+package io.saagie.plugin.tasks.pipeline
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

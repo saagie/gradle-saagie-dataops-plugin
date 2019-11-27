@@ -1,4 +1,4 @@
-package io.saagie.plugin.pipeline
+package io.saagie.plugin.tasks.job
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -13,11 +13,11 @@ import spock.lang.Title
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsDeletePipeline task tests')
-class PipelineDeleteTaskTests extends Specification {
+@Title('projectsStopJobInstance task tests')
+class JobStopTaskTests extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsDeletePipeline'
+    @Shared String taskName = 'projectsStopJobInstance'
 
     File buildFile
     File jobFile
@@ -56,24 +56,24 @@ class PipelineDeleteTaskTests extends Specification {
         gradle(true, arguments)
     }
 
-    def "projectsDeletePipeline should delete a pipeline the deletion status"() {
+    def "projectsStopJobInstance should stop a job"() {
         given:
-        def mockedDeletePipelineResponse = new MockResponse()
-        mockedDeletePipelineResponse.responseCode = 200
-        mockedDeletePipelineResponse.body = '''{"data":{"deletePipeline":true}}'''
-        mockWebServer.enqueue(mockedDeletePipelineResponse)
+        def mockedStopJobResponse = new MockResponse()
+        mockedStopJobResponse.responseCode = 200
+        mockedStopJobResponse.body = '''{"data":{"stopJobInstance":{"id":"stopped-job-id"}}}'''
+        mockWebServer.enqueue(mockedStopJobResponse)
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'test.user'
+                    login = 'user.user'
                     password = 'password'
-                    environment = 2
+                    environment = 4
                 }
 
-                pipeline {
-                    id = "pipeline-id"
+                jobinstance {
+                    id = 'job-instance-id'
                 }
             }
         """
@@ -82,20 +82,18 @@ class PipelineDeleteTaskTests extends Specification {
         BuildResult result = gradle(taskName)
 
         then:
-        notThrown(Exception)
-        !result.output.contains('"data"')
-        result.output.contains('{"status":"success"}')
+        result.output.contains('{"id":"stopped-job-id"}')
     }
 
-    def "projectsDeletePipeline should fail if no pipeline id is provided"() {
+    def "projectsStopJobInstance should fail if job instance id is missing"() {
         given:
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'test.user'
+                    login = 'user.user'
                     password = 'password'
-                    environment = 2
+                    environment = 4
                 }
             }
         """
@@ -110,12 +108,12 @@ class PipelineDeleteTaskTests extends Specification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsDeletePipeline should fail if pipeline id doesn't exists"() {
+    def "projectsStopJobInstance should fail if job instance doesn't exists"() {
         given:
-        def mockedDeletePipelineResponse = new MockResponse()
-        mockedDeletePipelineResponse.responseCode = 200
-        mockedDeletePipelineResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
-        mockWebServer.enqueue(mockedDeletePipelineResponse)
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
 
         buildFile << """
             saagie {
@@ -126,7 +124,7 @@ class PipelineDeleteTaskTests extends Specification {
                     environment = 2
                 }
 
-                pipeline {
+                jobinstance {
                     id = 'bad-id'
                 }
             }
@@ -138,7 +136,7 @@ class PipelineDeleteTaskTests extends Specification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Something went wrong when deleting pipeline: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.message.contains('Something went wrong when stopping the job instance: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }
