@@ -23,6 +23,7 @@ The following tasks are available:
 
 Saagie tasks
 ------------
+groupList - list all groups for the user
 platformList - list available platforms
 projectsArchiveJob - archive a task
 projectsCreateJob - create a brand new job in a project
@@ -32,6 +33,7 @@ projectsGetJobInstanceStatus - get the status of a job instance
 projectsGetPipelineInstanceStatus - get the status of a pipeline instance
 projectsList - list all projects on the environment
 projectsListJobs - list all jobs of a project
+projectsListPipelines - list all pipelines of a project
 projectsListTechnologies - list all technologies of a project
 projectsRunJob - run an existing job
 projectsRunPipeline - run a pipeline
@@ -39,6 +41,7 @@ projectsStopJobInstance - stop a job instance
 projectsStopPipelineInstance - stop a pipeline instance
 projectsUpdateJob - update a existing job in a project
 projectsUpdatePipeline - update a pipeline
+technologyList - list all technologies for the user
 ```
 
 ## Quick Example
