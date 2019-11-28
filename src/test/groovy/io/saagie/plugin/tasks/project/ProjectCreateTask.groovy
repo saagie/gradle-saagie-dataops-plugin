@@ -3,7 +3,6 @@ package io.saagie.plugin.tasks.project
 import io.saagie.plugin.DataOpsGradleTaskSpecification
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Title
 
@@ -41,14 +40,65 @@ class ProjectCreateTask extends DataOpsGradleTaskSpecification {
         result.output.contains('{"id":"project-id","name":"project","description":""}')
     }
 
-    @PendingFeature
     def "the task should create a new project when all params are given"() {
+        given:
+        enqueueRequest('{"data":{"createProject":{"id":"project-id","name":"project","description":"description"}}}')
 
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    name = 'My project'
+                    description = 'description'
+                    technologyByCategory = [
+                        {
+                            category = 'Extraction'
+                            technologyid = ['tech-id']
+                        }
+                    ]
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{"id":"project-id","name":"project","description":"description"}')
     }
 
-    @PendingFeature
     def "the task should fail if required params are missing"() {
+        given:
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                }
 
+                project {
+                    description = 'description'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
     def "the task should fail if the required name is already used"() {

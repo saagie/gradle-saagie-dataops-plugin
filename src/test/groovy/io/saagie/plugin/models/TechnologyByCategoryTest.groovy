@@ -19,34 +19,30 @@ class TechnologyByCategoryTest extends Specification {
     def "the model should return a map with only required provided data"() {
         given:
         TechnologyByCategory technologyByCategory = new TechnologyByCategory()
-        technologyByCategory.jobCategory = "job-category"
+        technologyByCategory.category = "job-category"
 
         expect:
-        technologyByCategory.exists()
-        technologyByCategory.jobCategory == "job-category"
+        !technologyByCategory.exists()
+        technologyByCategory.category == "job-category"
     }
 
     def "the model should return a correct map when the toMap method is called"() {
         given:
         TechnologyByCategory technologyByCategory = new TechnologyByCategory()
-        technologyByCategory.jobCategory = "job-category"
+        technologyByCategory.category = "job-category"
 
         when:
         Map result = technologyByCategory.toMap()
 
         then:
-        technologyByCategory.exists()
-        result.size() == 2
-        result.containsKey("technologies")
-        result.containsKey("jobCategory")
-        result.jobCategory == "job-category"
-        result.technologies == null
+        !technologyByCategory.exists()
+        result == null
     }
 
     def "the model should return a correct map when the toMap method is called and technologies are provided"() {
         given:
         TechnologyByCategory technologyByCategory = new TechnologyByCategory()
-        technologyByCategory.jobCategory = "job-category"
+        technologyByCategory.category = "job-category"
         technologyByCategory.technologyid = [
             "techno1", "techno2"
         ]

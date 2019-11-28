@@ -1,5 +1,8 @@
 package io.saagie.plugin.dataops.models
 
+import groovy.transform.TypeChecked
+
+@TypeChecked
 class Project implements IMapable {
     String id
     String name
@@ -8,7 +11,12 @@ class Project implements IMapable {
     Integer jobsCount
     String status
 
-    List<TechnologyByCategory> technologyByCategory = []
+    private interface ITechnologyByCategory {
+        String category
+        List<String> technologyid
+    }
+
+    List<Closure<TechnologyByCategory>> technologyByCategory = []
     List<SecurityGroup> authorizedGroups = []
 
     @Override
@@ -26,7 +34,13 @@ class Project implements IMapable {
             return [
                 name: name,
                 description: description,
-                technologiesByCategory: technologyByCategory ? technologyByCategory.collect({ it.toMap() }) : null,
+                technologiesByCategory: technologyByCategory ? (
+                    technologyByCategory.collect({
+                        TechnologyByCategory tech = new TechnologyByCategory()
+                        tech.with(it)
+                        return tech.toMap()
+                    })
+                ) : null,
                 authorizedGroups: authorizedGroups.collect({ it.toMap() })
             ]
         }

@@ -44,10 +44,18 @@ class ProjectTest extends Specification {
                 new SecurityGroup(name: 'security-group-2', projectRole: 'ROLE_PROJECT_VIEWER'),
             ],
             technologyByCategory: [
-                new TechnologyByCategory(),
-                new TechnologyByCategory(jobCategory: 'job-category'),
-                new TechnologyByCategory(jobCategory: 'job-category-2', technologyid: []),
-                new TechnologyByCategory(jobCategory: 'job-category-3', technologyid: ['1']),
+                { },
+                {
+                    category = 'job-category'
+                },
+                {
+                    category = 'job-category-2'
+                    technologyid = []
+                },
+                {
+                    category = 'job-category-3'
+                    technologyid = ['1']
+                },
             ]
         )
 
@@ -66,8 +74,8 @@ class ProjectTest extends Specification {
         generatedMap.containsKey('technologiesByCategory')
         generatedMap.technologiesByCategory.size() == 4
         generatedMap.technologiesByCategory[0] == null
-        generatedMap.technologiesByCategory[1] == [jobCategory: 'job-category', technologies: null]
-        generatedMap.technologiesByCategory[2] == [jobCategory: 'job-category-2', technologies: null]
+        generatedMap.technologiesByCategory[1] == null
+        generatedMap.technologiesByCategory[2] == null
         generatedMap.technologiesByCategory[3] == [jobCategory: 'job-category-3', technologies: [[id:'1']]]
 
         generatedMap.containsKey('authorizedGroups')
