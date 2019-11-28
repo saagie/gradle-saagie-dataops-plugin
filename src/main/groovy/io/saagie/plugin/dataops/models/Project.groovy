@@ -11,13 +11,8 @@ class Project implements IMapable {
     Integer jobsCount
     String status
 
-    private interface ITechnologyByCategory {
-        String category
-        List<String> technologyid
-    }
-
     List<Closure<TechnologyByCategory>> technologyByCategory = []
-    List<SecurityGroup> authorizedGroups = []
+    List<Closure<SecurityGroup>> authorizedGroups = []
 
     @Override
     Map toMap() {
@@ -41,7 +36,11 @@ class Project implements IMapable {
                         return tech.toMap()
                     })
                 ) : null,
-                authorizedGroups: authorizedGroups.collect({ it.toMap() })
+                authorizedGroups: authorizedGroups.collect({
+                    SecurityGroup securityGroup = new SecurityGroup()
+                    securityGroup.with(it)
+                    return securityGroup.toMap()
+                })
             ]
         }
         return null

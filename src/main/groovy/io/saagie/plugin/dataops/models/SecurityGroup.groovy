@@ -2,21 +2,20 @@ package io.saagie.plugin.dataops.models
 
 class SecurityGroup implements IMapable, IExists {
 
-    String name
-
-    String projectRole
+    String id
+    String role
 
     @Override
     Map toMap() {
         if (!exists()) return null
         return [
-            name: name,
-            projectRole: projectRole
+            name: id,
+            role: role
         ]
     }
 
     @Override
     boolean exists() {
-        return name
+        return id
     }
 }

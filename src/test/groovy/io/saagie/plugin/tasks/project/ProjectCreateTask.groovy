@@ -62,6 +62,12 @@ class ProjectCreateTask extends DataOpsGradleTaskSpecification {
                             technologyid = ['tech-id']
                         }
                     ]
+                    authorizedGroups = [
+                        {
+                            id = 'users'
+                            role = 'ROLE_PROJECT_VIEWER'
+                        }
+                    ]
                 }
             }
         """

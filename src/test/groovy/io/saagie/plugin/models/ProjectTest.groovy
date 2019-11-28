@@ -1,8 +1,6 @@
 package io.saagie.plugin.models
 
 import io.saagie.plugin.dataops.models.Project
-import io.saagie.plugin.dataops.models.SecurityGroup
-import io.saagie.plugin.dataops.models.TechnologyByCategory
 import spock.lang.Specification
 import spock.lang.Title
 
@@ -39,9 +37,14 @@ class ProjectTest extends Specification {
             name: 'my-project',
             description: 'my-description',
             authorizedGroups: [
-                new SecurityGroup(),
-                new SecurityGroup(name: 'security-group'),
-                new SecurityGroup(name: 'security-group-2', projectRole: 'ROLE_PROJECT_VIEWER'),
+                { },
+                {
+                    id = 'security-group'
+                },
+                {
+                    id = 'security-group-2'
+                    role = 'ROLE_PROJECT_VIEWER'
+                },
             ],
             technologyByCategory: [
                 { },
@@ -81,7 +84,7 @@ class ProjectTest extends Specification {
         generatedMap.containsKey('authorizedGroups')
         generatedMap.authorizedGroups.size == 3
         generatedMap.authorizedGroups[0] == null
-        generatedMap.authorizedGroups[1] == [name: 'security-group', projectRole: null]
-        generatedMap.authorizedGroups[2] == [name: 'security-group-2', projectRole: 'ROLE_PROJECT_VIEWER']
+        generatedMap.authorizedGroups[1] == [name: 'security-group', role: null]
+        generatedMap.authorizedGroups[2] == [name: 'security-group-2', role: 'ROLE_PROJECT_VIEWER']
     }
 }
