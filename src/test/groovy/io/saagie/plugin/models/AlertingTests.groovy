@@ -1,5 +1,6 @@
-package io.saagie.plugin.dataops.models
+package io.saagie.plugin.models
 
+import io.saagie.plugin.dataops.models.Alerting
 import spock.lang.Specification
 import spock.lang.Title
 

@@ -886,6 +886,36 @@ class SaagieClient {
         }
     }
 
+    String createProject() {
+        logger.info('Starting projectsCreate task')
+
+        checkRequiredConfig(!configuration?.project?.name)
+
+        Request projectsCreateRequest = saagieUtils.getProjectsCreateRequest()
+        try {
+            client.newCall(projectsCreateRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating project: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdProjectResult = parsedResult.data.createProject
+                    return JsonOutput.toJson(createdProjectResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsCreate')
+            throw exception
+        }
+    }
+
     private checkRequiredConfig(boolean conditions) {
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
