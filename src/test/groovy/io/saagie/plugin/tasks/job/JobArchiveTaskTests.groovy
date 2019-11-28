@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_ARCHIVE_JOB_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_ARCHIVE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsArchiveJob task tests')
 class JobArchiveTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_ARCHIVE_JOB_TASK
+    @Shared String taskName = PROJECTS_ARCHIVE_JOB_TASK
 
     def "projectsArchiveJob should archive a job and return the archive status"() {
         given:

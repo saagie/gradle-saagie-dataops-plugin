@@ -11,12 +11,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_CREATE_PIPELINE_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_CREATE_PIPELINE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsCreatePipeline task tests')
 class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_CREATE_PIPELINE_TASK
+    @Shared String taskName = PROJECTS_CREATE_PIPELINE_TASK
 
     def "projectsCreatePipelineJob should create a new pipeline"() {
         given:

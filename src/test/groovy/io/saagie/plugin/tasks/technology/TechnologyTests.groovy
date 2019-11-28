@@ -6,11 +6,11 @@ import org.gradle.testkit.runner.BuildResult
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_LIST_TECHNOLOGIES_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_TECHNOLOGIES_TASK
 
 @Title("projectsListTechnologies task tests")
 class TechnologyTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_LIST_TECHNOLOGIES_TASK
+    @Shared String taskName = PROJECTS_LIST_TECHNOLOGIES_TASK
 
     def "projectsListTechnologies task should list technologies of a project"() {
         given:

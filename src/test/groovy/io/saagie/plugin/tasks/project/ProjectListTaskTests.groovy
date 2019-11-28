@@ -6,12 +6,12 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_LIST_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsList task tests")
 class ProjectListTaskTests extends DataOpsGradleTaskSpecification {
-    String taskName = PROJECT_LIST_TASK
+    String taskName = PROJECTS_LIST_TASK
 
     def "projectsList task should return a list of project"() {
         given:

@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_RUN_JOB_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_RUN_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsRunJob task tests')
 class JobRunTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_RUN_JOB_TASK
+    @Shared String taskName = PROJECTS_RUN_JOB_TASK
 
     def "projectsRunJob should run a job and return the job instance id and status"() {
         given:

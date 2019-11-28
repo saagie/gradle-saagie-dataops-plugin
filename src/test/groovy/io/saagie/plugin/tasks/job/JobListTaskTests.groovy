@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_LIST_JOBS_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_JOBS_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsListJobs task tests')
 class JobListTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_LIST_JOBS_TASK
+    @Shared String taskName = PROJECTS_LIST_JOBS_TASK
 
     def "projectsListJobs task should list jobs on a project"() {
         given:

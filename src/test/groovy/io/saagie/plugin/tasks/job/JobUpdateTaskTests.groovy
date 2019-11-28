@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_UPDATE_JOB_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPDATE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsUpdateJob task tests')
 class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_UPDATE_JOB_TASK
+    @Shared String taskName = PROJECTS_UPDATE_JOB_TASK
 
     def "projectsUpdateJob should update the specified job with only job config"() {
         given:

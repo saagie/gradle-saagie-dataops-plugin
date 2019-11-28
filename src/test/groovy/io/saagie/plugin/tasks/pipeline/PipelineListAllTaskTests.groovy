@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_PIPELINES
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_PIPELINES_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsListAllPipelinesTask task tests")
 class PipelineListAllTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_LIST_PIPELINES
+    @Shared String taskName = PROJECTS_LIST_PIPELINES_TASK
 
     def "the task should list all projects pipelines"() {
         given:

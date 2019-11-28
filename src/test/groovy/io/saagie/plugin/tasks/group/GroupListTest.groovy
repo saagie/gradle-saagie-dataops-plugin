@@ -6,12 +6,12 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.GROUP_LIST
+import static io.saagie.plugin.dataops.DataOpsModule.GROUP_LIST_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('groupList task tests')
 class GroupListTest extends DataOpsGradleTaskSpecification {
-    String taskName = GROUP_LIST
+    String taskName = GROUP_LIST_TASK
 
     def "the task should return a list of all user groups"() {
         given:

@@ -1,10 +1,12 @@
 package io.saagie.plugin
 
+import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import org.spockframework.runtime.IStackTraceFilter
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -53,5 +55,12 @@ class DataOpsGradleTaskSpecification extends Specification {
 
     BuildResult gradle(String[] arguments = ['tasks']) {
         gradle(true, arguments)
+    }
+
+    def enqueueRequest(String body, status = 200) {
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = status
+        mockedResponse.body = body
+        mockWebServer.enqueue(mockedResponse)
     }
 }

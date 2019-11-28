@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_PIPELINE_INSTANCE
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_PIPELINE_INSTANCE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsStopPipelineInstance task tests')
 class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_STOP_PIPELINE_INSTANCE
+    @Shared String taskName = PROJECTS_STOP_PIPELINE_INSTANCE_TASK
 
     def "projectsStopPipelineInstance should stop a pipeline instance"() {
         given:

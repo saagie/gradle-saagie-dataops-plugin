@@ -2,22 +2,17 @@ package io.saagie.plugin.tasks.job
 
 import io.saagie.plugin.DataOpsGradleTaskSpecification
 import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Title
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_STOP_JOB_INSTANCE_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_JOB_INSTANCE_TASK
 
 @Title('projectsStopJobInstance task tests')
 class JobStopTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECT_STOP_JOB_INSTANCE_TASK
+    @Shared String taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
 
     def "projectsStopJobInstance should stop a job"() {
         given:
