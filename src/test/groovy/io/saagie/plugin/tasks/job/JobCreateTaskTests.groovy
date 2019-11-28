@@ -1,61 +1,17 @@
 package io.saagie.plugin.tasks.job
 
+import io.saagie.plugin.DataOpsGradleTaskSpecification
 import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Title
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsCreateJob task tests')
-class JobCreateTaskTests extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
+class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = 'projectsCreateJob'
-
-    File buildFile
-    File jobFile
-
-    def setupSpec() {
-        mockWebServer.start(9000)
-    }
-
-    def cleanupSpec() {
-        mockWebServer.shutdown()
-    }
-
-    def setup() {
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
-
-        jobFile = testProjectDir.newFile('jobFile.py')
-        jobFile << 'print("Hello World")'
-    }
-
-    def cleanup() {
-        mockWebServer.dispatcher.peek()
-    }
-
-    private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
-        arguments += '--stacktrace'
-        def runner = GradleRunner.create()
-            .withArguments(arguments)
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withDebug(true)
-
-        return isSuccessExpected ? runner.build() : runner.buildAndFail();
-    }
-
-    private BuildResult gradle(String[] arguments = ['tasks']) {
-        gradle(true, arguments)
-    }
 
     def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:

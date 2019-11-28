@@ -76,5 +76,4 @@ class ProjectTest extends Specification {
         generatedMap.authorizedGroups[1] == [name: 'security-group', projectRole: null]
         generatedMap.authorizedGroups[2] == [name: 'security-group-2', projectRole: 'ROLE_PROJECT_VIEWER']
     }
-
 }

@@ -1,61 +1,18 @@
 package io.saagie.plugin.tasks.job
 
-import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.DataOpsGradleTaskSpecification
 import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Title
 
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_UPDATE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsUpdateJob task tests')
-class JobUpdateTaskTests extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsUpdateJob'
-
-    File buildFile
-    File jobFile
-
-    def setupSpec() {
-        mockWebServer.start(9000)
-    }
-
-    def cleanupSpec() {
-        mockWebServer.shutdown()
-    }
-
-    def setup() {
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
-
-        jobFile = testProjectDir.newFile('jobFile.py')
-    }
-
-    def cleanup() {
-        mockWebServer.dispatcher.peek()
-    }
-
-    private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
-        arguments += '--stacktrace'
-        def runner = GradleRunner.create()
-            .withArguments(arguments)
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withDebug(true)
-
-        return isSuccessExpected ? runner.build() : runner.buildAndFail();
-    }
-
-    private BuildResult gradle(String[] arguments = ['tasks']) {
-        gradle(true, arguments)
-    }
+class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECT_UPDATE_JOB_TASK
 
     def "projectsUpdateJob should update the specified job with only job config"() {
         given:
@@ -165,24 +122,6 @@ class JobUpdateTaskTests extends Specification {
 
         then:
         result.output.contains('{"id":"jobId"}')
-    }
-
-    def "JobVersion object DSL should return null values on empty array"() {
-        given:
-        JobVersion jobVersion = new JobVersion()
-        jobVersion.with {
-            runtimeVersion = '1'
-            releaseNote = 'release note'
-            volume = []
-            exposedPorts = []
-        }
-
-        when:
-        Map jobVersionMap = jobVersion.toMap()
-
-        then:
-        jobVersionMap.volume == null
-        jobVersionMap.exposedPorts == null
     }
 
     def "projectsUpdateJob should fail if jobVersion is provided without a runtimeVersion"() {
