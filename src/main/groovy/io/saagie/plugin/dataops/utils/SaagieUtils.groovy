@@ -768,7 +768,7 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            *:project.toMap()
+            project: project.toMap()
         ])
 
         def createProjectRequest = gq('''
