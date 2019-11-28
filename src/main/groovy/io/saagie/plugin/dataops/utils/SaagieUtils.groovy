@@ -759,6 +759,31 @@ class SaagieUtils {
         return getPlatformListRequest()
     }
 
+    Request getProjectsCreateRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectsCreateRequest for creating a new project [name={}]', project.name)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            *:project.toMap()
+        ])
+
+        def createProjectRequest = gq('''
+            mutation createProjectMutation($project: ProjectInput!) {
+                createProject(project: $project) {
+                    id
+                    name
+                    description
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(createProjectRequest)
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
