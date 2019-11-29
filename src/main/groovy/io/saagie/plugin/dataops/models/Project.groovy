@@ -23,7 +23,19 @@ class Project implements IMapable {
                 creator    : creator,
                 description: description,
                 jobsCount  : jobsCount,
-                status     : status
+                status     : status,
+                technologiesByCategory: technologyByCategory ? (
+                    technologyByCategory.collect({
+                        TechnologyByCategory tech = new TechnologyByCategory()
+                        tech.with(it)
+                        return tech.toMap()
+                    })
+                ) : null,
+                authorizedGroups: authorizedGroups.collect({
+                    SecurityGroup securityGroup = new SecurityGroup()
+                    securityGroup.with(it)
+                    return securityGroup.toMap()
+                })
             ]
         } else if (!id && name) {
             return [

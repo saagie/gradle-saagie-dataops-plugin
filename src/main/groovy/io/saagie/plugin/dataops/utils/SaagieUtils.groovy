@@ -784,6 +784,29 @@ class SaagieUtils {
         return buildRequestFromQuery(createProjectRequest)
     }
 
+    Request getProjectsUpdateRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectsUpdateRequest for updating a new project [id={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            project: project.toMap()
+        ])
+
+        def updateProjectRequest = gq('''
+            mutation editProjectMutation($project: ProjectEditionInput!) {
+                editProject(project: $project) {
+                    status
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(updateProjectRequest)
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
