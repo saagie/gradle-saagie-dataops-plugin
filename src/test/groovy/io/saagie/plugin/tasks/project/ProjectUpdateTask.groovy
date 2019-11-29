@@ -25,6 +25,23 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
 
                 project {
                     id = 'project-id'
+                    name = 'project-name'
+                    technologyByCategory = [
+                        {
+                            category = "category"
+                            technologyid = ["tech-id", "tech-id-1", "tech-id-2"]
+                        },
+                        {
+                            category = "category-2"
+                            technologyid = ["tech-id","tech-id-1","tech-id-2"]
+                        }
+                    ]
+                    authorizedGroups = [
+                        {
+                            id = 'group id'
+                            role = 'type of Authroization role'
+                        }
+                    ]
                 }
             }
         """
@@ -51,7 +68,24 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
 
                 project {
                     id = 'project-id'
+                    name = 'project-name'
                     description = 'new description'
+                    technologyByCategory = [
+                        {
+                            category = "category"
+                            technologyid = ["tech-id", "tech-id-1", "tech-id-2"]
+                        },
+                        {
+                            category = "category-2"
+                            technologyid = ["tech-id","tech-id-1","tech-id-2"]
+                        }
+                    ]
+                    authorizedGroups = [
+                        {
+                            id = 'group id'
+                            role = 'type of Authroization role'
+                        }
+                    ]
                 }
             }
         """

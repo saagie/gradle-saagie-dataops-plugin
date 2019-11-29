@@ -919,7 +919,12 @@ class SaagieClient {
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 
-        checkRequiredConfig(!configuration?.project?.id)
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.project?.name ||
+            configuration?.project?.technologyByCategory.empty ||
+            configuration?.project?.authorizedGroups.empty
+        )
 
         Request projectsUpdateRequest = saagieUtils.getProjectsUpdateRequest()
         try {
