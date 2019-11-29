@@ -916,6 +916,36 @@ class SaagieClient {
         }
     }
 
+    String updateProject() {
+        logger.info('Starting projectsUpdate task')
+
+        checkRequiredConfig(!configuration?.project?.id)
+
+        Request projectsUpdateRequest = saagieUtils.getProjectsUpdateRequest()
+        try {
+            client.newCall(projectsUpdateRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when updating project: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdProjectResult = parsedResult.data.editProject
+                    return JsonOutput.toJson(createdProjectResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsUpdate')
+            throw exception
+        }
+    }
+
     private checkRequiredConfig(boolean conditions) {
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))

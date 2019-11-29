@@ -19,6 +19,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectsUpdateTask
 import io.saagie.plugin.dataops.tasks.projects.TechnologyListTask
 import org.gradle.api.Project
 
@@ -44,6 +45,7 @@ class DataOpsModule {
     final static String TECHNOLOGY_LIST_TASK = 'technologyList'
     final static String GROUP_LIST_TASK = 'groupList'
     final static String PROJECTS_CREATE_TASK = 'projectsCreate'
+    final static String PROJECTS_UPDATE = 'projectsUpdate'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -189,6 +191,13 @@ class DataOpsModule {
             description = 'create a brand new project'
             configuration = project.saagie
             taskName = PROJECTS_CREATE_TASK
+        }
+
+        project.task(PROJECTS_UPDATE, type: ProjectsUpdateTask) {
+            group = TASK_GROUP
+            description = 'update an existing project'
+            configuration = project.saagie
+            taskName = PROJECTS_UPDATE
         }
     }
 }
