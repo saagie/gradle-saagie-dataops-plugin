@@ -16,7 +16,7 @@ class Project implements IMapable {
 
     @Override
     Map toMap() {
-        if (id && name && creator && description && jobsCount && status) {
+        if (id) {
             return [
                 id         : id,
                 name       : name,
