@@ -123,6 +123,23 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectJobs)
     }
 
+    Request archiveProjectRequest(){
+        Project job = configuration.project
+        logger.debug('Generating archiveProjectRequest [ProjectId={}]', Project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
+
+        def getProjectInstanceStatus = gq('''
+            mutation archiveProjectMutation(projectId: UUID!) {
+                archiveProject(jobId: $projectId)
+            }
+        ''', gqVariables)
+    }
+
     Request getProjectTechnologiesRequest() {
         Project project = configuration.project
         logger.debug('generating getProjectTechnologiesRequest [projectId={}]', project.id)

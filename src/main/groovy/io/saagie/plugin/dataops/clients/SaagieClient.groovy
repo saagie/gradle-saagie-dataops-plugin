@@ -747,6 +747,41 @@ class SaagieClient {
         }
     }
 
+    String deleteProject() {
+        logger.info('Starting deleteProject task')
+        if (configuration?.project?.id == null        ) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+        }
+
+        logger.debug('Using config [projectId={}]', configuration.project.id)
+
+        Request projectDeleteRequest = saagieUtils.archiveProjectRequest()
+        try {
+            client.newCall(projectDeleteRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when deleting project: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String deletedPipelineStatus = parsedResult.data.archiveProject ? 'success' : 'failure'
+                    Map deletedPipeline = [status: deletedPipelineStatus]
+                    return JsonOutput.toJson(deletedPipeline)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in deleteProject')
+            throw exception
+        }
+    }
+
     String archiveProjectJob() {
         logger.info('Starting archiveProjectJob task')
         if (configuration?.job?.id == null) {
