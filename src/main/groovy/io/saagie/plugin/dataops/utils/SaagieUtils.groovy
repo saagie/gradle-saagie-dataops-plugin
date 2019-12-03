@@ -134,7 +134,7 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
 
         def getProjectInstanceStatus = gq('''
-            mutation archiveProjectMutation(projectId: UUID!) {
+            mutation archiveProjectMutation($projectId: UUID!) {
                 archiveProject(projectId: $projectId)
             }
         ''', gqVariables)

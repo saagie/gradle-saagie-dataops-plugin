@@ -60,16 +60,16 @@ class ProjectDeleteTaskTests extends Specification {
         given:
         def mockedDeleteProjectResponse = new MockResponse()
         mockedDeleteProjectResponse.responseCode = 200
-        mockedDeleteProjectResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+        mockedDeleteProjectResponse.body = '''{"errors":[{"message":"Unexpected error"}],"data":null}'''
         mockWebServer.enqueue(mockedDeleteProjectResponse)
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'test.user'
+                    login = 'user.test'
                     password = 'password'
-                    environment = 2
+                    environment = 1
                 }
 
                 project {
@@ -84,7 +84,7 @@ class ProjectDeleteTaskTests extends Specification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Something went wrong when deleting project: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+        e.message.contains('Something went wrong when deleting project: {"errors":[{"message":"Unexpected error"}],"data":null}')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
@@ -94,9 +94,9 @@ class ProjectDeleteTaskTests extends Specification {
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'test.user'
+                    login = 'user.test'
                     password = 'password'
-                    environment = 2
+                    environment = 1
                 }
             }
         """
@@ -122,13 +122,13 @@ class ProjectDeleteTaskTests extends Specification {
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'test.user'
+                    login = 'user.test'
                     password = 'password'
-                    environment = 2
+                    environment = 1
                 }
 
                 project {
-                    id = "project-id"
+                    id = "c1ff8e71-2ee9-4016-8ea9-de1b3f2fecb9"
                 }
             }
         """
