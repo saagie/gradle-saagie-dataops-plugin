@@ -767,9 +767,9 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    String deletedPipelineStatus = parsedResult.data.archiveProject ? 'success' : 'failure'
-                    Map deletedPipeline = [status: deletedPipelineStatus]
-                    return JsonOutput.toJson(deletedPipeline)
+                    String deletedProjectStatus = parsedResult.data.archiveProject ? 'success' : 'failure'
+                    Map deletedProject = [status: deletedProjectStatus]
+                    return JsonOutput.toJson(deletedProject)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
