@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectStopPipelineInstanceTask extends DefaultTask {
+class TechnologyListTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -15,9 +15,9 @@ class ProjectStopPipelineInstanceTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def stopPipelineInstance() {
+    def listTechnologies() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.stopPipelineInstance()
+        def result = saagieClient.listTechnologies()
         logger.quiet(result)
         return result
     }

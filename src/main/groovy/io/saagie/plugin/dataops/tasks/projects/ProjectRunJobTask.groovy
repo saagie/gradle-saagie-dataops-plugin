@@ -17,6 +17,8 @@ class ProjectRunJobTask extends DefaultTask {
     @TaskAction
     def runProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.runProjectJob())
+        def result = saagieClient.runProjectJob()
+        logger.quiet(result)
+        return result
     }
 }

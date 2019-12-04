@@ -17,6 +17,8 @@ class PlatformListTask extends DefaultTask {
     @TaskAction
     def archiveProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        logger.quiet(saagieClient.listPlatforms())
+        def result = saagieClient.listPlatforms()
+        logger.quiet(result)
+        return result
     }
 }

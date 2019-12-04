@@ -1,4 +1,4 @@
-package io.saagie.plugin.dataops.tasks.projects
+package io.saagie.plugin.dataops.tasks.group
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectStopPipelineInstanceTask extends DefaultTask {
+class GroupListTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -15,9 +15,9 @@ class ProjectStopPipelineInstanceTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def stopPipelineInstance() {
+    def listGroups() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.stopPipelineInstance()
+        def result = saagieClient.listGroups()
         logger.quiet(result)
         return result
     }

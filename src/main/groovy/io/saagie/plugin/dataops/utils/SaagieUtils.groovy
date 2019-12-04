@@ -173,7 +173,39 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectTechnologies)
     }
 
+    @Deprecated
     Request getProjectCreateJobRequest() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
+
+        job.projectId = configuration.project.id
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .excludeFieldsByName('id')
+            .excludeFieldsByName('usePreviousArtifact')
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            job: job.toMap(),
+            jobVersion: jobVersion.toMap()
+        ])
+
+        def createProjectJob = gq('''
+            mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!) {
+                createJob(job: $job, jobVersion: $jobVersion) {
+                    id
+                    name
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(createProjectJob)
+    }
+
+    Request getProjectCreateJobRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
@@ -238,7 +270,34 @@ class SaagieUtils {
         return buildRequestFromQuery(updateProjectJob)
     }
 
+    @Deprecated
     Request getAddJobVersionRequest() {
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId     : job.id,
+            jobVersion: jobVersion.toMap()
+        ])
+
+        def updateProjectJob = gq('''
+            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
+                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
+                    number
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(updateProjectJob)
+    }
+
+    Request getAddJobVersionRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
@@ -672,6 +731,99 @@ class SaagieUtils {
 
         debugRequest(newRequest)
         return newRequest
+    }
+
+    Request getListAllPipelinesRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getListAllPipelinesRequest for project [id={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            projectId: project.id
+        ])
+
+        def listAllPipelineRequest = gq('''
+            query getAllPipelines($projectId: UUID!) {
+                pipelines(projectId: $projectId) {
+                    id
+                    name
+                    description
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listAllPipelineRequest)
+    }
+
+    Request getListAllTechnologiesRequest() {
+        logger.debug('Generating getListAllTechnologiesRequest')
+
+        def listAllPipelineRequest = gq('''
+            query getAllTechnologies {
+                technologies {
+                    id
+                    label
+                    isAvailable
+                }
+            }
+        ''')
+
+        return buildRequestFromQuery(listAllPipelineRequest)
+    }
+
+    Request getGroupListRequest() {
+        return getPlatformListRequest()
+    }
+
+    Request getProjectsCreateRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectsCreateRequest for creating a new project [name={}]', project.name)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            project: project.toMap()
+        ])
+
+        def createProjectRequest = gq('''
+            mutation createProjectMutation($project: ProjectInput!) {
+                createProject(project: $project) {
+                    id
+                    name
+                    description
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(createProjectRequest)
+    }
+
+    Request getProjectsUpdateRequest() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectsUpdateRequest for updating a new project [id={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            project: project.toMap()
+        ])
+
+        def updateProjectRequest = gq('''
+            mutation editProjectMutation($project: ProjectEditionInput!) {
+                editProject(project: $project) {
+                    status
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(updateProjectRequest)
     }
 
     private Request buildRequestFromQuery(String query) {

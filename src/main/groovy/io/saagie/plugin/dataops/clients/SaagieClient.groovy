@@ -4,6 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -29,7 +30,7 @@ class SaagieClient {
 
     SaagieUtils saagieUtils
 
-    OkHttpClient client = new OkHttpClient()
+    OkHttpClient client
 
     JsonSlurper slurper = new JsonSlurper()
 
@@ -49,6 +50,7 @@ class SaagieClient {
         }
 
         saagieUtils = new SaagieUtils(configuration)
+        client = HttpClientBuilder.getHttpClient(configuration)
 
         this.checkBaseConfiguration()
     }
@@ -122,10 +124,7 @@ class SaagieClient {
 
     String getProjectJobs() {
         logger.info('Starting getProjectJob task')
-        if (!configuration.project?.id) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration.project?.id)
 
         logger.debug('Using config [project={}]', configuration.project)
 
@@ -156,10 +155,7 @@ class SaagieClient {
 
     String getProjectTechnologies() {
         logger.info('Starting getProjectTechnologies task')
-        if (configuration?.project?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.project?.id)
 
         logger.debug('Using config [project={}]', configuration.project)
 
@@ -197,17 +193,15 @@ class SaagieClient {
 
     @Deprecated
     String createProjectJob() {
-        logger.info('Starting createProjectJob task')
-        if (configuration?.project?.id == null ||
-            configuration?.job?.name == null ||
-            configuration?.job?.technology == null ||
-            configuration?.job?.category == null ||
-            configuration?.jobVersion?.runtimeVersion == null ||
-            configuration?.jobVersion?.resources == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        logger.info('Starting deprecated createProjectJob task')
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.job?.name ||
+            !configuration?.job?.technology ||
+            !configuration?.job?.category ||
+            !configuration?.jobVersion?.runtimeVersion ||
+            !configuration?.jobVersion?.resources
+        )
 
         if (configuration.jobVersion.packageInfo?.name != null) {
             File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
@@ -260,16 +254,14 @@ class SaagieClient {
 
     String createProjectJobWithGraphQL() {
         logger.info('Starting createProjectJob task')
-        if (configuration?.project?.id == null ||
-            configuration?.job?.name == null ||
-            configuration?.job?.technology == null ||
-            configuration?.job?.category == null ||
-            configuration?.jobVersion?.runtimeVersion == null ||
-            configuration?.jobVersion?.resources == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.job?.name ||
+            !configuration?.job?.technology ||
+            !configuration?.job?.category ||
+            !configuration?.jobVersion?.runtimeVersion ||
+            !configuration?.jobVersion?.resources
+        )
 
         if (configuration.jobVersion.packageInfo?.name != null) {
             File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
@@ -281,7 +273,7 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
-        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
         try {
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -308,10 +300,7 @@ class SaagieClient {
 
     String runProjectJob() {
         logger.info('Starting runProjectJob task')
-        if (configuration?.job?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.job?.id)
 
         logger.debug('Using config [job={}]', configuration.job)
 
@@ -343,12 +332,7 @@ class SaagieClient {
     @Deprecated
     String updateProjectJob() {
         logger.info('Starting updateProjectJob task')
-        if (configuration?.job?.id == null ||
-            configuration?.project?.id == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.job?.id || !configuration?.project?.id)
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
@@ -399,13 +383,11 @@ class SaagieClient {
 
     String updateProjectJobWithGraphQL() {
         logger.info('Starting updateProjectJob task')
-        if (configuration?.job?.id == null ||
+        checkRequiredConfig(
+            !configuration?.job?.id ||
             (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling) ||
             (configuration?.jobVersion?.exists() && !configuration?.jobVersion?.runtimeVersion)
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        )
 
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
 
@@ -438,7 +420,7 @@ class SaagieClient {
         if (configuration?.jobVersion?.exists()) {
             Request addJobVersionRequest
             if (configuration.jobVersion.packageInfo?.name) {
-                addJobVersionRequest = saagieUtils.getAddJobVersionRequest()
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL()
             } else {
                 configuration.jobVersion.usePreviousArtifact = true
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
@@ -463,12 +445,7 @@ class SaagieClient {
 
     String createProjectPipelineJob() {
         logger.info('Starting createPipeline task')
-        if (configuration?.project?.id == null ||
-            configuration?.pipeline?.name == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.project?.id || !configuration?.pipeline?.name)
 
         logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, configuration.pipeline, configuration.pipelineVersion)
 
@@ -499,10 +476,7 @@ class SaagieClient {
 
     String getJobInstanceStatus() {
         logger.info('Starting getJobInstanceStatus task')
-        if (configuration?.jobinstance?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.jobinstance?.id)
 
         logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobinstance)
 
@@ -535,21 +509,12 @@ class SaagieClient {
         logger.info('Starting updateProjectPipeline task')
 
         // 1. try to update pipeline infos
-        if (
-            configuration?.pipeline &&
-            configuration?.pipeline?.id == null
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.pipeline?.id)
         def pipelineResult = updatePipelineInfos();
 
         // 2. try to update pipeline version
         if (configuration?.pipelineVersion) {
-            if (configuration?.pipelineVersion && configuration?.pipelineVersion?.jobs?.isEmpty()) {
-                logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-                throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            }
+            checkRequiredConfig(configuration?.pipelineVersion && configuration?.pipelineVersion?.jobs?.isEmpty())
             updatePipelineVersion()
         }
 
@@ -613,10 +578,7 @@ class SaagieClient {
 
     String getPipelineInstanceStatus() {
         logger.info('Starting getPipelineInstanceStatus task')
-        if (configuration?.pipelineinstance?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.pipelineinstance?.id)
 
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
         Request projectPipelineInstanceStatusRequest = saagieUtils.getProjectPipelineInstanceStatusRequest()
@@ -646,10 +608,7 @@ class SaagieClient {
 
     String runProjectPipeline() {
         logger.info('Starting runProjectPipeline task')
-        if (configuration?.pipeline?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.pipeline?.id)
 
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
@@ -680,10 +639,7 @@ class SaagieClient {
 
     String stopJobInstance() {
         logger.info('Starting stopJobInstance task')
-        if (configuration?.jobinstance?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.jobinstance?.id)
 
         logger.debug('Using config [job={}]', configuration.job)
 
@@ -714,10 +670,7 @@ class SaagieClient {
 
     String deleteProjectPipeline() {
         logger.info('Starting deleteProjectPipeline task')
-        if (configuration?.pipeline?.id == null        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.pipeline?.id)
 
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
@@ -784,10 +737,7 @@ class SaagieClient {
 
     String archiveProjectJob() {
         logger.info('Starting archiveProjectJob task')
-        if (configuration?.job?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.job?.id)
 
         logger.debug('Using config [jobId={}]', configuration.job.id)
 
@@ -819,10 +769,7 @@ class SaagieClient {
 
     String stopPipelineInstance() {
         logger.info('Starting stopPipelineInstance task')
-        if (configuration?.pipelineinstance?.id == null) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        checkRequiredConfig(!configuration?.pipelineinstance?.id)
 
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
 
@@ -852,14 +799,12 @@ class SaagieClient {
     }
 
     String listPlatforms() {
-        logger.info('Starting stopPipelineInstance task')
-        if (
+        logger.info('Starting platformList task')
+
+        checkRequiredConfig(
             !configuration.server?.jwt ||
             !configuration.server?.realm
-        ) {
-            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
-        }
+        )
 
         Request platformListRequest = saagieUtils.getPlatformListRequest()
         try {
@@ -883,6 +828,168 @@ class SaagieClient {
         } catch (Exception exception) {
             logger.error('Unknown error in listPlatforms')
             throw exception
+        }
+    }
+
+    String listAllPipelines() {
+        logger.info('Starting projectsListAllPipelines task')
+        checkRequiredConfig(!configuration?.project?.id)
+
+        Request platformListRequest = saagieUtils.getListAllPipelinesRequest()
+        try {
+            client.newCall(platformListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting pipelines list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List pipelineList = parsedResult.data.pipelines
+                    return JsonOutput.toJson(pipelineList)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in listAllPipelines')
+            throw exception
+        }
+    }
+
+    String listTechnologies() {
+        logger.info('Starting technologyList task')
+
+        Request technologyListRequest = saagieUtils.getListAllTechnologiesRequest()
+        try {
+            client.newCall(technologyListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting technology list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List technologyList = parsedResult.data.technologies
+                    return JsonOutput.toJson(technologyList)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in listTechnologies')
+            throw exception
+        }
+    }
+
+    String listGroups() {
+        logger.info('Starting groupList task')
+
+        checkRequiredConfig(
+            !configuration.server?.jwt ||
+            !configuration.server?.realm
+        )
+
+        Request groupListRequest = saagieUtils.getGroupListRequest()
+        try {
+            client.newCall(groupListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.groups == null) {
+                    def message = "Something went wrong when getting group list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    List groupListResult = parsedResult.groups
+                    return JsonOutput.toJson(groupListResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in groupList')
+            throw exception
+        }
+    }
+
+    String createProject() {
+        logger.info('Starting projectsCreate task')
+
+        checkRequiredConfig(!configuration?.project?.name)
+
+        Request projectsCreateRequest = saagieUtils.getProjectsCreateRequest()
+        try {
+            client.newCall(projectsCreateRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating project: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdProjectResult = parsedResult.data.createProject
+                    return JsonOutput.toJson(createdProjectResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsCreate')
+            throw exception
+        }
+    }
+
+    String updateProject() {
+        logger.info('Starting projectsUpdate task')
+
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.project?.name ||
+            configuration?.project?.technologyByCategory.empty ||
+            configuration?.project?.authorizedGroups.empty
+        )
+
+        Request projectsUpdateRequest = saagieUtils.getProjectsUpdateRequest()
+        try {
+            client.newCall(projectsUpdateRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when updating project: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdProjectResult = parsedResult.data.editProject
+                    return JsonOutput.toJson(createdProjectResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsUpdate')
+            throw exception
+        }
+    }
+
+    private checkRequiredConfig(boolean conditions) {
+        if (conditions) {
+            logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
+            throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
     }
 

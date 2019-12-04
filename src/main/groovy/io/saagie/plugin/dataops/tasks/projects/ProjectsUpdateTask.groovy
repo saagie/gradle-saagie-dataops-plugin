@@ -1,13 +1,16 @@
 package io.saagie.plugin.dataops.tasks.projects
 
+import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
+import io.saagie.plugin.dataops.models.Server
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectStopPipelineInstanceTask extends DefaultTask {
+@TypeChecked
+class ProjectsUpdateTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -15,9 +18,11 @@ class ProjectStopPipelineInstanceTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def stopPipelineInstance() {
+    def updateProject() {
+        Server server = configuration.server
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.stopPipelineInstance()
+
+        def result = saagieClient.updateProject()
         logger.quiet(result)
         return result
     }

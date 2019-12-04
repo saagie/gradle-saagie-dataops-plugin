@@ -1,67 +1,23 @@
-package io.saagie.plugin.project
+package io.saagie.plugin.tasks.project
 
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import io.saagie.plugin.DataOpsGradleTaskSpecification
+
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.UnexpectedBuildFailure
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
-import spock.lang.Specification
 import spock.lang.Title
 
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECT_DELETE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsDelete task tests")
-class ProjectDeleteTaskTests extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String taskName = 'projectsDelete'
+class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
 
-    File buildFile
-    File jobFile
-
-    def setupSpec() {
-        mockWebServer.start(9000)
-    }
-
-    def cleanupSpec() {
-        mockWebServer.shutdown()
-    }
-
-    def setup() {
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << 'plugins { id "io.saagie.gradle-saagie-dataops-plugin" }\n'
-
-        jobFile = testProjectDir.newFile('jobFile.py')
-    }
-
-    def cleanup() {
-        mockWebServer.dispatcher.peek()
-    }
-
-    private BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
-        arguments += '--stacktrace'
-        def runner = GradleRunner.create()
-            .withArguments(arguments)
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withDebug(true)
-
-        return isSuccessExpected ? runner.build() : runner.buildAndFail();
-    }
-
-    private BuildResult gradle(String[] arguments = ['tasks']) {
-        gradle(true, arguments)
-    }
+    @Shared String taskName = PROJECT_DELETE_TASK
 
     def "projectsDelete should fail if project id doesn't exists"() {
         given:
-        def mockedDeleteProjectResponse = new MockResponse()
-        mockedDeleteProjectResponse.responseCode = 200
-        mockedDeleteProjectResponse.body = '''{"errors":[{"message":"Unexpected error"}],"data":null}'''
-        mockWebServer.enqueue(mockedDeleteProjectResponse)
+        enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
 
         buildFile << """
             saagie {
@@ -90,6 +46,9 @@ class ProjectDeleteTaskTests extends Specification {
 
     def "projectsDelete should fail if no project id is provided"() {
         given:
+
+        enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
+
         buildFile << """
             saagie {
                 server {
@@ -113,10 +72,7 @@ class ProjectDeleteTaskTests extends Specification {
 
     def "projectsDelete should delete a project the archive status"() {
         given:
-        def mockedDeleteResponse = new MockResponse()
-        mockedDeleteResponse.responseCode = 200
-        mockedDeleteResponse.body = '''{"data":{"archiveProject":true}}'''
-        mockWebServer.enqueue(mockedDeleteResponse)
+        enqueueRequest('''{"data":{"archiveProject":true}}''')
 
         buildFile << """
             saagie {
@@ -128,7 +84,7 @@ class ProjectDeleteTaskTests extends Specification {
                 }
 
                 project {
-                    id = "c1ff8e71-2ee9-4016-8ea9-de1b3f2fecb9"
+                    id = "project-id"
                 }
             }
         """
