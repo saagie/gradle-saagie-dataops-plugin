@@ -15,35 +15,6 @@ class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
 
     @Shared String taskName = PROJECT_DELETE_TASK
 
-    def "projectsDelete should delete a project the archive status"() {
-        given:
-
-        enqueueRequest('''{"data":{"archiveProject": true}}''')
-
-        buildFile << """
-            saagie {
-                server {
-                    url = 'http://localhost:9000'
-                    login = 'test.user'
-                    password = 'password'
-                    environment = 1
-                }
-
-                project {
-                    id = "project-id"
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        !result.output.contains('"data"')
-        result.output.contains('{"status":"success"}')
-    }
-
     def "projectsDelete should fail if project id doesn't exists"() {
         given:
         enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
@@ -73,18 +44,22 @@ class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsDelete should fail if no project id is provided"() {
+    def "projectsDelete should delete a project the archive status"() {
         given:
 
-        enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
+        enqueueRequest('''{"data":{"archiveProject": true}}''')
 
         buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
-                    login = 'user.test'
+                    login = 'test.user'
                     password = 'password'
                     environment = 1
+                }
+
+                project {
+                    id = "project-id"
                 }
             }
         """
@@ -93,10 +68,8 @@ class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
         BuildResult result = gradle(taskName)
 
         then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
+        notThrown(Exception)
+        !result.output.contains('"data"')
+        result.output.contains('{"status":"success"}')
     }
-
 }
