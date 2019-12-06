@@ -5,6 +5,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectArchiveJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectDeletePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectDeleteTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectGetJobInstanceStatus
 import io.saagie.plugin.dataops.tasks.projects.ProjectGetPipelineInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectListJobsTask
@@ -33,6 +34,7 @@ class DataOpsModule {
     final static String PROJECTS_UPDATE_JOB_TASK = 'projectsUpdateJob'
     final static String PROJECTS_GET_JOB_INSTANCE_STATUS = 'projectsGetJobInstanceStatus'
     final static String PROJECTS_CREATE_PIPELINE_TASK = 'projectsCreatePipeline'
+    final static String PROJECT_DELETE_TASK = 'projectsDelete'
     final static String PROJECTS_GET_PIPELINE_INSTANCE_STATUS = 'projectsGetPipelineInstanceStatus'
     final static String PROJECTS_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
     final static String PROJECTS_RUN_PIPELINE_TASK = 'projectsRunPipeline'
@@ -107,6 +109,13 @@ class DataOpsModule {
             description = 'create a pipeline'
             configuration = project.saagie
             taskName = PROJECTS_CREATE_PIPELINE_TASK
+        }
+
+        project.task(PROJECT_DELETE_TASK, type: ProjectDeleteTask) {
+            group = TASK_GROUP
+            description = 'archive a project'
+            configuration = project.saagie
+            taskName = PROJECT_DELETE_TASK
         }
 
         project.task(PROJECTS_GET_PIPELINE_INSTANCE_STATUS, type: ProjectGetPipelineInstanceStatusTask) {
