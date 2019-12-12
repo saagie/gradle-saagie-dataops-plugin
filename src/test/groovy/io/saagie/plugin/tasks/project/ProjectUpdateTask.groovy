@@ -158,9 +158,7 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
         BuildResult result = gradle(taskName)
 
         then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
+        notThrown()
+        result.output.contains('{"id":"project-id","name":"project name","description":"project description","status":"READY"}')
     }
 }

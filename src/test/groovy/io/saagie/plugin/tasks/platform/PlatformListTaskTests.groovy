@@ -35,7 +35,6 @@ class PlatformListTaskTests extends DataOpsGradleTaskSpecification {
                     url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
-                    realm = 'saagie'
                     jwt = true
                 }
             }
