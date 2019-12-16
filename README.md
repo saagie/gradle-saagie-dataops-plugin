@@ -11,7 +11,7 @@ This plugin is only compatible with gradle 3.0+
 
 ```
 plugins {
-  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.58"
+  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.59"
 }
 ```
 
@@ -26,8 +26,10 @@ Saagie tasks
 groupList - list all groups for the user
 platformList - list available platforms
 projectsArchiveJob - archive a task
+projectsCreate - create a brand new project
 projectsCreateJob - create a brand new job in a project
 projectsCreatePipeline - create a pipeline
+projectsDelete - archive a project
 projectsDeletePipeline - delete a pipeline
 projectsGetJobInstanceStatus - get the status of a job instance
 projectsGetPipelineInstanceStatus - get the status of a pipeline instance
@@ -39,6 +41,7 @@ projectsRunJob - run an existing job
 projectsRunPipeline - run a pipeline
 projectsStopJobInstance - stop a job instance
 projectsStopPipelineInstance - stop a pipeline instance
+projectsUpdate - update an existing project
 projectsUpdateJob - update a existing job in a project
 projectsUpdatePipeline - update a pipeline
 technologyList - list all technologies for the user
