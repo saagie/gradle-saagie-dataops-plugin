@@ -951,6 +951,74 @@ class SaagieClient {
         }
     }
 
+    String exportJob() {
+        logger.info('Starting Export Job task')
+
+        checkRequiredConfig(!configuration?.project?.id ||
+                            !configuration?.job?.id ||
+                            !configuration?.export?.export_file_path ||
+                            !configuration?.export?.overwrite
+        )
+        def result = getJobAndJobVersionDetailToExport();
+        logger.debug(result);
+        File newDirectoryStructureParent = new File(configuration.export.export_file_path);
+
+    }
+
+    String getJobAndJobVersionDetailToExport() {
+
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.job?.id ||
+            !configuration?.export?.export_file_path ||
+            !configuration?.export?.overwrite
+        )
+
+        Request getJobDetail = saagieUtils.getJobDetailRequest()
+        Request getJobVersionDetail = saagieUtils.getJobVersionDetailRequest()
+        def job = null;
+        def jobVersion = null;
+        try {
+            client.newCall(getJobDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting job detail: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map jobDetailResult = parsedResult.data.job
+                    job = JsonOutput.toJson(jobDetailResult)
+                }
+            }
+
+            client.newCall(getJobVersionDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting job version detail: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map jobVersionDetail = parsedResult.data.job
+                    jobVersion =  JsonOutput.toJson(jobVersionDetail)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsCreate')
+            throw exception
+        }
+
+        return jsonGenerator.toJson([
+            job: job.toMap(),
+            jobVersion: jobVersion.toMap()
+        ])
+    }
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 

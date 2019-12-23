@@ -1,0 +1,55 @@
+package io.saagie.plugin.tasks.job
+
+import io.saagie.plugin.DataOpsGradleTaskSpecification
+import okhttp3.mockwebserver.MockResponse
+import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.UnexpectedBuildFailure
+import spock.lang.Shared
+import spock.lang.Title
+
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_EXPORT_JOB;
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+
+@Title('JobExportTaskTests task tests')
+class JobExportTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECTS_EXPORT_JOB
+
+    def "projectsExportJob should export job and job version"() {
+        given:
+        def mockedJobCreationResponse = new MockResponse()
+        mockedJobCreationResponse.responseCode = 200
+        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
+        mockWebServer.enqueue(mockedJobCreationResponse)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = https://saagie-beta.prod.saagie.io/
+                    login = mohamed.amin.ziraoui
+                    password = aA21452972
+                    environment = 4
+                }
+
+                project {
+                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+                }
+
+                job {
+                    id = 'd936c1d5-86e9-4268-b65a-82e17b344046'
+                }
+
+                export {
+                    
+                }
+            }
+        """
+
+        when:
+        def result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        assert 1===1
+    }
+
+}

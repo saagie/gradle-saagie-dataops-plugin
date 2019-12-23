@@ -19,6 +19,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsUpdateTask
 import io.saagie.plugin.dataops.tasks.projects.TechnologyListTask
@@ -48,7 +49,7 @@ class DataOpsModule {
     final static String GROUP_LIST_TASK = 'groupList'
     final static String PROJECTS_CREATE_TASK = 'projectsCreate'
     final static String PROJECTS_UPDATE = 'projectsUpdate'
-
+    final static String PROJECTS_EXPORT_JOB = 'projectsExportJob'
     final static String TASK_GROUP = 'Saagie'
 
     static void load(Project project) {
@@ -116,6 +117,13 @@ class DataOpsModule {
             description = 'archive a project'
             configuration = project.saagie
             taskName = PROJECT_DELETE_TASK
+        }
+
+        project.task(PROJECTS_EXPORT_JOB, type: ProjectsExportJob) {
+            group = TASK_GROUP
+            description = 'export a job project'
+            configuration = project.saagie
+            taskName = PROJECTS_EXPORT_JOB
         }
 
         project.task(PROJECTS_GET_PIPELINE_INSTANCE_STATUS, type: ProjectGetPipelineInstanceStatusTask) {

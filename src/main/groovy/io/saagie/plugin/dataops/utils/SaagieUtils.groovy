@@ -803,6 +803,88 @@ class SaagieUtils {
         return buildRequestFromQuery(createProjectRequest)
     }
 
+    Request getJobDetailRequest() {
+        Project project = configuration.project;
+        Job job = configuration.job;
+        logger.debug('Generating getJobDetailRequest for getting job detail [id={}] with project Id [id={}]', project.id, job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ $jobId: job.id ])
+
+        def createProjectRequest = gq('''
+            query job($jobId: UUID!) {
+                job(id: $jobId) {
+                    id
+                    name
+                    description
+                    countJobInstance
+                    versions {
+                        number
+                    }
+                    category
+                    technology {
+                        id
+                        label
+                        isAvailable
+                    }
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
+                    isStreaming
+                    creationDate
+                    migrationStatus
+                    migrationProjectId
+                    isDeletable
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(createProjectRequest)
+    }
+
+    Request getJobVersionDetailRequest(Integer number) {
+        Project project = configuration.project;
+        Job job = configuration.job;
+        logger.debug('Getting jobVersion for job  [id={}] with project Id [id={}]', project.id, job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ $jobId: job.id, $number: number])
+
+        def getJobVersionRequest = gq('''
+            query jobVersion($jobId: UUID!, $number: Int!) {
+                jobVersion(jobId: $jobId, number: $number) {
+                    commandLine
+                    dockerInfo {
+                        image
+                        dockerCredentialsId
+                    }
+                    releaseNote
+                    runtimeVersion
+                    packageInfo {
+                        name
+                    }
+                }
+            }
+
+        ''', gqVariables)
+
+        return buildRequestFromQuery(getJobVersionRequest)
+    }
+
     Request getProjectsUpdateRequest() {
         Project project = configuration.project
         logger.debug('Generating getProjectsUpdateRequest for updating a new project [id={}]', project.id)
