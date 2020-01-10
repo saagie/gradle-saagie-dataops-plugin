@@ -20,19 +20,19 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         buildFile << """
             saagie {
                 server {
-                    url = 'https://saagie-beta.prod.saagie.io/'
-                    login = 'mohamed.amin.ziraoui'
-                    password = 'aA21452972'
+                    url = 'https://saagie.io/'
+                    login = 'username'
+                    password = 'password'
                     environment = 4
                     useLegacy = false
                 }
 
                 project {
-                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+                    id = 'projet-id'
                 }
 
                 job {
-                    id = 'd936c1d5-86e9-4268-b65a-82e17b344046'
+                    id = 'job-id'
                 }
 
                 export {

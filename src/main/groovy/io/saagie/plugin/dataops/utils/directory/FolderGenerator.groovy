@@ -8,23 +8,22 @@ class FolderGenerator {
         def folder = new File("${inputDire}/${name}/job");
         if(!folder.exists() && exportJob.exists()) {
             folder.mkdir()
-            def object = jsonSlurper.parseText '''
-                { "job": ${ JsonOutput.toJson(exportJob.job)},
-                  "jobVersion": ${exportJob.jobVersion}
-                }'''
             def builder = new JsonBuilder()
             def root = builder.job {
                 job {
-                    firstName 'Guillame'
-                    lastName 'Laforge'
+                    name exportJob.job.name
+                    description exportJob.job.name
+                    category exportJob.job.category
+                    technology exportJob.job.technology
+                    isScheduled exportJob.job.isScheduled
+                    cronScheduling exportJob.job.cronScheduling
+                    alerting exportJob.job.alerting
                 }
-                jobVersion {
-
-                }
+                jobVersion exportJob.jobVersion
             }
-            def json_str = JsonOutput.toJson(exportJob.job)
+            def json_str = JsonOutput.toJson(root)
             def json_beauty = JsonOutput.prettyPrint(json_str)
-            File jobFile = new File("${inputDire}/${name}/job/${job.id}")
+            File jobFile = new File("${inputDire}/${name}/job/${exportJob.job.id}")
             jobFile.write(json_beauty)
         }
     }
