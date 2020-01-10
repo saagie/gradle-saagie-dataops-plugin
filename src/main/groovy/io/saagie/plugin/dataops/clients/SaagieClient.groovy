@@ -8,6 +8,7 @@ import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
+import io.saagie.plugin.dataops.utils.directory.FolderGenerator
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -994,7 +995,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map jobDetailResult = parsedResult.data.job
-                    job = JsonOutput.toJson(jobDetailResult)
+                    jobDetail = JsonOutput.toJson(jobDetailResult)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1006,10 +1007,23 @@ class SaagieClient {
             throw exception
         }
 
-        return jsonGenerator.toJson([
-            job: job.toMap(),
-            jobVersion: jobVersion.toMap()
-        ])
+        def folderGenerator = new FolderGenerator();
+        def downloadUrl = null
+        folderGenerator.job = jobDetailResult
+        parsedResult.data.job.versions.each {
+            if(it.isCurrent) {
+                folderGenerator.jobVersion = it
+            }
+            if(it.packageInfo && it.packageInfo.downloadUrl) {
+                downloadUrl =  it.packageInfo.downloadUrl
+            }
+        }
+
+        if(!downloadUrl) {
+            logger.error('The is no download URl')
+            throw exception
+        }
+
     }
     String updateProject() {
         logger.info('Starting projectsUpdate task')
