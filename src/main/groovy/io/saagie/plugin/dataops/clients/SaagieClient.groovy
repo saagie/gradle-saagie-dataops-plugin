@@ -7,6 +7,7 @@ import io.saagie.plugin.dataops.models.ExportJob
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
+import io.saagie.plugin.dataops.utils.ZipUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
 import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
@@ -21,6 +22,8 @@ import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
+import java.nio.file.Files
+import java.util.zip.ZipFile
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -1102,7 +1105,42 @@ class SaagieClient {
         }
     }
 
+    String importJob() {
+        logger.info('Starting projectsUpdate task')
+
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.importJob?.import_file
+        )
+
+        String exportedJobFilePath = configuration.importJob.import_file
+
+        // TODO: First, read all needed informations from the provided zip file
+        File exportedJob = new File(exportedJobFilePath)
+        println("exportedJob: ${exportedJob.absolutePath}")
+        if (!exportedJob.exists() || !exportedJob.canRead()) {
+            logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+            throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+        }
+
+        try {
+            def tempFolder = Files.createTempDirectory('job-exports').toFile()
+            println("tempFolder: ${tempFolder.absolutePath}")
+            ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
+        } catch (IOException e) {
+            logger.error('An error occured when unziping the job export file.', e.message)
+        }
+
+        // TODO: Second, check if we can override export settings with the ones in jobOverride
+
+
+
+        // TODO: Third, make the createJob request by calling the projectsJobCreate task
+        return ''
+    }
+
     private checkRequiredConfig(boolean conditions) {
+        logger.info('Checking required pre-conditions...')
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
