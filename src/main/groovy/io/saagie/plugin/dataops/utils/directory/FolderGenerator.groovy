@@ -1,16 +1,28 @@
 package io.saagie.plugin.dataops.utils.directory
 
-import io.saagie.plugin.dataops.models.Job
-import io.saagie.plugin.dataops.models.JobVersion
-
+import io.saagie.plugin.dataops.models.ExportJob
+import groovy.json.JsonBuilder;
 class FolderGenerator {
-    Job job;
-    JobVersion jobVersion
+    ExportJob exportJob;
     def GenerateFolder(inputDire, name) {
         def folder = new File("${inputDire}/${name}/job");
-        if(!folder.exists() && job && job.id) {
+        if(!folder.exists() && exportJob.exists()) {
             folder.mkdir()
-            def json_str = JsonOutput.toJson(job)
+            def object = jsonSlurper.parseText '''
+                { "job": ${ JsonOutput.toJson(exportJob.job)},
+                  "jobVersion": ${exportJob.jobVersion}
+                }'''
+            def builder = new JsonBuilder()
+            def root = builder.job {
+                job {
+                    firstName 'Guillame'
+                    lastName 'Laforge'
+                }
+                jobVersion {
+
+                }
+            }
+            def json_str = JsonOutput.toJson(exportJob.job)
             def json_beauty = JsonOutput.prettyPrint(json_str)
             File jobFile = new File("${inputDire}/${name}/job/${job.id}")
             jobFile.write(json_beauty)

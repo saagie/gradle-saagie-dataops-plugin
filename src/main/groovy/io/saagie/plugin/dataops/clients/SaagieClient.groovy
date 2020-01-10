@@ -4,6 +4,8 @@ import groovy.json.JsonGenerator
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
@@ -982,7 +984,7 @@ class SaagieClient {
 
         Request getJobDetail = saagieUtils.getJobDetailRequest()
         def job = configuration.job;
-        JobVersion jobDetail = null;
+        ExportJob exportJob = null;
         def projectId = configuration.project.id;
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
@@ -994,8 +996,29 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map jobDetailResult = parsedResult.data.job
+                    Job jobDetailResult = parsedResult.data.job
                     jobDetail = JsonOutput.toJson(jobDetailResult)
+
+                    exportJob.job = jobDetailResult
+                    if(!jobDetailResult.versions.isEmpty()) {
+                        jobDetailResult.versions.sort { it.creationDate }
+                    }
+                    jobDetailResult.versions.each {
+                        if(it.isCurrent) {
+                            exportJob.jobVersion = it
+                        }
+                        if(it.packageInfo && it.packageInfo.downloadUrl) {
+                            exportJob.downloadUrl =  it.packageInfo.downloadUrl
+                        }
+                    }
+
+                    if(!exportJob.downloadUrl) {
+                        def message = "The is no download URl"
+                        logger.error(message)
+                        throw new GradleException(message)
+                    }
+
+                    return exportJob;
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1004,23 +1027,6 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error('Unknown error in projectsCreate')
-            throw exception
-        }
-
-        def folderGenerator = new FolderGenerator();
-        def downloadUrl = null
-        folderGenerator.job = jobDetailResult
-        parsedResult.data.job.versions.each {
-            if(it.isCurrent) {
-                folderGenerator.jobVersion = it
-            }
-            if(it.packageInfo && it.packageInfo.downloadUrl) {
-                downloadUrl =  it.packageInfo.downloadUrl
-            }
-        }
-
-        if(!downloadUrl) {
-            logger.error('The is no download URl')
             throw exception
         }
 
