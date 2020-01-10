@@ -1,8 +1,10 @@
 package io.saagie.plugin.dataops.clients
 
+import groovy.json.JsonGenerator
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -967,6 +969,10 @@ class SaagieClient {
 
     String getJobAndJobVersionDetailToExport() {
 
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.id ||
             !configuration?.export?.export_file_path ||
@@ -974,35 +980,21 @@ class SaagieClient {
         )
 
         Request getJobDetail = saagieUtils.getJobDetailRequest()
-        Request getJobVersionDetail = saagieUtils.getJobVersionDetailRequest()
-        def job = null;
-        def jobVersion = null;
+        def job = configuration.job;
+        JobVersion jobDetail = null;
+        def projectId = configuration.project.id;
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job detail: $responseBody"
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $jobId and $projectId"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
                     Map jobDetailResult = parsedResult.data.job
                     job = JsonOutput.toJson(jobDetailResult)
-                }
-            }
-
-            client.newCall(getJobVersionDetail).execute().withCloseable { response ->
-                handleErrors(response)
-                String responseBody = response.body().string()
-                def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job version detail: $responseBody"
-                    logger.error(message)
-                    throw new GradleException(message)
-                } else {
-                    Map jobVersionDetail = parsedResult.data.job
-                    jobVersion =  JsonOutput.toJson(jobVersionDetail)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {

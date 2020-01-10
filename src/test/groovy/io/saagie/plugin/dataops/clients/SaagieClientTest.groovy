@@ -53,6 +53,10 @@ class SaagieClientTest extends Specification {
                 name = tempFile.absolutePath
             }
         }
+        configuration.export {
+            export_file_path = '/home/saagie/export/'
+            overwrite = false
+        }
         configuration.jobinstance {
             id = 'jobInstanceId'
         }

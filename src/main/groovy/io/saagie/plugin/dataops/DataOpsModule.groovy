@@ -19,7 +19,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJob
+import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsUpdateTask
 import io.saagie.plugin.dataops.tasks.projects.TechnologyListTask
@@ -119,7 +119,7 @@ class DataOpsModule {
             taskName = PROJECT_DELETE_TASK
         }
 
-        project.task(PROJECTS_EXPORT_JOB, type: ProjectsExportJob) {
+        project.task(PROJECTS_EXPORT_JOB, type: ProjectsExportJobTask) {
             group = TASK_GROUP
             description = 'export a job project'
             configuration = project.saagie

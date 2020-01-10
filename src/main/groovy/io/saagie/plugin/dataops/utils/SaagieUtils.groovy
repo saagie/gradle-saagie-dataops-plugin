@@ -804,25 +804,39 @@ class SaagieUtils {
     }
 
     Request getJobDetailRequest() {
-        Project project = configuration.project;
         Job job = configuration.job;
+        Project project = configuration.project;
         logger.debug('Generating getJobDetailRequest for getting job detail [id={}] with project Id [id={}]', project.id, job.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ $jobId: job.id ])
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
 
-        def createProjectRequest = gq('''
-            query job($jobId: UUID!) {
+        def getJobDetailRequest = gq('''
+           query job($jobId: UUID!) {
                 job(id: $jobId) {
                     id
                     name
                     description
                     countJobInstance
-                    versions {
-                        number
+                    versions { 
+                        number 
+                        creationDate 
+                        releaseNote 
+                        runtimeVersion 
+                        packageInfo { 
+                            downloadUrl 
+                        } 
+                        dockerInfo { 
+                            image 
+                            dockerCredentialsId 
+                        } 
+                        commandLine 
+                        isCurrent 
+                        isMajor 
+                        creator 
                     }
                     category
                     technology {
@@ -850,10 +864,10 @@ class SaagieUtils {
             }
         ''', gqVariables)
 
-        return buildRequestFromQuery(createProjectRequest)
+        return buildRequestFromQuery(getJobDetailRequest)
     }
 
-    Request getJobVersionDetailRequest(Integer number) {
+    Request getJobVersionDetailRequest() {
         Project project = configuration.project;
         Job job = configuration.job;
         logger.debug('Getting jobVersion for job  [id={}] with project Id [id={}]', project.id, job.id)
@@ -862,7 +876,7 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ $jobId: job.id, $number: number])
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id, number: 1])
 
         def getJobVersionRequest = gq('''
             query jobVersion($jobId: UUID!, $number: Int!) {
@@ -876,10 +890,10 @@ class SaagieUtils {
                     runtimeVersion
                     packageInfo {
                         name
+                        downloadUrl
                     }
                 }
             }
-
         ''', gqVariables)
 
         return buildRequestFromQuery(getJobVersionRequest)

@@ -15,19 +15,16 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_EXPORT_JOB
 
     def "projectsExportJob should export job and job version"() {
-        given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
 
+        given:
         buildFile << """
             saagie {
                 server {
-                    url = https://saagie-beta.prod.saagie.io/
-                    login = mohamed.amin.ziraoui
-                    password = aA21452972
+                    url = 'https://saagie-beta.prod.saagie.io/'
+                    login = 'mohamed.amin.ziraoui'
+                    password = 'aA21452972'
                     environment = 4
+                    useLegacy = false
                 }
 
                 project {
@@ -39,17 +36,17 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 export {
-                    
+                    export_file_path = '/home/saagie/export/'
+                    overwrite = true 
                 }
             }
         """
 
         when:
-        def result = gradle(taskName)
-
+        BuildResult result = gradle(taskName, "-d")
         then:
         notThrown(Exception)
-        assert 1===1
+        result != null
     }
 
 }
