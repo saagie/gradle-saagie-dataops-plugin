@@ -1117,7 +1117,6 @@ class SaagieClient {
 
         // TODO: First, read all needed informations from the provided zip file
         File exportedJob = new File(exportedJobFilePath)
-        println("exportedJob: ${exportedJob.absolutePath}")
         if (!exportedJob.exists() || !exportedJob.canRead()) {
             logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
             throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
