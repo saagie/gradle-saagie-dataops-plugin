@@ -3,11 +3,16 @@ package io.saagie.plugin.dataops.utils.directory
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class zipGenerator {
-    def zipFileName ;
-    def inputDir;
+class ZipGenerator {
+    def zipFileName
+    def inputDir
 
-    def generateZipFile (inputDire) {
+    ZipGenerator(zipFileName, inputDir) {
+        this.zipFileName = zipFileName
+        this.inputDir = inputDir
+    }
+
+    def generateZipFile () {
         if (zipFileName.isEmpty()) {
             throw new Exception("zip file name is undefined")
         }

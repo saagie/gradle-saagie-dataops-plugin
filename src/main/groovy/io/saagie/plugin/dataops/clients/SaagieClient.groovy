@@ -11,6 +11,7 @@ import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
+import io.saagie.plugin.dataops.utils.directory.ZipGenerator
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -957,24 +958,39 @@ class SaagieClient {
     }
 
     String exportJob() {
-        logger.info('Starting Export Job task')
+        logger.debug('Starting Export Job task')
 
         checkRequiredConfig(!configuration?.project?.id ||
                             !configuration?.job?.id ||
                             !configuration?.export?.export_file_path ||
                             !configuration?.export?.overwrite
         )
-        def result = getJobAndJobVersionDetailToExport();
-        logger.debug(result);
-        File newDirectoryStructureParent = new File(configuration.export.export_file_path);
+        ExportJob exportJob = getJobAndJobVersionDetailToExport()
+        logger.debug(configuration.export.export_file_path)
+        File newDirectoryStructureParent = new File(configuration.export.export_file_path)
+        newDirectoryStructureParent.setReadable(true, false)
+        newDirectoryStructureParent.setExecutable(true, false)
+        newDirectoryStructureParent.setWritable(true, false)
+        if( newDirectoryStructureParent.canWrite()) {
+            def mkdirs = newDirectoryStructureParent.mkdirs()
+
+            if (mkdirs) {
+                logger.debug("Directory is created");
+            }
+            else {
+                logger.debug("Directory cannot be created");
+            }
+        } else {
+            throw new GradleException("don't have permissions to create file")
+        }
+        FolderGenerator folder = [exportJob, configuration.export.export_file_path]
+        def link = folder.generateFolder('analyticName')
+        ZipGenerator zipGenerator = ['job', link]
+        zipGenerator.generateZipFile()
 
     }
 
-    String getJobAndJobVersionDetailToExport() {
-
-        def jsonGenerator = new JsonGenerator.Options()
-            .excludeNulls()
-            .build()
+    ExportJob getJobAndJobVersionDetailToExport() {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.id ||
@@ -984,43 +1000,46 @@ class SaagieClient {
 
         Request getJobDetail = saagieUtils.getJobDetailRequest()
         def job = configuration.job;
-        ExportJob exportJob = null;
-        def projectId = configuration.project.id;
+        ExportJob exportJob = new ExportJob();
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job detail: $responseBody for job id $jobId and $projectId"
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $job.id"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Job jobDetailResult = parsedResult.data.job
-                    jobDetail = JsonOutput.toJson(jobDetailResult)
-
+                    def jobDetailResult = parsedResult.data.job
                     exportJob.job = jobDetailResult
-                    if(!jobDetailResult.versions.isEmpty()) {
-                        jobDetailResult.versions.sort { it.creationDate }
-                    }
-                    jobDetailResult.versions.each {
-                        if(it.isCurrent) {
-                            exportJob.jobVersion = it
+                    if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
+                        jobDetailResult.versions.sort { a,b-> b.creationDate<=>a.creationDate }
+                        jobDetailResult.versions.each {
+                            if(it.isCurrent) {
+                                exportJob.jobVersion = it
+                            }
+                            if(it.packageInfo && it.packageInfo.downloadUrl) {
+                                exportJob.downloadUrl =  it.packageInfo.downloadUrl
+                            }else{
+                                logger.debug("the is no package info here")
+                            }
                         }
-                        if(it.packageInfo && it.packageInfo.downloadUrl) {
-                            exportJob.downloadUrl =  it.packageInfo.downloadUrl
-                        }
+                    } else {
+                         def messageEmptyVersions = "No versions for the job $job.id"
+                        logger.error(messageEmptyVersions)
+                        throw new GradleException(messageEmptyVersions)
                     }
+
 
                     if(!exportJob.downloadUrl) {
-                        def message = "The is no download URl"
-                        logger.error(message)
-                        throw new GradleException(message)
+                        def messageNoDownloadUrl = "The is no download URl"
+                        logger.error(messageNoDownloadUrl)
+                        throw new GradleException(messageNoDownloadUrl)
                     }
-
-                    return exportJob;
                 }
             }
+            return exportJob;
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
