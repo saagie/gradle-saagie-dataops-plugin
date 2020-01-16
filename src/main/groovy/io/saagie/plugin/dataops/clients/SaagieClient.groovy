@@ -973,22 +973,16 @@ class SaagieClient {
         ExportJob exportJob = getJobAndJobVersionDetailToExport()
         logger.debug(configuration.export.export_file_path)
         File newDirectoryStructureParent = new File(configuration.export.export_file_path)
-        if( newDirectoryStructureParent.canWrite()) {
-            def mkdirs = newDirectoryStructureParent.mkdirs()
-
-            if (mkdirs) {
-                logger.debug("Directory is created");
-            }
-            else {
-                throw new GradleException("Cannot create directories for main folder")
-            }
-        } else {
-            throw new GradleException("don't have permissions to create file")
+        if (newDirectoryStructureParent.canWrite()) {
+            logger.debug("Directory is created");
+        }
+        else {
+            throw new GradleException("Cannot Write inside this directory")
         }
         FolderGenerator folder = [exportJob, configuration.export.export_file_path]
-        def link = folder.generateFolder('analyticName', overwrite)
-        ZipGenerator zipGenerator = ['job', link]
-        zipGenerator.generateZipFile()
+        def link = folder.generateFolder('project-export-'+configuration.project.id, overwrite)
+        ZipGenerator zipGenerator = ['project-export-'+configuration.project.id, configuration.export.export_file_path]
+        zipGenerator.compressDirectory(configuration.export.export_file_path+'/zip.zip')
 
     }
 
