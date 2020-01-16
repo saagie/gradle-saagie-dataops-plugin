@@ -980,7 +980,7 @@ class SaagieClient {
                 logger.debug("Directory is created");
             }
             else {
-                logger.debug("Directory cannot be created");
+                throw new GradleException("Cannot create directories for main folder")
             }
         } else {
             throw new GradleException("don't have permissions to create file")
@@ -1014,12 +1014,13 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     def jobDetailResult = parsedResult.data.job
+
                     exportJob.setJobFromApiResult(jobDetailResult)
                     if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
                         jobDetailResult.versions.sort { a,b-> b.creationDate<=>a.creationDate }
                         jobDetailResult.versions.each {
                             if(it.isCurrent) {
-                                exportJob.jobVersion = it
+                                exportJob.setJobVersionFromApiResult(it)
                             }
                             if(it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl =  it.packageInfo.downloadUrl

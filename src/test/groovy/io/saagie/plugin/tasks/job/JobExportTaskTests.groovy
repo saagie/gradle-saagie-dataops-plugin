@@ -20,23 +20,23 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         buildFile << """
             saagie {
                 server {
-                    url = 'https://saagie-beta.prod.saagie.io/'
-                    login = 'mohamed.amin.ziraoui'
-                    password = 'aA21452972'
+                    url = 'https://saggie'
+                    login = 'username'
+                    password = 'password'
                     environment = 4
                     useLegacy = false
                 }
 
                 project {
-                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+                    id = 'project-id'
                 }
 
                 job {
-                    id = 'd936c1d5-86e9-4268-b65a-82e17b344046'
+                    id = 'job-id'
                 }
 
                 export {
-                    export_file_path = '/home/amine/projects/saggie/gradle-saagie-dataops-plugin'
+                    export_file_path = '/home/desktop/amine/projects/saggie/gradle-saagie-dataops-plugin'
                     overwrite = true 
                 }
             }

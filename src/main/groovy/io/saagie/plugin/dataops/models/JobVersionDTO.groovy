@@ -15,4 +15,12 @@ class JobVersionDTO implements IExists{
             releaseNote ||
             packageInfo
     }
+
+    void setJobVersionFromApiResult(version) {
+        commandLine = version.commandLine
+        dockerInfo = version.dockerInfo
+        runtimeVersion = version.runtimeVersion
+        releaseNote = version.releaseNote
+        packageInfo = version.packageInfo
+    }
 }

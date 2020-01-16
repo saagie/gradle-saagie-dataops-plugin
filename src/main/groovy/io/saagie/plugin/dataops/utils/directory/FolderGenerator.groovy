@@ -24,25 +24,40 @@ class FolderGenerator {
 
         if(exportJob.exists()) {
             folder.mkdir()
-            def builder = new JsonBuilder()
-            builder.job {
-                name exportJob.jobDTO.name
-                description exportJob.jobDTO.description
-                category exportJob.jobDTO.category
-                technology exportJob.jobDTO.technology
-                isScheduled exportJob.jobDTO.isScheduled
-                cronScheduling exportJob.jobDTO.cronScheduling
-                alerting exportJob.jobDTO.alerting
+            def builder = new JsonBuilder([
+                job: [
+                    name: exportJob.jobDTO.name,
+                    description: exportJob.jobDTO.description,
+                    category: exportJob.jobDTO.category,
+                    technology: exportJob.jobDTO.technology,
+                    isScheduled: exportJob.jobDTO.isScheduled,
+                    cronScheduling: exportJob.jobDTO.cronScheduling,
+                    alerting: exportJob.jobDTO.alerting
+                ],
+                JobVersion: [
+                    commandLine: exportJob.jobVersionDTO.commandLine,
+                    dockerInfo: exportJob.jobVersionDTO.dockerInfo,
+                    runtimeVersion: exportJob.jobVersionDTO.runtimeVersion,
+                    releaseNote: exportJob.jobVersionDTO.releaseNote,
+                    packageInfo: exportJob.jobVersionDTO.packageInfo,
+                ]
+            ]).toPrettyString()
+            File jobFile = new File("${inputDire}/${name}/job/${exportJob.jobDTO.id}")
+            jobFile.mkdirs()
+            if( jobFile.canWrite()) {
+                def mkdirs = jobFile.mkdirs()
+                if (mkdirs) {
+                    jobFile.write(builder)
+                    jobFile.close()
+                    return  "${inputDire}/${name}/";
+                }
+                else {
+                    throw new GradleException("Cannot create directories")
+                }
+            } else {
+                throw new GradleException("don't have permissions to create file for the job")
             }
-            builder.job {
-                jobVersion exportJob.jobVersion
-            }
-            def json_str = JsonOutput.toJson(builder.toString())
-            def json_beauty = JsonOutput.prettyPrint(json_str)
-            File jobFile = new File("${inputDire}/${name}/job/${exportJob.job.id}")
-            jobFile.write(json_beauty)
-            jobFile.close()
-            return  "${inputDire}/${name}/";
+
         }
     }
 }

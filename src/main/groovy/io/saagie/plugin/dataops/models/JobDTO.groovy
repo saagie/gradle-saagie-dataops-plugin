@@ -26,15 +26,6 @@ class JobDTO implements IExists{
     }
 
     void setJobFromApiResult(jobDetailResult) {
-        if( jobDetailResult.name
-            && jobDetailResult.id
-            && jobDetailResult.description
-            && jobDetailResult.category
-            && jobDetailResult.technology
-            && jobDetailResult.isScheduled
-            && jobDetailResult.cronScheduling
-            && jobDetailResult.alerting
-        ) {
             name = jobDetailResult.name
             id = jobDetailResult.id
             description = jobDetailResult.description
@@ -43,7 +34,6 @@ class JobDTO implements IExists{
             isScheduled = jobDetailResult.isScheduled
             cronScheduling = jobDetailResult.cronScheduling
             alerting = jobDetailResult.alerting
-        }
 
     }
 }
