@@ -13,20 +13,20 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class JobImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_IMPORT_JOB
     @Shared ClassLoader classLoader = getClass().getClassLoader()
-    @Shared String exportJobZipFilename = 'testExportJob.zip'
+    @Shared String exportJobZipFilename = 'exportedJob.zip'
 
     def "the task should fail if required params are not provided"() {
         given:
-        buildFile << '''
+        buildFile << """
             saagie {
                 server {
-                    url = 'https://localhost:9000'
+                    url = '${mockServerUrl}'
                     login = 'login'
                     password = 'password'
                     environment = 1
                 }
             }
-        '''
+        """
 
         when:
         BuildResult result = gradle(taskName)
@@ -43,10 +43,12 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.toURI())
 
+        enqueueRequest('{"data":{"createJob":{"id":"created-job-id","name":"Created Job"}}}')
+
         buildFile << """
             saagie {
                 server {
-                    url = 'https://localhost:9000'
+                    url = 'http://localhost:9000'
                     login = 'login'
                     password = 'password'
                     environment = 1
@@ -67,14 +69,15 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
+        result.output.contains('{"status":"success","id":"created-job-id"}')
     }
 
     def "the task should fail if the import_file does not exists"() {
         given:
-        buildFile << '''
+        buildFile << """
             saagie {
                 server {
-                    url = 'https://localhost:9000'
+                    url = '${mockServerUrl}'
                     login = 'login'
                     password = 'password'
                     environment = 1
@@ -88,7 +91,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     import_file = 'invalid/path/test.zip'
                 }
             }
-        '''
+        """
 
         when:
         BuildResult result = gradle(taskName)

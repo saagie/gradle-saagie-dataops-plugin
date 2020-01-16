@@ -5,7 +5,7 @@ import spock.lang.Specification
 
 class SaagieClientUtilsTest extends Specification {
     @Shared ClassLoader classLoader = getClass().getClassLoader()
-    @Shared String exportJobZipFilename = 'testExportJob.zip'
+    @Shared String exportJobZipFilename = 'exportedJob'
 
     def "expect that the testExportJob.zip test file exists in the resource folder"() {
         when:
@@ -23,11 +23,12 @@ class SaagieClientUtilsTest extends Specification {
         File unzippedExportedConfig = new File(resource.toURI())
 
         when:
-        println unzippedExportedConfig.absolutePath
-        Map exportedConfig = SaagieClientUtils.extractJobConfigAndPackageFromExportedZip(unzippedExportedConfig)
+        Map exportedConfig = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(unzippedExportedConfig)
 
         then:
         notThrown(Exception)
-        exportedConfig.package.exists()
+        exportedConfig.jobs['d936c1d5-86e9-4268-b65a-82e17b344046'] != null
+        exportedConfig.jobs['d936c1d5-86e9-4268-b65a-82e17b344046'].configOverride != null
+        exportedConfig.jobs['d936c1d5-86e9-4268-b65a-82e17b344046'].package.exists()
     }
 }

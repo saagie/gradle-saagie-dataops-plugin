@@ -4,6 +4,10 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.DockerInfos
+import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.PackageInfo
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -1122,20 +1126,59 @@ class SaagieClient {
             throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
         }
 
+        def tempFolder = null
         try {
-            def tempFolder = Files.createTempDirectory('job-exports').toFile()
-            println("tempFolder: ${tempFolder.absolutePath}")
+            tempFolder = Files.createTempDirectory('job-exports').toFile()
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
         } catch (IOException e) {
             logger.error('An error occured when unziping the job export file.', e.message)
         }
 
-        // TODO: Second, check if we can override export settings with the ones in jobOverride
+        def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
+        def exportedJobPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
+        def jobConfig = jobsConfigFromExportedZip.jobs.iterator().next()
 
+        Map jobConfigOverride = jobConfig.value.configOverride
+        File jobPackageFile = jobConfig.value.package
 
+        def newJobConfigWithOverride = [
+            *:jobConfigOverride.job,
+            *:SaagieUtils.extractProperties(configuration.jobOverride),
+        ]
 
-        // TODO: Third, make the createJob request by calling the projectsJobCreate task
-        return ''
+        def newJobVersionConfigOverride = [
+            *:jobConfigOverride.jobVersion,
+            packageInfos: [
+                name: jobPackageFile.absolutePath,
+            ],
+        ]
+
+        configuration.job = newJobConfigWithOverride as Job
+        configuration.jobVersion {
+            commandLine = jobConfigOverride.jobVersion.commandLine
+            releaseNote = jobConfigOverride.jobVersion.releaseNote
+            runtimeVersion = jobConfigOverride.jobVersion.runtimeVersion
+            dockerInfo {
+                image = jobConfigOverride.jobVersion.dockerInfo?.image
+                dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
+            }
+            packageInfo {
+                name = jobPackageFile.absolutePath
+            }
+        }
+
+        def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
+        if (jsonResult.id && jsonResult.name) {
+            return JsonOutput.toJson([
+                status: 'success',
+                id: jsonResult.id
+            ])
+        } else {
+            return JsonOutput.toJson([
+                status: 'failed'
+            ])
+        }
     }
 
     private checkRequiredConfig(boolean conditions) {

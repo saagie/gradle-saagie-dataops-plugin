@@ -1006,7 +1006,7 @@ class SaagieUtils {
     }
 
     // From stackoverflow: https://stackoverflow.com/a/36072704/8543172
-    private static Map extractProperties(obj) {
+    static Map extractProperties(obj) {
         obj.getClass()
             .declaredFields
             .findAll { !it.synthetic }

@@ -22,6 +22,7 @@ import java.nio.ByteBuffer
 class DataOpsGradleTaskSpecification extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
     @Shared MockWebServer mockWebServer = new MockWebServer()
+    @Shared String mockServerUrl = "http://localhost:9000"
 
     File buildFile
     File jobFile

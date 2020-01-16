@@ -22,7 +22,7 @@ class JobOverride implements IExists, IMapable {
 
     @Override
     Map toMap() {
-        if (!exists()) return null
+        if (!exists()) return [:]
         return [
             isScheduled: isScheduled,
             cronScheduling: cronScheduling,
