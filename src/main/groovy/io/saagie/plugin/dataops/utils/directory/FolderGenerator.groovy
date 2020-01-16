@@ -12,30 +12,32 @@ class FolderGenerator {
         this.inputDire = inputDire
     }
 
-    String generateFolder(name, override) {
+    String generateFolder(name, overwrite) {
         def folder = new File("${inputDire}/${name}/job");
-        if (override && folder.exists()) {
+        if (overwrite && folder.exists()) {
             def folderStatus = folder.deleteDir()
             if(!folderStatus) {
                 throw new GradleException("Couldn t delete existing folder ${inputDire}/${name}/job")
             }
         }
+        // TODO add the condition for the overwrite
+
         if(exportJob.exists()) {
             folder.mkdir()
             def builder = new JsonBuilder()
-            def root = builder.job {
-                job {
-                    name exportJob.job.name
-                    description exportJob.job.description
-                    category exportJob.job.category
-                    technology exportJob.job.technology
-                    isScheduled exportJob.job.isScheduled
-                    cronScheduling exportJob.job.cronScheduling
-                    alerting exportJob.job.alerting
-                }
+            builder.job {
+                name exportJob.jobDTO.name
+                description exportJob.jobDTO.description
+                category exportJob.jobDTO.category
+                technology exportJob.jobDTO.technology
+                isScheduled exportJob.jobDTO.isScheduled
+                cronScheduling exportJob.jobDTO.cronScheduling
+                alerting exportJob.jobDTO.alerting
+            }
+            builder.job {
                 jobVersion exportJob.jobVersion
             }
-            def json_str = JsonOutput.toJson(root)
+            def json_str = JsonOutput.toJson(builder.toString())
             def json_beauty = JsonOutput.prettyPrint(json_str)
             File jobFile = new File("${inputDire}/${name}/job/${exportJob.job.id}")
             jobFile.write(json_beauty)

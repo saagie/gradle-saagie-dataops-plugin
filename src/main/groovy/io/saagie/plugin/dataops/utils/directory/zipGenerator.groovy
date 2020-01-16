@@ -12,7 +12,7 @@ class ZipGenerator {
         this.inputDir = inputDir
     }
 
-    def generateZipFile () {
+    void generateZipFile () {
         if (zipFileName.isEmpty()) {
             throw new Exception("zip file name is undefined")
         }
@@ -39,7 +39,7 @@ class ZipGenerator {
         output.close();
     }
 
-    def generateZip2() {
+    void generateZip2() {
         ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(zipFileName))
         new File(inputDir).eachFile() { file ->
             //check if file

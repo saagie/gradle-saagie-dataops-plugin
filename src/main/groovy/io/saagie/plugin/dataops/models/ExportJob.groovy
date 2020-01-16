@@ -4,12 +4,15 @@ import groovy.transform.TypeChecked
 
 @TypeChecked
 class ExportJob implements IExists{
-    def job
-    def jobVersion
+    JobDTO jobDTO = new JobDTO()
+    JobVersionDTO jobVersion  = new JobVersionDTO()
     String downloadUrl
 
     @Override
     boolean exists() {
-        return job && jobVersion && downloadUrl
+        return jobDTO.exists() && jobVersion && downloadUrl
+    }
+    void setJobFromApiResult(jobDetailResult) {
+        jobDTO.setJobFromApiResult(jobDetailResult)
     }
 }

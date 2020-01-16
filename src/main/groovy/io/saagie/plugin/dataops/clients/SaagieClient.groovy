@@ -24,6 +24,8 @@ import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
+import java.nio.file.Files
+import java.nio.file.Path
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -962,15 +964,15 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
                             !configuration?.job?.id ||
-                            !configuration?.export?.export_file_path ||
-                            !configuration?.export?.overwrite
+                            !configuration?.export?.export_file_path
         )
+        def overwrite = false
+        if(configuration?.export?.overwrite) {
+            overwrite = configuration.export.overwrite
+        }
         ExportJob exportJob = getJobAndJobVersionDetailToExport()
         logger.debug(configuration.export.export_file_path)
         File newDirectoryStructureParent = new File(configuration.export.export_file_path)
-        newDirectoryStructureParent.setReadable(true, false)
-        newDirectoryStructureParent.setExecutable(true, false)
-        newDirectoryStructureParent.setWritable(true, false)
         if( newDirectoryStructureParent.canWrite()) {
             def mkdirs = newDirectoryStructureParent.mkdirs()
 
@@ -984,7 +986,7 @@ class SaagieClient {
             throw new GradleException("don't have permissions to create file")
         }
         FolderGenerator folder = [exportJob, configuration.export.export_file_path]
-        def link = folder.generateFolder('analyticName')
+        def link = folder.generateFolder('analyticName', overwrite)
         ZipGenerator zipGenerator = ['job', link]
         zipGenerator.generateZipFile()
 
@@ -1012,7 +1014,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     def jobDetailResult = parsedResult.data.job
-                    exportJob.job = jobDetailResult
+                    exportJob.setJobFromApiResult(jobDetailResult)
                     if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
                         jobDetailResult.versions.sort { a,b-> b.creationDate<=>a.creationDate }
                         jobDetailResult.versions.each {
