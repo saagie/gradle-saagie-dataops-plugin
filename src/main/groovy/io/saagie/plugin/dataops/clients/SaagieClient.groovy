@@ -971,7 +971,11 @@ class SaagieClient {
             overwrite = configuration.export.overwrite
         }
         def generatedJobName = 'project-export-'+configuration.project.id;
+        File exportPath = new File(configuration.export.export_file_path)
         File zipFolder = new File(configuration.export.export_file_path.concat(generatedJobName+'.zip'))
+        if(!exportPath.exists()) {
+            throw new GradleException("configuration export path does not exist")
+        }
         if(overwrite && zipFolder.exists()) {
             zipFolder.delete()
         } else if(!overwrite) {

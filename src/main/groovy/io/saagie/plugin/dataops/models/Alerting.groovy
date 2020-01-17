@@ -8,15 +8,15 @@ class Alerting implements IMapable {
     @Deprecated
     List<String> emails = []
 
-    List<String> loginEmails = []
+    List<String> logins = []
 
     List<String> statusList = []
 
     @Override
     Map toMap() {
-        if ((emails.empty && loginEmails.empty) || statusList.empty) return null
+        if ((emails.empty && logins.empty) || statusList.empty) return null
 
-        if (emails && (!loginEmails || loginEmails.empty)) {
+        if (emails && (!logins || logins.empty)) {
             return [
                 emails    : emails,
                 statusList: statusList
@@ -24,7 +24,7 @@ class Alerting implements IMapable {
         }
 
         return [
-            logins    : loginEmails,
+            logins    : logins,
             statusList: statusList
         ]
     }

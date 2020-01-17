@@ -8,7 +8,7 @@ class JobDTO implements IExists{
     String technology
     Boolean isScheduled
     String cronScheduling
-    Alerting alerting= new Alerting()
+    AlertingDTO alerting= new AlertingDTO()
 
     Object alerting(Closure closure) {
             alerting.with(closure)
