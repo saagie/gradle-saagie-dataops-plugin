@@ -30,7 +30,7 @@ class JobDTO implements IExists{
             id = jobDetailResult.id
             description = jobDetailResult.description
             category = jobDetailResult.category
-            technology = jobDetailResult.technology
+            technology = jobDetailResult.technology.id
             isScheduled = jobDetailResult.isScheduled
             cronScheduling = jobDetailResult.cronScheduling
             alerting = jobDetailResult.alerting

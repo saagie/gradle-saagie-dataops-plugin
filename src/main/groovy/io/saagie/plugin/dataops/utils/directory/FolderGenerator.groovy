@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops.utils.directory
 
+import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -11,7 +12,6 @@ class FolderGenerator {
     def inputDire
     SaagieUtils saagieUtils
     OkHttpClient client
-
     FolderGenerator(exportJob, inputDire, saagieUtils, client) {
         this.exportJob = exportJob
         this.inputDire = inputDire
@@ -19,12 +19,14 @@ class FolderGenerator {
         this.client = client
     }
 
-    void generateFolder(name, overwrite, String serverUrl) {
-        def folder = new File("${inputDire}/${name}/job");
+    void generateFolder(name, overwrite, String serverUrl, jobId) {
+        def folder = new File("${inputDire}/${name}/Job/${jobId}");
+        def sl = File.separator;
+        def urlJobIdFolder = "${inputDire}/${name}/Job/${jobId}"
         if (overwrite && folder.exists()) {
             def folderStatus = folder.deleteDir()
             if(!folderStatus) {
-                throw new GradleException("Couldn t delete existing folder ${inputDire}/${name}/job")
+                throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}job")
             }
         }
         // TODO add the condition for the overwrite
@@ -53,14 +55,14 @@ class FolderGenerator {
                         ]
                     ]
                 ]).toPrettyString()
-                File jobFile = new File("${inputDire}/${name}/job/${exportJob.jobDTO.id}.json")
+                File jobFile = new File("${urlJobIdFolder}${sl}job.json")
                 jobFile.write(builder)
                 try {
-                    File localPackage = new File("${inputDire}/${name}/job/package")
+                    File localPackage = new File("${urlJobIdFolder}${sl}package")
                     localPackage.mkdirs()
                     saagieUtils.downloadFromHTTPSServer(
                         SaagieUtils.removeLastSlash(serverUrl) + exportJob.downloadUrl,
-                        "${inputDire}/${name}/job/package",
+                        "${urlJobIdFolder}${sl}package",
                         client
                     )
                 } catch (IOException e) {

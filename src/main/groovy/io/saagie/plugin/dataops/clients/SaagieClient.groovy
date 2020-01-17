@@ -991,11 +991,12 @@ class SaagieClient {
             throw new GradleException("Cannot Write inside this temporary directory")
         }
         FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
-        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+"/"+generatedJobName;
+        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+File.separator+generatedJobName;
         folder.generateFolder(
             generatedJobName,
             overwrite,
-            configuration.server.url
+            configuration.server.url,
+            configuration.job.id
         )
         ZippingFolder zippingFolder = [configuration.export.export_file_path.concat(generatedJobName+'.zip'), inputDirectoryToZip]
         zippingFolder.generateZip(tempJobDirectory)
@@ -1029,7 +1030,9 @@ class SaagieClient {
                     if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
                         jobDetailResult.versions.sort { a,b->a.creationDate <=> b.creationDate}
                         jobDetailResult.versions.each {
-                            exportJob.setJobVersionFromApiResult(it)
+                            if (it.isCurrent){
+                                exportJob.setJobVersionFromApiResult(it)
+                            }
                             if(it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl =  it.packageInfo.downloadUrl
                             }else{
