@@ -14,13 +14,16 @@ import io.saagie.plugin.dataops.models.Server
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.apache.tika.Tika
 import okhttp3.Response
 import okio.Buffer
+import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import sun.misc.BASE64Encoder
 
 @TypeChecked
 class SaagieUtils {
@@ -949,6 +952,55 @@ class SaagieUtils {
         return newRequest
     }
 
+    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client ) {
+        InputStream inputStream = null
+        OutputStream outputStream = null
+
+        try {
+            Request request = this.buildRequestForFile(urlFrom)
+            def response = client.newCall(request).execute()
+            inputStream = response.body().byteStream();
+            outputStream = new FileOutputStream(new File(to + "/" + getFileNameFromUrl(urlFrom)))
+            byte[] buffer = new byte[2048]
+            int length;
+            int downloaded = 0;
+            while ((length = inputStream.read(buffer)) != -1)
+            {
+                outputStream.write(buffer, 0, length)
+                downloaded+=length
+
+            }
+        } catch (Exception ex) {
+            throw new GradleException(ex.message)
+        }
+        outputStream.close()
+        inputStream.close()
+    }
+
+    Request buildRequestForFile(String url) {
+        logger.debug('Generating request for url="{}"', url)
+        Server server = configuration.server
+        Request newRequest;
+        logger.debug('Fetching file with basic auth...')
+        newRequest = new Request.Builder()
+            .url(url)
+            .addHeader('Authorization', getCredentials())
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    static String getFileNameFromUrl(String url) {
+        return url.substring( url.lastIndexOf('/')+1, url.length() );
+    }
+
+    static removeLastSlash(String url ){
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url
+    }
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
     }

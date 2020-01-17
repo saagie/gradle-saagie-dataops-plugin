@@ -11,7 +11,7 @@ import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
-import io.saagie.plugin.dataops.utils.directory.ZipGenerator
+import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -979,10 +979,15 @@ class SaagieClient {
         else {
             throw new GradleException("Cannot Write inside this directory")
         }
-        FolderGenerator folder = [exportJob, configuration.export.export_file_path]
-        def link = folder.generateFolder('project-export-'+configuration.project.id, overwrite)
-        ZipGenerator zipGenerator = ['project-export-'+configuration.project.id, configuration.export.export_file_path]
-        zipGenerator.compressDirectory(configuration.export.export_file_path+'/zip.zip')
+        FolderGenerator folder = [exportJob, configuration.export.export_file_path, saagieUtils, client]
+        def link = folder.generateFolder(
+            'project-export-'+configuration.project.id,
+            overwrite,
+            configuration.server.url
+        )
+        ZippingFolder zippingFolder = ["zip", configuration.export.export_file_path]
+        zippingFolder.getListOfFiles(new File(configuration.export.export_file_path))
+        zippingFolder.generateZip(configuration.export.export_file_path.concat('project-export-'+configuration.project.id+'.zip'))
 
     }
 

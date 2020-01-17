@@ -2,17 +2,24 @@ package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
+import io.saagie.plugin.dataops.utils.SaagieUtils
+import okhttp3.OkHttpClient
 import org.gradle.api.GradleException;
 class FolderGenerator {
+
     ExportJob exportJob
     def inputDire
+    SaagieUtils saagieUtils
+    OkHttpClient client
 
-    FolderGenerator(exportJob, inputDire) {
+    FolderGenerator(exportJob, inputDire, saagieUtils, client) {
         this.exportJob = exportJob
         this.inputDire = inputDire
+        this.saagieUtils = saagieUtils
+        this.client = client
     }
 
-    String generateFolder(name, overwrite) {
+    String generateFolder(name, overwrite, String serverUrl) {
         def folder = new File("${inputDire}/${name}/job");
         if (overwrite && folder.exists()) {
             def folderStatus = folder.deleteDir()
@@ -44,7 +51,19 @@ class FolderGenerator {
                     ]
                 ]).toPrettyString()
                 File jobFile = new File("${inputDire}/${name}/job/${exportJob.jobDTO.id}")
+                File packageFolder = new File("remoteFile/remoteFolder")
                 jobFile.write(builder)
+                try {
+                    File localPackage = new File("${inputDire}/${name}/job/package")
+                    localPackage.mkdirs()
+                    saagieUtils.downloadFromHTTPSServer(
+                        SaagieUtils.removeLastSlash(serverUrl) + exportJob.downloadUrl,
+                        "${inputDire}/${name}/job/package",
+                        client
+                    )
+                } catch (IOException e) {
+                    throw new GradleException(e.message)
+                }
                 return  "${inputDire}/${name}/";
             } else {
                 throw new GradleException("Cannot create directories for the job")
