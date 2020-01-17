@@ -20,10 +20,10 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         buildFile << """
             saagie {
                 server {
-                    url = 'https://remote-url'
-                    login = 'use'
+                    url = 'https://url-saagie'
+                    login = 'username'
                     password = 'password'
-                    environment = 4
+                    environment = 0
                     useLegacy = false
                 }
 

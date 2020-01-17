@@ -959,7 +959,7 @@ class SaagieClient {
         }
     }
 
-    String exportJob() {
+    void exportJob() {
         logger.debug('Starting Export Job task')
 
         checkRequiredConfig(!configuration?.project?.id ||
@@ -970,24 +970,31 @@ class SaagieClient {
         if(configuration?.export?.overwrite) {
             overwrite = configuration.export.overwrite
         }
+        def generatedJobName = 'project-export-'+configuration.project.id;
+        File zipFolder = new File(configuration.export.export_file_path.concat(generatedJobName+'.zip'))
+        if(overwrite && zipFolder.exists()) {
+            zipFolder.delete()
+        } else if(!overwrite) {
+            return
+        }
         ExportJob exportJob = getJobAndJobVersionDetailToExport()
         logger.debug(configuration.export.export_file_path)
-        File newDirectoryStructureParent = new File(configuration.export.export_file_path)
-        if (newDirectoryStructureParent.canWrite()) {
-            logger.debug("Directory is created");
+        File tempJobDirectory = File.createTempDir("job", ".tmp");
+        if (tempJobDirectory.canWrite()) {
+            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath());
         }
         else {
-            throw new GradleException("Cannot Write inside this directory")
+            throw new GradleException("Cannot Write inside this temporary directory")
         }
-        FolderGenerator folder = [exportJob, configuration.export.export_file_path, saagieUtils, client]
-        def link = folder.generateFolder(
-            'project-export-'+configuration.project.id,
+        FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
+        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+"/"+generatedJobName;
+        folder.generateFolder(
+            generatedJobName,
             overwrite,
             configuration.server.url
         )
-        ZippingFolder zippingFolder = ["zip", configuration.export.export_file_path]
-        zippingFolder.getListOfFiles(new File(configuration.export.export_file_path))
-        zippingFolder.generateZip(configuration.export.export_file_path.concat('project-export-'+configuration.project.id+'.zip'))
+        ZippingFolder zippingFolder = [configuration.export.export_file_path.concat(generatedJobName+'.zip'), inputDirectoryToZip]
+        zippingFolder.generateZip(tempJobDirectory)
 
     }
 
@@ -1016,11 +1023,9 @@ class SaagieClient {
 
                     exportJob.setJobFromApiResult(jobDetailResult)
                     if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
-                        jobDetailResult.versions.sort { a,b-> b.creationDate<=>a.creationDate }
+                        jobDetailResult.versions.sort { a,b->a.creationDate <=> b.creationDate}
                         jobDetailResult.versions.each {
-                            if(it.isCurrent) {
-                                exportJob.setJobVersionFromApiResult(it)
-                            }
+                            exportJob.setJobVersionFromApiResult(it)
                             if(it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl =  it.packageInfo.downloadUrl
                             }else{
