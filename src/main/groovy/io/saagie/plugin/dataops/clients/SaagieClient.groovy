@@ -959,9 +959,9 @@ class SaagieClient {
         }
     }
 
-    void exportJob() {
+    String exportJob() {
         logger.debug('Starting Export Job task')
-
+        def sl = File.separator;
         checkRequiredConfig(!configuration?.project?.id ||
                             !configuration?.job?.id ||
                             !configuration?.export?.export_file_path
@@ -970,9 +970,14 @@ class SaagieClient {
         if(configuration?.export?.overwrite) {
             overwrite = configuration.export.overwrite
         }
-        def generatedJobName = 'project-export-'+configuration.project.id;
-        File exportPath = new File(configuration.export.export_file_path)
-        File zipFolder = new File(configuration.export.export_file_path.concat(generatedJobName+'.zip'))
+        def generatedJobName = 'project-export-'+configuration.project.id
+        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
+        File exportPath = new File(exportConfigPath)
+
+        def generatedZipPath = exportConfigPath+generatedJobName+'.zip'
+
+        logger.debug("generatedZipPath before: {}, ", generatedZipPath)
+        File zipFolder = new File(generatedZipPath)
         if(!exportPath.exists()) {
             throw new GradleException("configuration export path does not exist")
         }
@@ -982,24 +987,31 @@ class SaagieClient {
             return
         }
         ExportJob exportJob = getJobAndJobVersionDetailToExport()
-        logger.debug(configuration.export.export_file_path)
+        logger.debug("exportConfigPath : {}, ", exportConfigPath)
+
         File tempJobDirectory = File.createTempDir("job", ".tmp");
         if (tempJobDirectory.canWrite()) {
             logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath());
         }
         else {
-            throw new GradleException("Cannot Write inside this temporary directory")
+            throw new GradleException("Cannot Write inside temporary directory")
         }
         FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
-        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+File.separator+generatedJobName;
+        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+File.separator+generatedJobName
         folder.generateFolder(
             generatedJobName,
             overwrite,
             configuration.server.url,
             configuration.job.id
         )
-        ZippingFolder zippingFolder = [configuration.export.export_file_path.concat(generatedJobName+'.zip'), inputDirectoryToZip]
+        ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
         zippingFolder.generateZip(tempJobDirectory)
+
+        logger.debug("generatedZipPath after: {}, ", generatedZipPath)
+        return  JsonOutput.toJson([
+            status: true,
+            exportfile: generatedZipPath
+        ])
 
     }
 
