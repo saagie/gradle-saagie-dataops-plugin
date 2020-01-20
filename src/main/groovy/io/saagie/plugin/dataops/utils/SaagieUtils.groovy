@@ -14,11 +14,13 @@ import io.saagie.plugin.dataops.models.Server
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.apache.tika.Tika
 import okhttp3.Response
 import okio.Buffer
+import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
@@ -803,6 +805,102 @@ class SaagieUtils {
         return buildRequestFromQuery(createProjectRequest)
     }
 
+    Request getJobDetailRequest() {
+        Job job = configuration.job;
+        Project project = configuration.project;
+        logger.debug('Generating getJobDetailRequest for getting job detail [id={}] with project Id [id={}]', project.id, job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
+
+        def getJobDetailRequest = gq('''
+           query job($jobId: UUID!) {
+                job(id: $jobId) {
+                    id
+                    name
+                    description
+                    countJobInstance
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        runtimeVersion
+                        packageInfo {
+                            downloadUrl
+                        }
+                        dockerInfo {
+                            image
+                            dockerCredentialsId
+                        }
+                        commandLine
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+                    category
+                    technology {
+                        id
+                        label
+                        isAvailable
+                    }
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
+                    isStreaming
+                    creationDate
+                    migrationStatus
+                    migrationProjectId
+                    isDeletable
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(getJobDetailRequest)
+    }
+
+    Request getJobVersionDetailRequest() {
+        Project project = configuration.project;
+        Job job = configuration.job;
+        logger.debug('Getting jobVersion for job  [id={}] with project Id [id={}]', project.id, job.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ jobId: job.id, number: 1])
+
+        def getJobVersionRequest = gq('''
+            query jobVersion($jobId: UUID!, $number: Int!) {
+                jobVersion(jobId: $jobId, number: $number) {
+                    commandLine
+                    dockerInfo {
+                        image
+                        dockerCredentialsId
+                    }
+                    releaseNote
+                    runtimeVersion
+                    packageInfo {
+                        name
+                        downloadUrl
+                    }
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(getJobVersionRequest)
+    }
+
     Request getProjectsUpdateRequest() {
         Project project = configuration.project
         logger.debug('Generating getProjectsUpdateRequest for updating a new project [id={}]', project.id)
@@ -853,6 +951,55 @@ class SaagieUtils {
         return newRequest
     }
 
+    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client ) {
+        InputStream inputStream = null
+        OutputStream outputStream = null
+
+        try {
+            Request request = this.buildRequestForFile(urlFrom)
+            def response = client.newCall(request).execute()
+            inputStream = response.body().byteStream();
+            outputStream = new FileOutputStream(new File(to + "/" + getFileNameFromUrl(urlFrom)))
+            byte[] buffer = new byte[2048]
+            int length;
+            int downloaded = 0;
+            while ((length = inputStream.read(buffer)) != -1)
+            {
+                outputStream.write(buffer, 0, length)
+                downloaded+=length
+
+            }
+        } catch (Exception ex) {
+            throw new GradleException(ex.message)
+        }
+        outputStream.close()
+        inputStream.close()
+    }
+
+    Request buildRequestForFile(String url) {
+        logger.debug('Generating request for url="{}"', url)
+        Server server = configuration.server
+        Request newRequest;
+        logger.debug('Fetching file with basic auth...')
+        newRequest = new Request.Builder()
+            .url(url)
+            .addHeader('Authorization', getCredentials())
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    static String getFileNameFromUrl(String url) {
+        return url.substring( url.lastIndexOf('/')+1, url.length() );
+    }
+
+    static removeLastSlash(String url ){
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url
+    }
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
     }

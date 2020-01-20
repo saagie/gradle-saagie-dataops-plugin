@@ -1,6 +1,7 @@
 package io.saagie.plugin.dataops
 
 import groovy.transform.TypeChecked
+import io.saagie.plugin.dataops.models.Export
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobVersion
@@ -32,6 +33,8 @@ class DataOpsExtension {
 
     PipelineVersion pipelineVersion = new PipelineVersion()
 
+    Export export = new Export()
+
     Object server(Closure closure) {
         server.with(closure)
     }
@@ -62,5 +65,9 @@ class DataOpsExtension {
 
     Object pipelineinstance(Closure closure) {
         pipelineinstance.with(closure)
+    }
+
+    Object export(Closure closure) {
+        export.with(closure)
     }
 }

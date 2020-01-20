@@ -5,17 +5,20 @@ import groovy.transform.TypeChecked
 @TypeChecked
 class PackageInfo implements IMapable, IExists {
     String name
+    String downloadUrl;
 
     @Override
     Map toMap() {
         if (exists()) {
-            return [name: name]
+            return [
+                name: name,
+                downloadUrl: downloadUrl ]
         }
         return null
     }
 
     @Override
     boolean exists() {
-        return name
+        return name || downloadUrl
     }
 }
