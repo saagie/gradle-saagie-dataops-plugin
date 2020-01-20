@@ -710,7 +710,7 @@ class SaagieClient {
 
     String deleteProject() {
         logger.info('Starting deleteProject task')
-        if (configuration?.project?.id == null        ) {
+        if (configuration?.project?.id == null) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
         }
@@ -963,41 +963,41 @@ class SaagieClient {
         logger.debug('Starting Export Job task')
         def sl = File.separator;
         checkRequiredConfig(!configuration?.project?.id ||
-                            !configuration?.job?.id ||
-                            !configuration?.export?.export_file_path
+            !configuration?.job?.id ||
+            !configuration?.export?.export_file_path
         )
-        def overwrite = false
-        if(configuration?.export?.overwrite) {
-            overwrite = configuration.export.overwrite
-        }
-        def generatedJobName = 'project-export-'+configuration.project.id
+
+        def overwrite = configuration.export.overwrite
+        def generatedJobName = 'project-export-' + configuration.project.id
         def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
+
         File exportPath = new File(exportConfigPath)
 
-        def generatedZipPath = exportConfigPath+generatedJobName+'.zip'
+        def generatedZipPath = exportConfigPath + generatedJobName + '.zip'
 
         logger.debug("generatedZipPath before: {}, ", generatedZipPath)
         File zipFolder = new File(generatedZipPath)
-        if(!exportPath.exists()) {
+        if (!exportPath.exists()) {
             throw new GradleException("configuration export path does not exist")
         }
-        if(overwrite && zipFolder.exists()) {
+
+        if (overwrite && zipFolder.exists()) {
             zipFolder.delete()
-        } else if(!overwrite) {
-            return
+        } else if (!overwrite && zipFolder.exists()) {
+            return JsonOutput.toJson([ status: "success", exportfile: generatedZipPath ])
         }
+
         ExportJob exportJob = getJobAndJobVersionDetailToExport()
         logger.debug("exportConfigPath : {}, ", exportConfigPath)
 
         File tempJobDirectory = File.createTempDir("job", ".tmp");
         if (tempJobDirectory.canWrite()) {
             logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath());
-        }
-        else {
+        } else {
             throw new GradleException("Cannot Write inside temporary directory")
         }
         FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
-        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+File.separator+generatedJobName
+        def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedJobName
         folder.generateFolder(
             generatedJobName,
             overwrite,
@@ -1009,7 +1009,7 @@ class SaagieClient {
 
         logger.debug("generatedZipPath after: {}, ", generatedZipPath)
         return JsonOutput.toJson([
-            status: true,
+            status    : "success",
             exportfile: generatedZipPath
         ])
 
@@ -1039,26 +1039,26 @@ class SaagieClient {
                     def jobDetailResult = parsedResult.data.job
 
                     exportJob.setJobFromApiResult(jobDetailResult)
-                    if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
-                        jobDetailResult.versions.sort { a,b->a.creationDate <=> b.creationDate}
+                    if (jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
+                        jobDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
                         jobDetailResult.versions.each {
-                            if (it.isCurrent){
+                            if (it.isCurrent) {
                                 exportJob.setJobVersionFromApiResult(it)
                             }
-                            if(it.packageInfo && it.packageInfo.downloadUrl) {
-                                exportJob.downloadUrl =  it.packageInfo.downloadUrl
-                            }else{
+                            if (it.packageInfo && it.packageInfo.downloadUrl) {
+                                exportJob.downloadUrl = it.packageInfo.downloadUrl
+                            } else {
                                 logger.debug("the is no package info here")
                             }
                         }
                     } else {
-                         def messageEmptyVersions = "No versions for the job $job.id"
+                        def messageEmptyVersions = "No versions for the job $job.id"
                         logger.error(messageEmptyVersions)
                         throw new GradleException(messageEmptyVersions)
                     }
 
 
-                    if(!exportJob.downloadUrl) {
+                    if (!exportJob.downloadUrl) {
                         def messageNoDownloadUrl = "The is no download URl"
                         logger.error(messageNoDownloadUrl)
                         throw new GradleException(messageNoDownloadUrl)
@@ -1076,6 +1076,7 @@ class SaagieClient {
         }
 
     }
+
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 
