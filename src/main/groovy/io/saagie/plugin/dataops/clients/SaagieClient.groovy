@@ -1,11 +1,17 @@
 package io.saagie.plugin.dataops.clients
 
+import groovy.json.JsonGenerator
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
+import io.saagie.plugin.dataops.utils.directory.FolderGenerator
+import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -18,6 +24,8 @@ import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
+import java.nio.file.Files
+import java.nio.file.Path
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -951,6 +959,123 @@ class SaagieClient {
         }
     }
 
+    String exportJob() {
+        logger.debug('Starting Export Job task')
+        def sl = File.separator;
+        checkRequiredConfig(!configuration?.project?.id ||
+                            !configuration?.job?.id ||
+                            !configuration?.export?.export_file_path
+        )
+        def overwrite = false
+        if(configuration?.export?.overwrite) {
+            overwrite = configuration.export.overwrite
+        }
+        def generatedJobName = 'project-export-'+configuration.project.id
+        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
+        File exportPath = new File(exportConfigPath)
+
+        def generatedZipPath = exportConfigPath+generatedJobName+'.zip'
+
+        logger.debug("generatedZipPath before: {}, ", generatedZipPath)
+        File zipFolder = new File(generatedZipPath)
+        if(!exportPath.exists()) {
+            throw new GradleException("configuration export path does not exist")
+        }
+        if(overwrite && zipFolder.exists()) {
+            zipFolder.delete()
+        } else if(!overwrite) {
+            return
+        }
+        ExportJob exportJob = getJobAndJobVersionDetailToExport()
+        logger.debug("exportConfigPath : {}, ", exportConfigPath)
+
+        File tempJobDirectory = File.createTempDir("job", ".tmp");
+        if (tempJobDirectory.canWrite()) {
+            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath());
+        }
+        else {
+            throw new GradleException("Cannot Write inside temporary directory")
+        }
+        FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
+        def inputDirectoryToZip =  tempJobDirectory.getAbsolutePath()+File.separator+generatedJobName
+        folder.generateFolder(
+            generatedJobName,
+            overwrite,
+            configuration.server.url,
+            configuration.job.id
+        )
+        ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
+        zippingFolder.generateZip(tempJobDirectory)
+
+        logger.debug("generatedZipPath after: {}, ", generatedZipPath)
+        return JsonOutput.toJson([
+            status: true,
+            exportfile: generatedZipPath
+        ])
+
+    }
+
+    ExportJob getJobAndJobVersionDetailToExport() {
+
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.job?.id ||
+            !configuration?.export?.export_file_path ||
+            !configuration?.export?.overwrite
+        )
+
+        Request getJobDetail = saagieUtils.getJobDetailRequest()
+        def job = configuration.job;
+        ExportJob exportJob = new ExportJob();
+        try {
+            client.newCall(getJobDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $job.id"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    def jobDetailResult = parsedResult.data.job
+
+                    exportJob.setJobFromApiResult(jobDetailResult)
+                    if(jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
+                        jobDetailResult.versions.sort { a,b->a.creationDate <=> b.creationDate}
+                        jobDetailResult.versions.each {
+                            if (it.isCurrent){
+                                exportJob.setJobVersionFromApiResult(it)
+                            }
+                            if(it.packageInfo && it.packageInfo.downloadUrl) {
+                                exportJob.downloadUrl =  it.packageInfo.downloadUrl
+                            }else{
+                                logger.debug("the is no package info here")
+                            }
+                        }
+                    } else {
+                         def messageEmptyVersions = "No versions for the job $job.id"
+                        logger.error(messageEmptyVersions)
+                        throw new GradleException(messageEmptyVersions)
+                    }
+
+
+                    if(!exportJob.downloadUrl) {
+                        def messageNoDownloadUrl = "The is no download URl"
+                        logger.error(messageNoDownloadUrl)
+                        throw new GradleException(messageNoDownloadUrl)
+                    }
+                }
+            }
+            return exportJob;
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsCreate')
+            throw exception
+        }
+
+    }
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 

@@ -2,13 +2,16 @@ package io.saagie.plugin
 
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
+import org.gradle.internal.impldep.org.apache.commons.io.FileUtils
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import org.spockframework.runtime.IStackTraceFilter
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.nio.ByteBuffer
 
 /**
  * Class used to create basic functions and attributes
@@ -62,5 +65,20 @@ class DataOpsGradleTaskSpecification extends Specification {
         mockedResponse.responseCode = status
         mockedResponse.body = body
         mockWebServer.enqueue(mockedResponse)
+    }
+
+    def enqueueRequestFile(File body, status = 200) {
+        def mockedResponse = new MockResponse()
+        mockedResponse.responseCode = status
+        mockedResponse.addHeader("Content-Type: application/octet-stream")
+        mockedResponse.addHeader("Content-Disposition: attachement;filename=\"" + body.name + "\"")
+        mockedResponse.body = this.getBinaryFileAsBuffer(body)
+        mockWebServer.enqueue(mockedResponse)
+    }
+    Buffer getBinaryFileAsBuffer(File file) throws IOException {
+        byte[] fileData = FileUtils.readFileToByteArray(file)
+        Buffer buf = new Buffer()
+        buf.write(fileData)
+        return buf
     }
 }

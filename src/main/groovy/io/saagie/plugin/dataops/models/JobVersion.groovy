@@ -6,6 +6,7 @@ import groovy.transform.TypeChecked
 class JobVersion implements IMapable, IExists {
     String commandLine
     String releaseNote
+    int number
     String runtimeVersion
     Boolean usePreviousArtifact = false
 
