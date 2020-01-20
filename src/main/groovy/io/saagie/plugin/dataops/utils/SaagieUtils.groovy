@@ -981,6 +981,7 @@ class SaagieUtils {
         Server server = configuration.server
         Request newRequest;
         logger.debug('Fetching file with basic auth...')
+
         newRequest = new Request.Builder()
             .url(url)
             .addHeader('Authorization', getCredentials())

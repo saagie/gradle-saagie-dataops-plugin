@@ -1,17 +1,18 @@
 package io.saagie.plugin.dataops.utils.directory
 
-import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
-import org.gradle.api.GradleException;
+import org.gradle.api.GradleException
+
 class FolderGenerator {
 
     ExportJob exportJob
     def inputDire
     SaagieUtils saagieUtils
     OkHttpClient client
+
     FolderGenerator(exportJob, inputDire, saagieUtils, client) {
         this.exportJob = exportJob
         this.inputDire = inputDire
@@ -19,7 +20,7 @@ class FolderGenerator {
         this.client = client
     }
 
-    void generateFolder(name, overwrite, String serverUrl, jobId) {
+    void generateFolder(name, overwrite, String serverUrl, jobId, projectId, environment) {
         def folder = new File("${inputDire}/${name}/Job/${jobId}");
         def sl = File.separator;
         def urlJobIdFolder = "${inputDire}/${name}/Job/${jobId}"
@@ -29,7 +30,6 @@ class FolderGenerator {
                 throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}job")
             }
         }
-        // TODO add the condition for the overwrite
 
         if(exportJob.exists()) {
             def createFolderForJob = folder.mkdirs()
@@ -61,7 +61,13 @@ class FolderGenerator {
                     File localPackage = new File("${urlJobIdFolder}${sl}package")
                     localPackage.mkdirs()
                     saagieUtils.downloadFromHTTPSServer(
-                        SaagieUtils.removeLastSlash(serverUrl) + exportJob.downloadUrl,
+                        SaagieUtils.removeLastSlash(serverUrl) +
+                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
+                            projectId +
+                            "${sl}job${sl}"+
+                            jobId +
+                            "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
+                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl),
                         "${urlJobIdFolder}${sl}package",
                         client
                     )

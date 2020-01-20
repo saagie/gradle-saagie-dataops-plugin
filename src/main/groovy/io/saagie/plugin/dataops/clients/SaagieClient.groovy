@@ -1,12 +1,9 @@
 package io.saagie.plugin.dataops.clients
 
-import groovy.json.JsonGenerator
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
-import io.saagie.plugin.dataops.models.Job
-import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -24,8 +21,6 @@ import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
-import java.nio.file.Files
-import java.nio.file.Path
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -1002,7 +997,9 @@ class SaagieClient {
             generatedJobName,
             overwrite,
             configuration.server.url,
-            configuration.job.id
+            configuration.job.id,
+            configuration.project.id,
+            configuration.server.environment
         )
         ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
         zippingFolder.generateZip(tempJobDirectory)
@@ -1045,9 +1042,10 @@ class SaagieClient {
                             if (it.isCurrent) {
                                 exportJob.setJobVersionFromApiResult(it)
                             }
-                            if (it.packageInfo && it.packageInfo.downloadUrl) {
+                            if(it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl = it.packageInfo.downloadUrl
-                            } else {
+                                exportJob.downloadUrlVersion = it.number
+                            }else{
                                 logger.debug("the is no package info here")
                             }
                         }
