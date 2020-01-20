@@ -23,7 +23,6 @@ import okio.Buffer
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import sun.misc.BASE64Encoder
 
 @TypeChecked
 class SaagieUtils {
@@ -824,22 +823,22 @@ class SaagieUtils {
                     name
                     description
                     countJobInstance
-                    versions { 
-                        number 
-                        creationDate 
-                        releaseNote 
-                        runtimeVersion 
-                        packageInfo { 
-                            downloadUrl 
-                        } 
-                        dockerInfo { 
-                            image 
-                            dockerCredentialsId 
-                        } 
-                        commandLine 
-                        isCurrent 
-                        isMajor 
-                        creator 
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        runtimeVersion
+                        packageInfo {
+                            downloadUrl
+                        }
+                        dockerInfo {
+                            image
+                            dockerCredentialsId
+                        }
+                        commandLine
+                        isCurrent
+                        isMajor
+                        creator
                     }
                     category
                     technology {

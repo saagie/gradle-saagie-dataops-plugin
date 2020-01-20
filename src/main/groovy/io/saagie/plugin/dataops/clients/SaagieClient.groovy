@@ -1008,7 +1008,7 @@ class SaagieClient {
         zippingFolder.generateZip(tempJobDirectory)
 
         logger.debug("generatedZipPath after: {}, ", generatedZipPath)
-        return  JsonOutput.toJson([
+        return JsonOutput.toJson([
             status: true,
             exportfile: generatedZipPath
         ])
