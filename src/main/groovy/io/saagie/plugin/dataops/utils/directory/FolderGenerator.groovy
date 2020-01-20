@@ -1,17 +1,18 @@
 package io.saagie.plugin.dataops.utils.directory
 
-import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
-import org.gradle.api.GradleException;
+import org.gradle.api.GradleException
+
 class FolderGenerator {
 
     ExportJob exportJob
     def inputDire
     SaagieUtils saagieUtils
     OkHttpClient client
+
     FolderGenerator(exportJob, inputDire, saagieUtils, client) {
         this.exportJob = exportJob
         this.inputDire = inputDire
@@ -29,7 +30,6 @@ class FolderGenerator {
                 throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}job")
             }
         }
-        // TODO add the condition for the overwrite
 
         if(exportJob.exists()) {
             def createFolderForJob = folder.mkdirs()
