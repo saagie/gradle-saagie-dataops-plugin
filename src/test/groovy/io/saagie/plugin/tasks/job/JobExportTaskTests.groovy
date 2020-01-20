@@ -108,7 +108,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName)
 
-        def computedValue = """{"status":true,"exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
 
         then:
         notThrown(Exception)
