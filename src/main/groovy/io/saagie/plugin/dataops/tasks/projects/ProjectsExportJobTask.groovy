@@ -20,7 +20,7 @@ class ProjectsExportJobTask extends DefaultTask{
         saagieClient = new SaagieClient(configuration, taskName)
 
         def result = saagieClient.exportJob()
-        logger.debug("results {}", result)
+        logger.debug("results : {}", result)
         return result
     }
 }
