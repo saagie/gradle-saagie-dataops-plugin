@@ -823,22 +823,22 @@ class SaagieUtils {
                     name
                     description
                     countJobInstance
-                    versions { 
-                        number 
-                        creationDate 
-                        releaseNote 
-                        runtimeVersion 
-                        packageInfo { 
-                            downloadUrl 
-                        } 
-                        dockerInfo { 
-                            image 
-                            dockerCredentialsId 
-                        } 
-                        commandLine 
-                        isCurrent 
-                        isMajor 
-                        creator 
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        runtimeVersion
+                        packageInfo {
+                            downloadUrl
+                        }
+                        dockerInfo {
+                            image
+                            dockerCredentialsId
+                        }
+                        commandLine
+                        isCurrent
+                        isMajor
+                        creator
                     }
                     category
                     technology {
@@ -981,6 +981,7 @@ class SaagieUtils {
         Server server = configuration.server
         Request newRequest;
         logger.debug('Fetching file with basic auth...')
+
         newRequest = new Request.Builder()
             .url(url)
             .addHeader('Authorization', getCredentials())
