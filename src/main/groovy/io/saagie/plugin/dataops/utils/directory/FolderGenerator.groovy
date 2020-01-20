@@ -20,7 +20,7 @@ class FolderGenerator {
         this.client = client
     }
 
-    void generateFolder(name, overwrite, String serverUrl, jobId, projectId) {
+    void generateFolder(name, overwrite, String serverUrl, jobId, projectId, environment) {
         def folder = new File("${inputDire}/${name}/Job/${jobId}");
         def sl = File.separator;
         def urlJobIdFolder = "${inputDire}/${name}/Job/${jobId}"
@@ -62,7 +62,7 @@ class FolderGenerator {
                     localPackage.mkdirs()
                     saagieUtils.downloadFromHTTPSServer(
                         SaagieUtils.removeLastSlash(serverUrl) +
-                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}4${sl}project${sl}"+
+                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
                             projectId +
                             "${sl}job${sl}"+
                             jobId +

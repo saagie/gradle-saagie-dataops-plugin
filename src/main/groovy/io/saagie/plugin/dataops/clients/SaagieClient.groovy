@@ -998,7 +998,8 @@ class SaagieClient {
             overwrite,
             configuration.server.url,
             configuration.job.id,
-            configuration.project.id
+            configuration.project.id,
+            configuration.server.environment
         )
         ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
         zippingFolder.generateZip(tempJobDirectory)
