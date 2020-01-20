@@ -19,7 +19,7 @@ class FolderGenerator {
         this.client = client
     }
 
-    void generateFolder(name, overwrite, String serverUrl, jobId) {
+    void generateFolder(name, overwrite, String serverUrl, jobId, projectId) {
         def folder = new File("${inputDire}/${name}/Job/${jobId}");
         def sl = File.separator;
         def urlJobIdFolder = "${inputDire}/${name}/Job/${jobId}"
@@ -61,7 +61,13 @@ class FolderGenerator {
                     File localPackage = new File("${urlJobIdFolder}${sl}package")
                     localPackage.mkdirs()
                     saagieUtils.downloadFromHTTPSServer(
-                        SaagieUtils.removeLastSlash(serverUrl) + exportJob.downloadUrl,
+                        SaagieUtils.removeLastSlash(serverUrl) +
+                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}4${sl}project${sl}"+
+                            projectId +
+                            "${sl}job${sl}"+
+                            jobId +
+                            "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
+                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl),
                         "${urlJobIdFolder}${sl}package",
                         client
                     )

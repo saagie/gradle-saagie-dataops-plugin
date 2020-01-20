@@ -23,7 +23,6 @@ import okio.Buffer
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import sun.misc.BASE64Encoder
 
 @TypeChecked
 class SaagieUtils {

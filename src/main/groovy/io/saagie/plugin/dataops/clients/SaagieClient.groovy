@@ -1002,7 +1002,8 @@ class SaagieClient {
             generatedJobName,
             overwrite,
             configuration.server.url,
-            configuration.job.id
+            configuration.job.id,
+            configuration.project.id
         )
         ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
         zippingFolder.generateZip(tempJobDirectory)
@@ -1047,6 +1048,7 @@ class SaagieClient {
                             }
                             if(it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl =  it.packageInfo.downloadUrl
+                                exportJob.downloadUrlVersion = it.number
                             }else{
                                 logger.debug("the is no package info here")
                             }

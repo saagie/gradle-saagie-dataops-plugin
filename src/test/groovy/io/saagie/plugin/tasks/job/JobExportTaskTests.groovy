@@ -15,7 +15,6 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 @Title('JobExportTaskTests task tests')
 class JobExportTaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_EXPORT_JOB
-    static final Logger logger = Logging.getLogger(JobExportTaskTests.class)
 
     def "the task should fail if required params are not provided"() {
         given:
