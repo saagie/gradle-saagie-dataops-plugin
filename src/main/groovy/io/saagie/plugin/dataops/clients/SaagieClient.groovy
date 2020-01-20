@@ -1077,7 +1077,6 @@ class SaagieClient {
 
     }
 
-    }
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 
