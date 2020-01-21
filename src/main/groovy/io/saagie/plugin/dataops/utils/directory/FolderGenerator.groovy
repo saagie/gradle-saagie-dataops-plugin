@@ -44,7 +44,7 @@ class FolderGenerator {
                         cronScheduling: exportJob.jobDTO.cronScheduling,
                         alerting: exportJob.jobDTO.alerting
                     ],
-                    JobVersion: [
+                    jobVersion: [
                         commandLine: exportJob.jobVersionDTO.commandLine,
                         dockerInfo: exportJob.jobVersionDTO.dockerInfo,
                         runtimeVersion: exportJob.jobVersionDTO.runtimeVersion,

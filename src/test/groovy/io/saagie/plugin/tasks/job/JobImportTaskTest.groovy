@@ -3,6 +3,7 @@ package io.saagie.plugin.tasks.job
 import io.saagie.plugin.DataOpsGradleTaskSpecification
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.UnexpectedBuildFailure
+import spock.lang.IgnoreRest
 import spock.lang.Shared
 import spock.lang.Title
 
@@ -102,5 +103,4 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         e.message.contains("Check that there is a file to upload in 'invalid/path/test.zip'. Be sure that 'invalid/path/test.zip' is a correct file path.")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
-
 }
