@@ -19,6 +19,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectsImportJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsUpdateTask
@@ -50,6 +51,8 @@ class DataOpsModule {
     final static String PROJECTS_CREATE_TASK = 'projectsCreate'
     final static String PROJECTS_UPDATE = 'projectsUpdate'
     final static String PROJECTS_EXPORT_JOB = 'projectsExportJob'
+    final static String PROJECTS_IMPORT_JOB = 'projectsImportJob'
+
     final static String TASK_GROUP = 'Saagie'
 
     static void load(Project project) {
@@ -215,6 +218,13 @@ class DataOpsModule {
             description = 'update an existing project'
             configuration = project.saagie
             taskName = PROJECTS_UPDATE
+        }
+
+        project.task(PROJECTS_IMPORT_JOB, type: ProjectsImportJobTask) {
+            group = TASK_GROUP
+            description = 'import a job using the artifacts generated from projectsExportJob'
+            configuration = project.saagie
+            taskName = PROJECTS_IMPORT_JOB
         }
     }
 }

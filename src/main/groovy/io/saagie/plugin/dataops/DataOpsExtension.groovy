@@ -2,8 +2,10 @@ package io.saagie.plugin.dataops
 
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.models.Export
+import io.saagie.plugin.dataops.models.ImportJob
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
+import io.saagie.plugin.dataops.models.JobOverride
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
@@ -33,8 +35,13 @@ class DataOpsExtension {
 
     PipelineVersion pipelineVersion = new PipelineVersion()
 
+    ImportJob importJob = new ImportJob()
+
+    JobOverride jobOverride = new JobOverride()
+
     Export export = new Export()
 
+    // ====== Closures to create a proper DSL
     Object server(Closure closure) {
         server.with(closure)
     }
@@ -65,6 +72,14 @@ class DataOpsExtension {
 
     Object pipelineinstance(Closure closure) {
         pipelineinstance.with(closure)
+    }
+
+    Object importJob(Closure closure) {
+        importJob.with(closure)
+    }
+
+    Object jobOverride(Closure closure) {
+        jobOverride.with(closure)
     }
 
     Object export(Closure closure) {
