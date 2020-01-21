@@ -104,15 +104,12 @@ class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
 
     def "projectsCreateJob should create job and upload a file"() {
         given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
+        enqueueRequest('{"data":{"createJob":{"id":"jobId","name":"Created Job"}}}')
 
         buildFile << """
             saagie {
                 server {
-                    url = 'http://localhost:9000'
+                    url = '${mockServerUrl}'
                     login = 'user'
                     password = 'password'
                     environment = 2
