@@ -1119,7 +1119,6 @@ class SaagieClient {
 
         String exportedJobFilePath = configuration.importJob.import_file
 
-        // TODO: First, read all needed informations from the provided zip file
         File exportedJob = new File(exportedJobFilePath)
         if (!exportedJob.exists() || !exportedJob.canRead()) {
             logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
@@ -1145,13 +1144,6 @@ class SaagieClient {
         def newJobConfigWithOverride = [
             *:jobConfigOverride.job,
             *:SaagieUtils.extractProperties(configuration.jobOverride),
-        ]
-
-        def newJobVersionConfigOverride = [
-            *:jobConfigOverride.jobVersion,
-            packageInfos: [
-                name: jobPackageFile.absolutePath,
-            ],
         ]
 
         configuration.job = newJobConfigWithOverride as Job
