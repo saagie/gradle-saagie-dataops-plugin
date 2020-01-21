@@ -14,7 +14,7 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class JobImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_IMPORT_JOB
     @Shared ClassLoader classLoader = getClass().getClassLoader()
-    @Shared String exportJobZipFilename = 'exportedJob.zip'
+    @Shared String exportJobZipFilename = './exportedJob.zip'
 
     def "the task should fail if required params are not provided"() {
         given:
@@ -42,7 +42,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
     def "the task should create a new job based on the exported config"() {
         given:
         URL resource = classLoader.getResource(exportJobZipFilename)
-        File exportedConfig = new File(resource.toURI())
+        File exportedConfig = new File(resource.getFile())
 
         enqueueRequest('{"data":{"createJob":{"id":"created-job-id","name":"Created Job"}}}')
 
