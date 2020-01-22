@@ -4,9 +4,14 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.DockerInfos
+import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.PackageInfo
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
+import io.saagie.plugin.dataops.utils.ZipUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
 import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
@@ -21,6 +26,8 @@ import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
+import java.nio.file.Files
+import java.util.zip.ZipFile
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -1105,7 +1112,72 @@ class SaagieClient {
         }
     }
 
+    String importJob() {
+        logger.info('Starting projectsUpdate task')
+
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+            !configuration?.importJob?.import_file
+        )
+
+        String exportedJobFilePath = configuration.importJob.import_file
+
+        File exportedJob = new File(exportedJobFilePath)
+        if (!exportedJob.exists() || !exportedJob.canRead()) {
+            logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+            throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+        }
+
+        def tempFolder = null
+        try {
+            tempFolder = Files.createTempDirectory('job-exports').toFile()
+            ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
+        } catch (IOException e) {
+            logger.error('An error occured when unziping the job export file.', e.message)
+        }
+
+        def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
+        def exportedJobPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
+        def jobConfig = jobsConfigFromExportedZip.jobs.iterator().next()
+
+        Map jobConfigOverride = jobConfig.value.configOverride
+        File jobPackageFile = jobConfig.value.package
+
+        def newJobConfigWithOverride = [
+            *:jobConfigOverride.job,
+            *:SaagieUtils.extractProperties(configuration.jobOverride),
+        ]
+
+        configuration.job = newJobConfigWithOverride as Job
+        configuration.jobVersion {
+            commandLine = jobConfigOverride.jobVersion.commandLine
+            releaseNote = jobConfigOverride.jobVersion.releaseNote
+            runtimeVersion = jobConfigOverride.jobVersion.runtimeVersion
+            dockerInfo {
+                image = jobConfigOverride.jobVersion.dockerInfo?.image
+                dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
+            }
+            packageInfo {
+                name = jobPackageFile.absolutePath
+            }
+        }
+
+        def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
+        if (jsonResult.id && jsonResult.name) {
+            return JsonOutput.toJson([
+                status: 'success',
+                id: jsonResult.id
+            ])
+        } else {
+            return JsonOutput.toJson([
+                status: 'failed'
+            ])
+        }
+    }
+
     private checkRequiredConfig(boolean conditions) {
+        logger.info('Checking required pre-conditions...')
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
             throw new InvalidUserDataException(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))

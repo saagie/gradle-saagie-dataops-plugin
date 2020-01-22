@@ -1,6 +1,5 @@
 package io.saagie.plugin.dataops.tasks.projects
 
-import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
 import org.gradle.api.DefaultTask
@@ -8,8 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-@TypeChecked
-class ProjectsCreateTask extends DefaultTask {
+class ProjectsImportJobTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -20,7 +18,7 @@ class ProjectsCreateTask extends DefaultTask {
     def createProject() {
         saagieClient = new SaagieClient(configuration, taskName)
 
-        def result = saagieClient.createProject()
+        def result = saagieClient.importJob()
         logger.quiet(result)
         return result
     }
