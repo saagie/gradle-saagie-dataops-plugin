@@ -4,10 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
-import io.saagie.plugin.dataops.models.DockerInfos
 import io.saagie.plugin.dataops.models.Job
-import io.saagie.plugin.dataops.models.JobVersion
-import io.saagie.plugin.dataops.models.PackageInfo
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -27,7 +24,6 @@ import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
 import java.nio.file.Files
-import java.util.zip.ZipFile
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -1138,12 +1134,16 @@ class SaagieClient {
         def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
         def jobConfig = jobsConfigFromExportedZip.jobs.iterator().next()
 
+        // TODO: update this code when the support of multiple jobs will be added
+        def jobsId = jobsConfigFromExportedZip.jobs.keySet()[0]
+
         Map jobConfigOverride = jobConfig.value.configOverride
         File jobPackageFile = jobConfig.value.package
 
         def newJobConfigWithOverride = [
             *:jobConfigOverride.job,
             *:SaagieUtils.extractProperties(configuration.jobOverride),
+            id: jobsId
         ]
 
         configuration.job = newJobConfigWithOverride as Job
@@ -1160,16 +1160,48 @@ class SaagieClient {
             }
         }
 
-        def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
-        if (jsonResult.id && jsonResult.name) {
-            return JsonOutput.toJson([
-                status: 'success',
-                id: jsonResult.id
-            ])
-        } else {
-            return JsonOutput.toJson([
-                status: 'failed'
-            ])
+        // Test if the job must be created or updated
+        Request jobDetailsRequest = saagieUtils.getJobDetailRequest()
+        try {
+            client.newCall(jobDetailsRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    // the job do not exists, create it
+                    def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
+                    if (jsonResult.id) {
+                        return JsonOutput.toJson([
+                            status: 'success',
+                            id: jsonResult.id
+                        ])
+                    } else {
+                        return JsonOutput.toJson([
+                            status: 'failed'
+                        ])
+                    }
+                } else {
+                    // the job exists, we should update it
+                    def jsonResult = slurper.parseText(updateProjectJobWithGraphQL())
+                    if (jsonResult.id) {
+                        return JsonOutput.toJson([
+                            status: 'success',
+                            id: jsonResult.id
+                        ])
+                    } else {
+                        return JsonOutput.toJson([
+                            status: 'failed'
+                        ])
+                    }
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsImport')
+            throw exception
         }
     }
 

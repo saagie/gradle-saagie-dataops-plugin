@@ -1001,6 +1001,7 @@ class SaagieUtils {
         }
         return url
     }
+
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
     }
