@@ -1160,8 +1160,8 @@ class SaagieClient {
             }
         }
 
-        // Test if the job must be created or updated
         Request jobDetailsRequest = saagieUtils.getJobDetailRequest()
+        Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
         try {
             client.newCall(jobDetailsRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -1169,30 +1169,33 @@ class SaagieClient {
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
                     // the job do not exists, create it
-                    def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
-                    if (jsonResult.id) {
-                        return JsonOutput.toJson([
-                            status: 'success',
-                            id: jsonResult.id
-                        ])
-                    } else {
-                        return JsonOutput.toJson([
-                            status: 'failed'
-                        ])
+                    client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
+                        handleErrors(response)
+                        String responseBodyForJobList = responseJobList.body().string()
+                        def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+                        if (parsedResultForJobList.data == null) {
+                            def message = "Something went wrong when getting jobs for project: $configuration.project.id"
+                            logger.error(message)
+                            throw new GradleException(message)
+                        } else {
+                            def listJobs = parsedResultForJobList.data.jobs
+                            boolean nameExist = false
+                            listJobs.each {
+                                if (it.name == configuration.job.name) {
+                                    nameExist = true
+                                }
+                            }
+                            if (nameExist) {
+                                return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                            } else{
+                                return executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                            }
+                        }
                     }
                 } else {
                     // the job exists, we should update it
-                    def jsonResult = slurper.parseText(updateProjectJobWithGraphQL())
-                    if (jsonResult.id) {
-                        return JsonOutput.toJson([
-                            status: 'success',
-                            id: jsonResult.id
-                        ])
-                    } else {
-                        return JsonOutput.toJson([
-                            status: 'failed'
-                        ])
-                    }
+                    return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1204,7 +1207,19 @@ class SaagieClient {
             throw exception
         }
     }
-
+    private String executeClosureAndReturnJsonOutPut(String data) {
+        def jsonResult = slurper.parseText(data)
+        if (jsonResult.id) {
+            return JsonOutput.toJson([
+                status: 'success',
+                id: jsonResult.id
+            ])
+        } else {
+            return JsonOutput.toJson([
+                status: 'failed'
+            ])
+        }
+    }
     private checkRequiredConfig(boolean conditions) {
         logger.info('Checking required pre-conditions...')
         if (conditions) {
