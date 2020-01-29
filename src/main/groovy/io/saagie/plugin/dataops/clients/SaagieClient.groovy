@@ -4,10 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
-import io.saagie.plugin.dataops.models.DockerInfos
 import io.saagie.plugin.dataops.models.Job
-import io.saagie.plugin.dataops.models.JobVersion
-import io.saagie.plugin.dataops.models.PackageInfo
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -27,7 +24,6 @@ import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
 import java.nio.file.Files
-import java.util.zip.ZipFile
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -1141,12 +1137,16 @@ class SaagieClient {
         def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
         def jobConfig = jobsConfigFromExportedZip.jobs.iterator().next()
 
+        // TODO: update this code when the support of multiple jobs will be added
+        def jobsId = jobsConfigFromExportedZip.jobs.keySet()[0]
+
         Map jobConfigOverride = jobConfig.value.configOverride
         File jobPackageFile = jobConfig.value.package
 
         def newJobConfigWithOverride = [
             *:jobConfigOverride.job,
             *:SaagieUtils.extractProperties(configuration.jobOverride),
+            id: jobsId
         ]
 
         configuration.job = newJobConfigWithOverride as Job
@@ -1163,8 +1163,56 @@ class SaagieClient {
             }
         }
 
-        def jsonResult = slurper.parseText(createProjectJobWithGraphQL())
-        if (jsonResult.id && jsonResult.name) {
+        Request jobDetailsRequest = saagieUtils.getJobDetailRequest()
+        Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
+        try {
+            client.newCall(jobDetailsRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    // the job do not exists, create it
+                    client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
+                        handleErrors(response)
+                        String responseBodyForJobList = responseJobList.body().string()
+                        def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+                        if (parsedResultForJobList.data == null) {
+                            def message = "Something went wrong when getting jobs for project: $configuration.project.id"
+                            logger.error(message)
+                            throw new GradleException(message)
+                        } else {
+                            def listJobs = parsedResultForJobList.data.jobs
+                            boolean nameExist = false
+                            listJobs.each {
+                                if (it.name == configuration.job.name) {
+                                    nameExist = true
+                                }
+                            }
+                            if (nameExist) {
+                                return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                            } else{
+                                return executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                            }
+                        }
+                    }
+                } else {
+                    // the job exists, we should update it
+                    return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsImport')
+            throw exception
+        }
+    }
+    private String executeClosureAndReturnJsonOutPut(String data) {
+        def jsonResult = slurper.parseText(data)
+        if (jsonResult.id) {
             return JsonOutput.toJson([
                 status: 'success',
                 id: jsonResult.id
@@ -1175,7 +1223,6 @@ class SaagieClient {
             ])
         }
     }
-
     private checkRequiredConfig(boolean conditions) {
         logger.info('Checking required pre-conditions...')
         if (conditions) {

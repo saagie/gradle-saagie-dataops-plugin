@@ -84,21 +84,14 @@ class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
 
     def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
         given:
-        def mockedJobUpdateResponse = new MockResponse()
-        mockedJobUpdateResponse.responseCode = 200
-        mockedJobUpdateResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
-        mockWebServer.enqueue(mockedJobUpdateResponse)
-
-        def mockedJobVersionResponse = new MockResponse()
-        mockedJobVersionResponse.responseCode = 200
-        mockedJobVersionResponse.body = '''{"data":{"addJobVersion":{"number":"jobNumber"}}}'''
-        mockWebServer.enqueue(mockedJobVersionResponse)
+        enqueueRequest('{"data":{"editJob":{"id":"jobId"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
 
         jobFile << 'println("Hello gradle")'
         buildFile << """
             saagie {
                 server {
-                    url = 'http://localhost:9000'
+                    url = '${mockServerUrl}'
                     login = 'user.user'
                     password = 'password'
                     environment = 4
@@ -154,5 +147,4 @@ class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
-
 }
