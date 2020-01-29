@@ -1160,42 +1160,29 @@ class SaagieClient {
             }
         }
 
-        Request jobDetailsRequest = saagieUtils.getJobDetailRequest()
+
         Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
         try {
-            client.newCall(jobDetailsRequest).execute().withCloseable { response ->
-                handleErrors(response)
-                String responseBody = response.body().string()
-                def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
-                    // the job do not exists, create it
-                    client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
-                        handleErrors(response)
-                        String responseBodyForJobList = responseJobList.body().string()
-                        def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
-                        if (parsedResultForJobList.data == null) {
-                            def message = "Something went wrong when getting jobs for project: $configuration.project.id"
-                            logger.error(message)
-                            throw new GradleException(message)
-                        } else {
-                            def listJobs = parsedResultForJobList.data.jobs
-                            boolean nameExist = false
-                            listJobs.each {
-                                if (it.name == configuration.job.name) {
-                                    nameExist = true
-                                }
-                            }
-                            if (nameExist) {
-                                return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
-                            } else{
-                                return executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
-                            }
+            // the job do not exists, create it
+            client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
+                handleErrors(responseJobList)
+                String responseBodyForJobList = responseJobList.body().string()
+                def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+                if (parsedResultForJobList.data?.jobs) {
+                    def listJobs = parsedResultForJobList.data.jobs
+                    boolean nameExist = false
+                    listJobs.each {
+                        if (it.name == configuration.job.name) {
+                            nameExist = true
                         }
                     }
+                    if (nameExist) {
+                        return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                    } else {
+                        return executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                    }
                 } else {
-                    // the job exists, we should update it
-                    return executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
-
+                    return executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
