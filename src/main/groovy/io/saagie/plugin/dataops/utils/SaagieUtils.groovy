@@ -78,16 +78,7 @@ class SaagieUtils {
     }
 
     Request getProjectJobsRequest() {
-        Project project = configuration.project
-        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
-
-        def jsonGenerator = new JsonGenerator.Options()
-            .excludeNulls()
-            .build()
-
-        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
-
-        def listProjectJobs = gq('''
+     getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
                     id
@@ -121,7 +112,31 @@ class SaagieUtils {
                     isDeletable
                 }
             }
-        ''', gqVariables)
+        ''')
+    }
+
+    Request getProjectJobsRequestGetNameAndId() {
+        getProjectJobsRequestBuild('''
+            query jobs($projectId: UUID!) {
+                jobs(projectId: $projectId) {
+                    id
+                    name
+                }
+            }
+        ''')
+    }
+
+    Request getProjectJobsRequestBuild(String query) {
+        Project project = configuration.project
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
+
+        def listProjectJobs = gq(query, gqVariables)
         return buildRequestFromQuery(listProjectJobs)
     }
 
@@ -1001,6 +1016,7 @@ class SaagieUtils {
         }
         return url
     }
+
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
     }
