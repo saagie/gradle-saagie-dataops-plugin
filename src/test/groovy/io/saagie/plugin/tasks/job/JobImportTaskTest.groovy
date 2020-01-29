@@ -44,7 +44,6 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
 
-        enqueueRequest('{"errors":[{"message":"Unexpected error"}],"data":null}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"name job"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
 
@@ -81,7 +80,6 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
 
-        enqueueRequest('{"errors":[{"message":"Unexpected error"}],"data":null}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"editJob":{"id":"id-1"}}}')
         enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
