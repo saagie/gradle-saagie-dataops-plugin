@@ -19,40 +19,6 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared
     String exportJobZipFilename = './exportedJob.zip'
 
-    def "the task should create a new job based on the exported config if name doesn't exist"() {
-        given:
-        URL resource = classLoader.getResource(exportJobZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
-
-        buildFile << """
-            saagie {
-                server {
-                    url = '${mockServerUrl}'
-                    login = 'login'
-                    password = 'password'
-                    environment = 1
-                }
-
-                project {
-                    id = 'project-id'
-                }
-
-                importJob {
-                    import_file = '${exportedConfig.absolutePath}'
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName, "-d")
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{"status":"success","id":"job-id"}')
-    }
 
     def "the task should fail if required params are not provided"() {
         given:
@@ -75,41 +41,6 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         result == null
         e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
-
-    def "the task should add jobversion based on the exported config if name exist"() {
-        given:
-        URL resource = classLoader.getResource(exportJobZipFilename)
-        File exportedConfig = new File(resource.getFile())
-
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":"jobVersionNumber"}}}')
-
-        buildFile << """
-            saagie {
-                server {
-                    url = '${mockServerUrl}'
-                    login = 'login'
-                    password = 'password'
-                    environment = 1
-                }
-
-                project {
-                    id = 'project-id'
-                }
-
-                importJob {
-                    import_file = '${exportedConfig.absolutePath}'
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{"status":"success","id":"id-1"}')
     }
 
     def "the task should update job based on the configuration build if id exist"() {
@@ -143,7 +74,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle(taskName, "-d")
 
         then:
         notThrown(Exception)
@@ -151,6 +82,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
     }
 
     def "the task should add jobversion based on the build configuration if name exist"() {
+
         given:
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
@@ -192,6 +124,41 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         then:
         notThrown(Exception)
         result.output.contains('{"status":"success","id":"id-1"}')
+    }
+
+    def "the task should create a new job based on the exported config if name doesn't exist"() {
+        given:
+        URL resource = classLoader.getResource(exportJobZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+        enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                importJob {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName, "-d")
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{"status":"success","id":"job-id"}')
     }
 
     def "the task should fail if the import_file does not exists"() {

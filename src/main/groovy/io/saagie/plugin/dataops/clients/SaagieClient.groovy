@@ -1191,13 +1191,14 @@ class SaagieClient {
         }
 
 
-        Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
+
         try {
             // the job do not exists, create it
             if(oldId) {
                 configuration.job.id = oldId
                 return parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQLFormatted())
             }
+            Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
