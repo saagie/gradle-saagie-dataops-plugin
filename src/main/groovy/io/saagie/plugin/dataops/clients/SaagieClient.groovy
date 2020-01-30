@@ -1116,7 +1116,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job detail for job id $configuration.job.id"
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $job.id"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -1227,6 +1227,7 @@ class SaagieClient {
         try {
             // the job do not exists, create it
             if(oldId) {
+                configuration.job = SaagieUtils.extractProperties(configuration.jobOverride) as Job
                 configuration.job.id = oldId
                 callGetJobDetail()
                 return parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQLFormatted())
