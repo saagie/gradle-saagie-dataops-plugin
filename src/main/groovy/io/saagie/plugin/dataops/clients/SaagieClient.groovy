@@ -291,6 +291,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map createdJob = parsedResult.data.createJob
+                    configuration.job.id = createdJob.id
                     return JsonOutput.toJson(createdJob)
                 }
             }
@@ -404,9 +405,8 @@ class SaagieClient {
 
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
 
-        String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
-        returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+        String returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
 
         addJobVersionFromConfiguration()
 
@@ -1103,6 +1103,38 @@ class SaagieClient {
 
     }
 
+    String callGetJobDetail(){
+
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.job?.id
+        )
+
+        Request getJobDetail = saagieUtils.getJobDetailRequest()
+        try {
+            client.newCall(getJobDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting job detail for job id $configuration.job.id"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map jobDetailResult = parsedResult.data.job
+                    return JsonOutput.toJson(jobDetailResult)
+                }
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsCreate')
+            throw exception
+        }
+
+    }
+
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 
@@ -1196,6 +1228,7 @@ class SaagieClient {
             // the job do not exists, create it
             if(oldId) {
                 configuration.job.id = oldId
+                callGetJobDetail()
                 return parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQLFormatted())
             }
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
@@ -1210,6 +1243,7 @@ class SaagieClient {
                     listJobs.each {
                         if (it.name == configuration.job.name) {
                             foundJob = it
+                            configuration.job.id = it.id
                             nameExist = true
                         }
                     }

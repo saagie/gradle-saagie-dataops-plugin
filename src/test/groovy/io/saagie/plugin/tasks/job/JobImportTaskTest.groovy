@@ -43,10 +43,51 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
+    def "the task should fail if configuration file job id doesn t exist"() {
+
+
+        given:
+        URL resource = classLoader.getResource(exportJobZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"errors":[{"message":"Unexpected error"}],"data":null}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                }
+                
+                job {
+                    id = "id-1"
+                }
+                
+                importJob {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("Something went wrong when getting job detail for job id id-1")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
     def "the task should update job based on the configuration build if id exist"() {
         given:
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"job":{"id":"job-id","name":"job name ","description":"job description ","countJobInstance":0,"versions":[{"number":1,"creationDate":"2020-01-30T16:37:29.888Z","releaseNote":"release from import job updated","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/downloadurl/jobfile"},"dockerInfo":null,"commandLine":"python commande","isCurrent":true,"isMajor":false,"creator":"mohamed.amin.ziraoui"}],"category":"Extraction","technology":{"id":"technology id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":{"loginEmails":[],"emails":["user@gmail.com","user2@gmail.com"],"statusList":["REQUESTED","KILLED"]},"isStreaming":false,"creationDate":"2020-01-30T16:37:29.888Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}}}')
         enqueueRequest('{"data":{"editJob":{"id":"id-1"}}}')
         enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
 
@@ -74,7 +115,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName, "-d")
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
@@ -154,7 +195,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName, "-d")
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
