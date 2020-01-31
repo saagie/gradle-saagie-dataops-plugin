@@ -80,7 +80,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains("Something went wrong when getting job detail for job id id-1")
+        e.message.contains('{"errors":[{"message":"Unexpected error"}],"data":null} for job id id-1')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
     def "the task should update job based on the configuration build if id exist"() {
