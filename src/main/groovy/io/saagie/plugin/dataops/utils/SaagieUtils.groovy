@@ -267,14 +267,30 @@ class SaagieUtils {
     Request getProjectUpdateJobRequest() {
         Job job = configuration.job
         logger.debug('Generating getProjectUpdateJobRequest [job={}]', job)
-
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
-
         def gqVariables = jsonGenerator.toJson([
             job: job.toMap(),
         ])
+        getProjectUpdateJobRequestFormat(gqVariables)
+
+    }
+
+    Request getProjectUpdateJobFromDataRequest() {
+        Job job = configuration.job
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+        Map formattedJob = getFormatForUpdateJob(job.toMap())
+        def gqVariables = jsonGenerator.toJson([
+            job: formattedJob,
+        ])
+        getProjectUpdateJobRequestFormat(gqVariables)
+    }
+
+    Request getProjectUpdateJobRequestFormat(String gqVariables) {
+
 
         def updateProjectJob = gq('''
             mutation editJobMutation($job: JobEditionInput!) {
@@ -284,9 +300,9 @@ class SaagieUtils {
             }
         ''', gqVariables)
 
+
         return buildRequestFromQuery(updateProjectJob)
     }
-
     @Deprecated
     Request getAddJobVersionRequest() {
         Job job = configuration.job
@@ -312,6 +328,15 @@ class SaagieUtils {
         ''', gqVariables)
 
         return buildRequestFromQuery(updateProjectJob)
+    }
+
+    static Map getFormatForUpdateJob(Map data) {
+        Set<String> set = new HashSet<> ()
+        set.add("projectId")
+        set.add("category")
+        set.add("technology")
+        data.keySet().removeAll(set)
+        return data
     }
 
     Request getAddJobVersionRequestWithGraphQL() {
