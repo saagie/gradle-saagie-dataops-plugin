@@ -47,7 +47,6 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"name job"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
 
-
         buildFile << """
             saagie {
                 server {
@@ -72,7 +71,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"status":"success","id":"job-id"}')
+        result.output.contains('{status=success, job=[{id=d936c1d5-86e9-4268-b65a-82e17b344046, name=Job from import}], pipeline=[]}')
     }
 
     def "the task should update a new job based on the exported config if name exist"() {
@@ -108,7 +107,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"status":"success","id":"id-1"}')
+        result.output.contains('{status=success, job=[{id=d936c1d5-86e9-4268-b65a-82e17b344046, name=Job from import}], pipeline=[]}')
     }
 
     def "the task should fail if the import_file does not exists"() {
