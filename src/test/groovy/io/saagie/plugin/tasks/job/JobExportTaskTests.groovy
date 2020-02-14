@@ -95,7 +95,103 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 job {
-                    id = 'job-id'
+                    ids = ['job-id']
+                }
+
+                export {
+                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+
+        then:
+        notThrown(Exception)
+        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        result.output.contains(computedValue)
+    }
+
+    def "projectsExportJob should export job, job version and pipeLines"() {
+        given:
+        File tempJobDirectory = File.createTempDir("project", ".tmp")
+        File tempJobFile = File.createTempFile("package", ".tmp")
+
+        enqueueRequest("""{"data":{"job":{"id":"job-id","name":"Test Job to archive","description":"Description","countJobInstance":5,"versions":[{"number":1,"creationDate":"2019-11-05T17:14:08.635Z","releaseNote":"Fixed release","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/projects/api/platform/4/project/project-id/job/job-id/version/1/artifact/renan-file.py"},"dockerInfo":null,"commandLine":"python {file} arg1 arg2","isCurrent":true,"isMajor":false,"creator":"admin.user"}],"category":"Extraction","technology":{"id":"technology-id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-11-05T17:14:08.635Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":false}}}""")
+        enqueueRequestFile(tempJobFile)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                job {
+                    ids = ['job-id1', 'job-id2']
+                }
+
+                pipeline {
+                    ids = ['pipeline-id1', 'pipeline-id2']
+                }
+
+                export {
+                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+
+        then:
+        notThrown(Exception)
+        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        result.output.contains(computedValue)
+    }
+
+    def "projectsExportJob should export job, job version and pipeLines with exp"() {
+        given:
+        File tempJobDirectory = File.createTempDir("project", ".tmp")
+        File tempJobFile = File.createTempFile("package", ".tmp")
+
+        enqueueRequest("""{"data":{"job":{"id":"job-id","name":"Test Job to archive","description":"Description","countJobInstance":5,"versions":[{"number":1,"creationDate":"2019-11-05T17:14:08.635Z","releaseNote":"Fixed release","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/projects/api/platform/4/project/project-id/job/job-id/version/1/artifact/renan-file.py"},"dockerInfo":null,"commandLine":"python {file} arg1 arg2","isCurrent":true,"isMajor":false,"creator":"admin.user"}],"category":"Extraction","technology":{"id":"technology-id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-11-05T17:14:08.635Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":false}}}""")
+        enqueueRequestFile(tempJobFile)
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                job {
+                    ids = ['job-id1', 'job-id2']
+                }
+
+                pipeline {
+                    ids = ['pipeline-id1', 'pipeline-id2']
                 }
 
                 export {

@@ -8,13 +8,16 @@ class ExportJob implements IExists{
     JobVersionDTO jobVersionDTO  = new JobVersionDTO()
     String downloadUrl
     int downloadUrlVersion
+
     @Override
     boolean exists() {
         return jobDTO.exists() && jobVersionDTO.exists() && downloadUrl
     }
+
     void setJobFromApiResult(jobDetailResult) {
         jobDTO.setJobFromApiResult(jobDetailResult)
     }
+
     void setJobVersionFromApiResult(version){
         jobVersionDTO.setJobVersionFromApiResult(version)
     }

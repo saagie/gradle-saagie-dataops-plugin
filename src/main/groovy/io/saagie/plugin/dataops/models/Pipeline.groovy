@@ -4,6 +4,8 @@ class Pipeline implements IMapable {
     String id
     String name
     String description
+    def ids = []
+    Boolean include_job = false
     Boolean isScheduled = false
     String cronScheduling
     Alerting alerting = new Alerting()

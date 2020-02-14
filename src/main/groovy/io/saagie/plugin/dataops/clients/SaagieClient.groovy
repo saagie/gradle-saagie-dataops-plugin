@@ -4,6 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
@@ -991,12 +992,12 @@ class SaagieClient {
         )
 
         def overwrite = configuration.export.overwrite
-        def generatedJobName = 'project-export-' + configuration.project.id
+        def generatedZipName = 'project-export-' + configuration.project.id
         def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
 
         File exportPath = new File(exportConfigPath)
 
-        def generatedZipPath = exportConfigPath + generatedJobName + '.zip'
+        def generatedZipPath = exportConfigPath + generatedZipName + '.zip'
 
         logger.debug("generatedZipPath before: {}, ", generatedZipPath)
         File zipFolder = new File(generatedZipPath)
@@ -1010,7 +1011,6 @@ class SaagieClient {
             return JsonOutput.toJson([ status: "success", exportfile: generatedZipPath ])
         }
 
-        ExportJob exportJob = getJobAndJobVersionDetailToExport()
         logger.debug("exportConfigPath : {}, ", exportConfigPath)
 
         File tempJobDirectory = File.createTempDir("job", ".tmp")
@@ -1019,37 +1019,48 @@ class SaagieClient {
         } else {
             throw new GradleException("Cannot Write inside temporary directory")
         }
-        FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
-        def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedJobName
-        folder.generateFolder(
-            generatedJobName,
-            overwrite,
-            configuration.server.url,
-            configuration.job.id,
-            configuration.project.id,
-            configuration.server.environment
-        )
-        ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
-        zippingFolder.generateZip(tempJobDirectory)
+        FolderGenerator folder = [
+            tempJobDirectory.getAbsolutePath(),
+            saagieUtils,
+            client,
+            configuration,
+            generatedZipName,
+            overwrite ]
 
-        logger.debug("generatedZipPath after: {}, ", generatedZipPath)
-        return JsonOutput.toJson([
-            status    : "success",
-            exportfile: generatedZipPath
-        ])
+        try {
+            ExportPipeline[] exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+            ExportJob[] exportJobs = getListJobAndJobVersionsFromConfig()
+            def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
+            folder.exportJobList = exportJobs
+            folder.exportPipelineList = exportPipelines
+            folder.generateFolderFromParams()
+            ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
+            zippingFolder.generateZip(tempJobDirectory)
 
+            logger.debug("generatedZipPath after: {}, ", generatedZipPath)
+            return JsonOutput.toJson([
+                status    : "success",
+                exportfile: generatedZipPath
+            ])
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
+            throw exception
+        }
     }
 
-    ExportJob getJobAndJobVersionDetailToExport() {
+    ExportJob getJobAndJobVersionDetailToExport(String jobId) {
 
         checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.job?.id ||
+            !configuration?.job?.ids ||
             !configuration?.export?.export_file_path ||
             !configuration?.export?.overwrite
         )
 
         Request getJobDetail = saagieUtils.getJobDetailRequest()
-        def job = configuration.job
         ExportJob exportJob = new ExportJob()
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
@@ -1057,7 +1068,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job detail: $responseBody for job id $job.id"
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $jobId"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -1078,7 +1089,7 @@ class SaagieClient {
                             }
                         }
                     } else {
-                        def messageEmptyVersions = "No versions for the job $job.id"
+                        def messageEmptyVersions = "No versions for the job $jobId"
                         logger.error(messageEmptyVersions)
                         throw new GradleException(messageEmptyVersions)
                     }
@@ -1097,10 +1108,87 @@ class SaagieClient {
         } catch (GradleException stopActionException) {
             throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknown error in projectsCreate')
+            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
             throw exception
         }
 
+    }
+
+    ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {
+
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.pipeline?.ids ||
+            !configuration?.export?.export_file_path ||
+            !configuration?.export?.overwrite
+        )
+
+        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam()
+        def pipeline = configuration.pipeline
+        ExportPipeline exportPipeline = new ExportPipeline()
+        try {
+            client.newCall(getPipelineDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting pipeline detail: $responseBody for pipeline id $pipelineId"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    def pipelineDetailResult = parsedResult.data.pipeline
+
+                    exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
+                    if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
+                        pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                        pipelineDetailResult.versions.each {
+                            if (it.isCurrent) {
+                                exportPipeline.setPipelineVersionFromApiResult(it)
+                            }
+                            if (it.jobs && pipeline.include_job) {
+                                const jobIds = configuration.job.ids
+                                configuration.job.ids = [jobIds, it.jobs.id].flatten()
+                            }
+                        }
+                    } else {
+                        def messageEmptyVersions = "No versions for the pipeline $pipelineId"
+                        logger.error(messageEmptyVersions)
+                        throw new GradleException(messageEmptyVersions)
+                    }
+                }
+            }
+            return exportPipeline
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.pipeline?.ids ||
+            !configuration?.export?.export_file_path ||
+            !configuration?.export?.overwrite
+        )
+        def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
+        listPipelineIds.each { pipelineId -> {
+           return getPipelineAndPipelineVersionDetailToExport(pipelineId as String)
+        }} as ExportPipeline[]
+    }
+
+    ExportJob[] getListJobAndJobVersionsFromConfig() {
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.job?.ids ||
+            !configuration?.export?.export_file_path ||
+            !configuration?.export?.overwrite
+        )
+        def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
+        listJobIds.each { jobId -> {
+            return getJobAndJobVersionDetailToExport(jobId as String)
+        }} as ExportJob[]
     }
 
     String callGetJobDetail(){

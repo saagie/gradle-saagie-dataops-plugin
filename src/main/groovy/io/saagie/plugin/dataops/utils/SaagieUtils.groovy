@@ -190,6 +190,54 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectTechnologies)
     }
 
+    Request getPipelineRequestFromParam(pipelineId) {
+        Project project = configuration.project
+        logger.debug('generating getPipelineRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ pipelineId: pipelineId ])
+
+        def pipelineResult = gq('''
+            query pipeline ($pipelineId: UUID!) {
+                pipeline(id: $pipelineId) {
+                    id
+                    name
+                    description
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        jobs {
+                          id
+                        }
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+                   
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
+                    
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(pipelineResult)
+    }
+
+
     @Deprecated
     Request getProjectCreateJobRequest() {
         Job job = configuration.job
@@ -1054,6 +1102,17 @@ class SaagieUtils {
             .collectEntries { field ->
                 [field.name, obj["$field.name"]]
             }
+    }
+
+    static boolean distinctValues(int[] arr){
+        Set<String> foundNumbers = new HashSet<String>()
+        for (String num : arr) {
+            if(foundNumbers.contains(num)){
+                return false
+            }
+            foundNumbers.add(num)
+        }
+        return true
     }
 
     static debugRequest(Request request) {
