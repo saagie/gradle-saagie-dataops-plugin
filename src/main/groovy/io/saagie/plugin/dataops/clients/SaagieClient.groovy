@@ -987,7 +987,6 @@ class SaagieClient {
         logger.debug('Starting Export Job task')
         def sl = File.separator
         checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.job?.id ||
             !configuration?.export?.export_file_path
         )
 
@@ -1028,8 +1027,17 @@ class SaagieClient {
             overwrite ]
 
         try {
-            ExportPipeline[] exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
-            ExportJob[] exportJobs = getListJobAndJobVersionsFromConfig()
+            ExportPipeline[] exportPipelines = []
+            if(configuration.pipeline.ids) {
+                exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+            }
+
+            ExportJob[] exportJobs = []
+            if(configuration.job.ids) {
+                exportJobs = getListJobAndJobVersionsFromConfig()
+            }
+
+
             def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
             folder.exportJobList = exportJobs
             folder.exportPipelineList = exportPipelines
@@ -1056,8 +1064,7 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.export?.export_file_path
         )
 
         Request getJobDetail = saagieUtils.getJobDetailRequest()
@@ -1118,8 +1125,7 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.export?.export_file_path
         )
 
         Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam()
@@ -1145,7 +1151,7 @@ class SaagieClient {
                                 exportPipeline.setPipelineVersionFromApiResult(it)
                             }
                             if (it.jobs && pipeline.include_job) {
-                                const jobIds = configuration.job.ids
+                                def jobIds = configuration.job.ids
                                 configuration.job.ids = [jobIds, it.jobs.id].flatten()
                             }
                         }
@@ -1170,13 +1176,15 @@ class SaagieClient {
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.export?.export_file_path
         )
         def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
-        listPipelineIds.each { pipelineId -> {
-           return getPipelineAndPipelineVersionDetailToExport(pipelineId as String)
-        }} as ExportPipeline[]
+        def arrayPipelines = [];
+        def resultArray = listPipelineIds.each { pipelineId ->
+            def sPipeLineInd = pipelineId as String
+            arrayPipelines.add(getPipelineAndPipelineVersionDetailToExport(sPipeLineInd))
+        }
+        return arrayPipelines as ExportPipeline[]
     }
 
     ExportJob[] getListJobAndJobVersionsFromConfig() {
@@ -1186,9 +1194,11 @@ class SaagieClient {
             !configuration?.export?.overwrite
         )
         def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
-        listJobIds.each { jobId -> {
-            return getJobAndJobVersionDetailToExport(jobId as String)
-        }} as ExportJob[]
+        def arrayJobs = [];
+        listJobIds.each { jobId ->
+            arrayJobs.add(getJobAndJobVersionDetailToExport(jobId as String))
+        }
+        return arrayJobs as ExportJob[]
     }
 
     String callGetJobDetail(){

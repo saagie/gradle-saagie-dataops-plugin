@@ -10,8 +10,8 @@ import org.gradle.api.GradleException
 
 class FolderGenerator {
 
-    ExportJob[] exportJobList
-    ExportPipeline[] exportPipelineList
+    ExportJob[] exportJobList = []
+    ExportPipeline[] exportPipelineList = []
     def inputDire
     SaagieUtils saagieUtils
     OkHttpClient client
@@ -20,6 +20,8 @@ class FolderGenerator {
     String projectId
     String environment
     String name
+    Boolean overwrite
+
     FolderGenerator(inputDire, saagieUtils, client, configuration, name, overwrite) {
         this.inputDire = inputDire
         this.saagieUtils = saagieUtils
@@ -76,15 +78,17 @@ class FolderGenerator {
                 try {
                     File localPackage = new File("${urlJobIdFolder}${sl}package")
                     localPackage.mkdirs()
-                    saagieUtils.downloadFromHTTPSServer(
-                        SaagieUtils.removeLastSlash(serverUrl) +
+                    def urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
                             "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
                             projectId +
                             "${sl}job${sl}"+
                             jobId +
                             "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
-                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl),
-                        "${urlJobIdFolder}${sl}package",
+                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                    def packageUrl = "${urlJobIdFolder}${sl}package";
+                    saagieUtils.downloadFromHTTPSServer(
+                        urlToDownload,
+                        packageUrl,
                         client
                     )
                 } catch (IOException e) {
@@ -139,12 +143,12 @@ class FolderGenerator {
         if(!exportJobList.length && ! exportPipelineList.length) {
             throw new GradleException("jobs and pipelines to be exported can t be empty at the same time")
         }
-        exportJobList.each { exportJob -> {
+        exportJobList.each { exportJob ->
             generateFolderForJob(exportJob)
-        }}
-        exportPipelineList.each { exportPipeline -> {
+        }
+        exportPipelineList.each { exportPipeline ->
             generateFolderForPipeline(exportPipeline)
-        }}
+        }
     }
 }
 

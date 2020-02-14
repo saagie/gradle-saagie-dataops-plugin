@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class PipelineDTO {
+class PipelineDTO  implements IExists{
     String name
     String id
     String description

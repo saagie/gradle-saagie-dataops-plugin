@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class PipelineVersionDTO {
+class PipelineVersionDTO  implements IExists{
     String releaseNote
     def jobs =[]
 
@@ -10,7 +10,7 @@ class PipelineVersionDTO {
     }
 
     void setPipelineVersionFromApiResult(pipelineVersionDetailResult) {
-        releaseNote = pipelineDetailResult.releaseNote
-        jobs = pipelineDetailResult.jobs
+        releaseNote = pipelineVersionDetailResult.releaseNote
+        jobs = pipelineVersionDetailResult.jobs
     }
 }
