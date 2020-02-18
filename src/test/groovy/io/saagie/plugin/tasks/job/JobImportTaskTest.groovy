@@ -85,7 +85,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         File exportedConfig = new File(resource.getFile())
         enqueueRequest('{"data":{"job":{"id":"job-id","name":"job name ","description":"job description ","countJobInstance":0,"versions":[{"number":1,"creationDate":"2020-01-30T16:37:29.888Z","releaseNote":"release from import job updated","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/downloadurl/jobfile"},"dockerInfo":null,"commandLine":"python commande","isCurrent":true,"isMajor":false,"creator":"mohamed.amin.ziraoui"}],"category":"Extraction","technology":{"id":"technology id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":{"loginEmails":[],"emails":["user@gmail.com","user2@gmail.com"],"statusList":["REQUESTED","KILLED"]},"isStreaming":false,"creationDate":"2020-01-30T16:37:29.888Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":true}}}')
         enqueueRequest('{"data":{"editJob":{"id":"id-1"}}}')
-enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
         buildFile << """
             saagie {
                 server {
@@ -198,6 +198,7 @@ enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
     }
 
     def "the task should fail if the import_file does not exists"() {
+
         given:
         buildFile << """
             saagie {
