@@ -3,6 +3,7 @@ package io.saagie.plugin.dataops.models
 class Job implements IMapable {
     String name
     String id
+    def ids = []
     String projectId
     String description
     String category
