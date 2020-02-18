@@ -45,4 +45,5 @@ class Job implements IMapable {
             ]
         }
     }
+
 }
