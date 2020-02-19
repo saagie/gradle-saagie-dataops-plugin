@@ -1067,7 +1067,7 @@ class SaagieClient {
             !configuration?.export?.export_file_path
         )
 
-        Request getJobDetail = saagieUtils.getJobDetailRequest()
+        Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
         ExportJob exportJob = new ExportJob()
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
@@ -1128,7 +1128,7 @@ class SaagieClient {
             !configuration?.export?.export_file_path
         )
 
-        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam()
+        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
         def pipeline = configuration.pipeline
         ExportPipeline exportPipeline = new ExportPipeline()
         try {
@@ -1190,8 +1190,7 @@ class SaagieClient {
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.export?.export_file_path
         )
         def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
         def arrayJobs = [];
