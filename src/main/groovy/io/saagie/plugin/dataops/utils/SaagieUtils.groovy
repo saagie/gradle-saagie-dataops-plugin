@@ -126,6 +126,27 @@ class SaagieUtils {
         ''')
     }
 
+    Request getProjectPipelinesRequestGetNameAndId() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
+
+        def listProjectJobs = gq('''
+            query pipelines($projectId: UUID!) {
+                pipelines(projectId: $projectId) {
+                    id
+                    name
+                }
+            }
+        ''', gqVariables)
+        return buildRequestFromQuery(listProjectJobs)
+    }
+
     Request getProjectJobsRequestBuild(String query) {
         Project project = configuration.project
         logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)

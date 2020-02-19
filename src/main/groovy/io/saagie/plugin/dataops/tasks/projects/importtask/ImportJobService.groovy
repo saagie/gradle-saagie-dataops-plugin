@@ -24,8 +24,8 @@ class ImportJobService {
             File jobPackageFile = job.value.package
 
             def newJobConfigWithOverride = [
-                *:jobConfigOverride.job,
-                *: SaagieUtils.extractProperties(globalConfig.jobOverride),
+                * : jobConfigOverride.job,
+                * : SaagieUtils.extractProperties(globalConfig.jobOverride),
                 id: jobId
             ]
 
@@ -44,5 +44,6 @@ class ImportJobService {
             }
             mapClosure(globalConfig, job)
         }
+
     }
 }

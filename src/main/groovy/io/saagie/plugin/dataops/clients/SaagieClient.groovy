@@ -7,6 +7,7 @@ import io.saagie.plugin.dataops.models.ExportJob
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.tasks.projects.importtask.ImportJobService
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
@@ -1291,14 +1292,14 @@ class SaagieClient {
         def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
         def exportedJobPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
         def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
-
+        def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedJobPathRoot)
         def response = [
             status: 'success',
             job: [],
             pipeline: []
         ]
 
-        def callbackToDebug = { globalConfig, job ->
+        def callbackJobToDebug = { globalConfig, job ->
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             try {
                 // the job do not exists, create it
@@ -1315,12 +1316,51 @@ class SaagieClient {
                             }
                         }
                         if (nameExist) {
-                            executeClosureAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                            parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQL())
                         } else {
-                            executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                            parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
                         }
                     } else {
-                        executeClosureAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                        parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                    }
+                    response.job << [
+                        id: job.key,
+                        name: globalConfig.job.name
+                    ]
+                }
+            } catch (InvalidUserDataException invalidUserDataException) {
+                throw invalidUserDataException
+            } catch (GradleException stopActionException) {
+                throw stopActionException
+            } catch (Exception exception) {
+                logger.error('Unknown error in projectsImport')
+                throw exception
+            }
+        }
+
+        def callbackPipelinesToDebug = { globalConfig, job ->
+            Request pipelineListRequest = saagieUtils.getProjectPipelinesRequestGetNameAndId()
+            try {
+                // the job do not exists, create it
+                client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
+                    handleErrors(responsePipelineList)
+                    String responseBodyForPipelineList = responsePipelineList.body().string()
+                    def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
+                    if (parsedResultForPipelineList.data?.pipelines) {
+                        def listPipelines = parsedResultForPipelineList.data.pipelines
+                        boolean nameExist = false
+                        listPipelines.each {
+                            if (it.name == globalConfig.pipeline.name) {
+                                nameExist = true
+                            }
+                        }
+                        if (nameExist) {
+                            parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                        } else {
+                            parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                        }
+                    } else {
+                        parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
                     }
                     response.job << [
                         id: job.key,
@@ -1340,7 +1380,12 @@ class SaagieClient {
         ImportJobService.importAndCreateJobs(
             jobsConfigFromExportedZip.jobs,
             configuration,
-            callbackToDebug
+            callbackJobToDebug
+        )
+        ImportJobService.importAndCreateJobs(
+            jobsConfigFromExportedZip.jobs,
+            configuration,
+            callbackJobToDebug
         )
 
         return response
