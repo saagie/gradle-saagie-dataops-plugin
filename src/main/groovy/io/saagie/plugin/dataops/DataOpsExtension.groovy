@@ -85,6 +85,10 @@ class DataOpsExtension {
         jobOverride.with(closure)
     }
 
+    Object pipelineOverride(Closure closure) {
+        pipelineOverride.with(closure)
+    }
+
     Object export(Closure closure) {
         export.with(closure)
     }

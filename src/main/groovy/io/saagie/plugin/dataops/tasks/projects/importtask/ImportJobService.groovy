@@ -25,7 +25,11 @@ class ImportJobService {
 
             def newJobConfigWithOverride = [
                 * : jobConfigOverride.job,
-                * : SaagieUtils.extractProperties(globalConfig.jobOverride),
+                *: [
+                    isScheduled : globalConfig.jobOverride?.isScheduled,
+                    cronScheduling : globalConfig.jobOverride?.cronScheduling,
+                    alerting : globalConfig.jobOverride?.alerting
+                ]
             ]
 
             globalConfig.job {
@@ -35,10 +39,13 @@ class ImportJobService {
                 isScheduled =  newJobConfigWithOverride.isScheduled
                 category = newJobConfigWithOverride.category
                 description = newJobConfigWithOverride.description
-                alerting {
-                    emails: newJobConfigWithOverride.alerting?.emails
-                    statusList: newJobConfigWithOverride.alerting?.statusList
-                    loginEmails: newJobConfigWithOverride.alerting?.loginEmails
+            }
+
+            if(newJobConfigWithOverride.alerting?.emails) {
+                globalConfig.job.alerting {
+                    emails = newJobConfigWithOverride.alerting?.emails
+                    statusList = newJobConfigWithOverride.alerting?.statusList
+                    logins = newJobConfigWithOverride.alerting?.logins
                 }
             }
 
@@ -54,7 +61,7 @@ class ImportJobService {
                     name = jobPackageFile.absolutePath
                 }
             }
-            mapClosure(globalConfig, job)
+            mapClosure(globalConfig, job, job.key)
         }
 
     }

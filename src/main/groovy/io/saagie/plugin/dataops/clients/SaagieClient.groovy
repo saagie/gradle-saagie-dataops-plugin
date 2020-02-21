@@ -1107,7 +1107,7 @@ class SaagieClient {
             !configuration?.export?.export_file_path
         )
 
-        Request getJobDetail = saagieUtils.getJobDetailRequest()
+        Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
         ExportJob exportJob = new ExportJob()
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
@@ -1168,7 +1168,7 @@ class SaagieClient {
             !configuration?.export?.export_file_path
         )
 
-        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam()
+        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
         def pipeline = configuration.pipeline
         ExportPipeline exportPipeline = new ExportPipeline()
         try {
@@ -1231,8 +1231,7 @@ class SaagieClient {
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.export?.export_file_path
         )
         def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
         def arrayJobs = [];
@@ -1339,7 +1338,7 @@ class SaagieClient {
             pipeline: []
         ]
         def listJobs = null
-        def callbackJobToDebug = { globalConfig, job ->
+        def callbackJobToDebug = { globalConfig, job, id ->
 
             configuration.job = globalConfig.job
             configuration.jobVersion = globalConfig.jobVersion
@@ -1347,13 +1346,16 @@ class SaagieClient {
             listJobs = getJobListByNameAndId()
             if (listJobs) {
                 boolean nameExist = false
+                def foundNameId = null;
                 listJobs.each {
                     if (it.name == globalConfig.job.name) {
                         nameExist = true
+                        foundNameId = it.id
                     }
                 }
                 // the job do not exists, create it
                 if (nameExist) {
+                    configuration.job.id = foundNameId
                     addJobVersionFromConfiguration()
                 } else {
                     createProjectJobWithGraphQL()
@@ -1361,14 +1363,16 @@ class SaagieClient {
             } else {
                 createProjectJobWithGraphQL()
             }
+
             response.job << [
                 id  : job.key,
                 name: globalConfig.job.name
             ]
 
         }
+
         def listPipelines = null;
-        def callbackPipelinesToDebug = { globalConfig, pipeline ->
+        def callbackPipelinesToDebug = { globalConfig, pipeline, id ->
 
             configuration.pipeline = globalConfig.pipeline
             configuration.pipelineVersion = globalConfig.pipelineVersion
@@ -1383,6 +1387,7 @@ class SaagieClient {
                 }
                 // the pipeline do not exists, create it
                 if (nameExist) {
+                    configuration.pipeline.id = id
                     updatePipelineVersion()
                 } else {
                     createProjectPipelineJob()

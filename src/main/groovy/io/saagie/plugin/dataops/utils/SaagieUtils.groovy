@@ -925,14 +925,17 @@ class SaagieUtils {
 
     Request getJobDetailRequest() {
         Job job = configuration.job;
-        Project project = configuration.project;
-        logger.debug('Generating getJobDetailRequest for getting job detail [id={}] with project Id [id={}]', project.id, job.id)
+      return getJobDetailRequestFromParam(job.id)
+    }
+
+    Request getJobDetailRequestFromParam(jobId) {
+        logger.debug('Generating getJobDetailRequest for getting job detail [id={}]', jobId)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
+        def gqVariables = jsonGenerator.toJson([ jobId: jobId ])
 
         def getJobDetailRequest = gq('''
            query job($jobId: UUID!) {
@@ -986,6 +989,8 @@ class SaagieUtils {
 
         return buildRequestFromQuery(getJobDetailRequest)
     }
+
+
 
     Request getJobVersionDetailRequest() {
         Project project = configuration.project;
