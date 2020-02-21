@@ -21,13 +21,18 @@ class JobVersionDTO implements IExists{
         if(version.dockerInfo && version.dockerInfo.dockerCredentialsId){
             dockerInfo.dockerCredentialsId = version.dockerInfo.dockerCredentialsId
         }
+
         if(version.dockerInfo && version.dockerInfo.image){
             dockerInfo.image = version.dockerInfo.image
         }
+
         commandLine = version.commandLine
         runtimeVersion = version.runtimeVersion
         releaseNote = version.releaseNote
-        packageInfo.name = version.packageInfo.name
+
+        if(version.packageInfo?.name){
+            packageInfo.name = version.packageInfo?.name
+        }
 
     }
 }

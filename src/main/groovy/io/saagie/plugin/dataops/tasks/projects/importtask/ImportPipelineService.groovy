@@ -13,15 +13,21 @@ class ImportPipelineService {
             pipelines.each { pipeline ->
                 def piplelineId = pipeline.key
                 Map pipelineConfigOverride = pipeline.value.configOverride
-               def newPipelineConfigWithOverride = [
-                    *:pipelineConfigOverride.pipeline,
-                    *: [
-                        isScheduled : globalConfig.pipelineOverride?.isScheduled,
-                        cronScheduling : globalConfig.pipelineOverride?.cronScheduling,
-                        alerting : globalConfig.pipelineOverride?.alerting
-                    ]
+                // delete next line
+                def pipelineOverride = SaagieUtils.extractProperties(globalConfig.pipelineOverride as PropertyOverride)
+                def newPipelineConfigWithOverride = [
+                    *:pipelineConfigOverride.pipeline
                 ]
+                if(globalConfig.pipelineOverride) {
+                    newPipelineConfigWithOverride << [ *: [
+                        isScheduled : globalConfig.pipelineOverride?.isScheduled,
+                        cronScheduling : globalConfig.pipelineOverride?.cronScheduling
+                    ]]
 
+                    if(globalConfig.pipelineOverride.alerting && globalConfig.pipelineOverride.alerting.emails){
+                        newJobConfigWithOverride << [*:[alerting : globalConfig.pipelineOverride?.alerting]]
+                    }
+                }
                 globalConfig.pipeline {
                      name = newPipelineConfigWithOverride.name
                      description = newPipelineConfigWithOverride.description

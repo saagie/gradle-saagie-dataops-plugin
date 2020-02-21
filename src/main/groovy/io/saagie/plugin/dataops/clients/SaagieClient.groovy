@@ -626,7 +626,6 @@ class SaagieClient {
                     String newPipelineVersion = updatedPipelineVersion.data.addPipelineVersion.number
                     logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
                 }
-
             }
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -1057,6 +1056,7 @@ class SaagieClient {
             overwrite]
 
         try {
+
             ExportPipeline[] exportPipelines = []
             if (configuration.pipeline.ids) {
                 exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
@@ -1066,15 +1066,18 @@ class SaagieClient {
             if (configuration.job.ids) {
                 exportJobs = getListJobAndJobVersionsFromConfig()
             }
+
             def listJobs = null;
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
                 def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+
                 if (parsedResultForJobList.data?.jobs) {
                     listJobs = parsedResultForJobList.data.jobs
                 }
+
                 def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
                 folder.exportJobList = exportJobs
                 folder.exportPipelineList = exportPipelines
@@ -1342,6 +1345,7 @@ class SaagieClient {
 
             configuration.job = globalConfig.job
             configuration.jobVersion = globalConfig.jobVersion
+            configuration.job.id =  null
 
             listJobs = getJobListByNameAndId()
             if (listJobs) {
@@ -1376,18 +1380,21 @@ class SaagieClient {
 
             configuration.pipeline = globalConfig.pipeline
             configuration.pipelineVersion = globalConfig.pipelineVersion
-
+            configuration.job.id =  null
             listPipelines = getPipelineListByNameAndId()
             if (listPipelines) {
                 boolean nameExist = false
+                def pipelineFoundId = null;
                 listPipelines.each {
                     if (it.name == globalConfig.pipeline.name) {
+                        pipelineFoundId = it.id
                         nameExist = true
                     }
                 }
                 // the pipeline do not exists, create it
+
                 if (nameExist) {
-                    configuration.pipeline.id = id
+                    configuration.pipeline.id = pipelineFoundId
                     updatePipelineVersion()
                 } else {
                     createProjectPipelineJob()

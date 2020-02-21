@@ -119,15 +119,17 @@ class FolderGenerator {
         if(exportPipeline.exists()) {
             def createFolderForPipeLine = folder.mkdirs()
             if(createFolderForPipeLine && jobList) {
-                def jobForPipeVersionArray = null
+                def jobForPipeVersionArray = []
                 if(exportPipeline && exportPipeline.pipelineVersionDTO && exportPipeline.pipelineVersionDTO.jobs) {
-                    jobForPipeVersionArray = jobList.each { job ->
+                    jobList.each { job ->
                         exportPipeline.pipelineVersionDTO?.jobs?.each { jobId ->
-                            if(jobId == job.id){
-                                jobForPipeVersionArray.add({
-                                    id = job.id
-                                    name = job.name
-                                })
+                            def element = null
+
+                            if(jobId.id == job.id){
+                                jobForPipeVersionArray.add([
+                                    id : job.id,
+                                    name: job.name
+                                ])
                             }
                         }
                     }

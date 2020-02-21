@@ -24,13 +24,20 @@ class ImportJobService {
             File jobPackageFile = job.value.package
 
             def newJobConfigWithOverride = [
-                * : jobConfigOverride.job,
-                *: [
+                * : jobConfigOverride.job
+            ]
+
+            if(globalConfig.jobOverride) {
+                newJobConfigWithOverride << [ *: [
                     isScheduled : globalConfig.jobOverride?.isScheduled,
                     cronScheduling : globalConfig.jobOverride?.cronScheduling,
-                    alerting : globalConfig.jobOverride?.alerting
-                ]
-            ]
+                ]]
+
+                if(globalConfig.jobOverride.alerting && globalConfig.jobOverride.alerting.emails){
+                    newJobConfigWithOverride << [*:[alerting : globalConfig.jobOverride?.alerting]]
+                }
+
+            }
 
             globalConfig.job {
                 name = newJobConfigWithOverride.name
