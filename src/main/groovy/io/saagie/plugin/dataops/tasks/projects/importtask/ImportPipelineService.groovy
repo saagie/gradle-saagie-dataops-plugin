@@ -6,7 +6,7 @@ import io.saagie.plugin.dataops.utils.SaagieUtils
 
 class ImportPipelineService {
 
-    def static importAndCreatePipelines(Map pipelines, DataOpsExtension globalConfig, Closure mapClosure) {
+    def static importAndCreatePipelines(Map pipelines, DataOpsExtension globalConfig, Closure mapClosure, jobList) {
             pipelines.each { pipeline ->
                 def piplelineId = pipeline.key
                 Map pipelineConfigOverride = pipeline.value.configOverride
@@ -31,12 +31,27 @@ class ImportPipelineService {
                          statusList = newPipelineConfigWithOverride.alerting?.statusList
                      }
                 }
+
                 globalConfig.pipelineVersion {
                     releaseNote = pipelineConfigOverride.pipelineVersion?.releaseNote
-                    jobs = pipelineConfigOverride.pipelineVersion?.jobs
+                    jobs = getJobsNameFromJobList(jobList, pipelineConfigOverride.pipelineVersion?.jobs)
                 }
                 mapClosure(globalConfig, pipeline)
             }
-
     }
+
+    def static getJobsNameFromJobList(jobs, JobsFromPipelines) {
+        def jobForPipeVersionArray = null
+        if(jobs && JobsFromPipelines) {
+            jobForPipeVersionArray = jobs.each { job ->
+                JobsFromPipelines.each { jobPipeline ->
+                    if(jobPipeline.name == job.name){
+                        jobForPipeVersionArray.add(job.id)
+                    }
+                }
+            }
+        }
+        return jobForPipeVersionArray
+    }
+
 }
