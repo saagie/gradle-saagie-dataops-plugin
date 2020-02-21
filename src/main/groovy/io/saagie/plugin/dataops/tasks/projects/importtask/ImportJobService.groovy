@@ -26,10 +26,22 @@ class ImportJobService {
             def newJobConfigWithOverride = [
                 * : jobConfigOverride.job,
                 * : SaagieUtils.extractProperties(globalConfig.jobOverride),
-                id: jobId
             ]
 
-            globalConfig.job = newJobConfigWithOverride as Job
+            globalConfig.job {
+                name = newJobConfigWithOverride.name
+                technology = newJobConfigWithOverride.technology
+                cronScheduling = newJobConfigWithOverride.cronScheduling
+                isScheduled =  newJobConfigWithOverride.isScheduled
+                category = newJobConfigWithOverride.category
+                description = newJobConfigWithOverride.description
+                alerting {
+                    emails: newJobConfigWithOverride.alerting?.emails
+                    statusList: newJobConfigWithOverride.alerting?.statusList
+                    loginEmails: newJobConfigWithOverride.alerting?.loginEmails
+                }
+            }
+
             globalConfig.jobVersion {
                 commandLine = jobConfigOverride.jobVersion.commandLine
                 releaseNote = jobConfigOverride.jobVersion.releaseNote

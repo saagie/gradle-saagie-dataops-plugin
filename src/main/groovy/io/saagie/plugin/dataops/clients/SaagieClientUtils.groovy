@@ -56,7 +56,7 @@ class SaagieClientUtils {
             pipelines: [:],
         ]
 
-        File pipelinesFolder = new File("${exportedZipFolder.absolutePath}/Pipelines")
+        File pipelinesFolder = new File("${exportedZipFolder.absolutePath}/Pipeline")
         pipelinesFolder.eachFile {  pipelineFolder ->
             String pipelineId = pipelineFolder.name
             String pipelineFolderPath = pipelineFolder.absolutePath
@@ -66,7 +66,7 @@ class SaagieClientUtils {
             ]
 
             def jsonParser = new JsonSlurper()
-            File pipelineConfigFile = new File("${pipelinesFolder}/${EXPORTED_PIPELINE_CONFIG_FILENAME}")
+            File pipelineConfigFile = new File("${pipelineFolderPath}/${EXPORTED_PIPELINE_CONFIG_FILENAME}")
             extractedConfig.pipelines[pipelineId].configOverride = jsonParser.parse(pipelineConfigFile)
         }
 

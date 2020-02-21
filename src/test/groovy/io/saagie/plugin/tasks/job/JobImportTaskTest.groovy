@@ -197,6 +197,87 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
         result.output.contains('{"status":"success","id":"job-id"}')
     }
 
+    def "the task should create a new pipeline and new job based on the exported config if name doesn't exist"() {
+        given:
+        URL resource = classLoader.getResource(exportJobZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+        enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
+        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline id 3"},{"id":"id-5","name":"test pipeline id 5"}]}}')
+        enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                importJob {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
+    }
+
+    def "the task should create a new job and update pipline with new version based on the exported config if name doesn exist"() {
+        given:
+        URL resource = classLoader.getResource(exportJobZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+        enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
+        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline 23"},{"id":"id-5","name":"test pipeline id 5"}]}}')
+        enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                }
+                
+                jobOverride {
+                    isScheduled = true
+                    cronScheduling = false
+                    alerting {
+                        emails= ['amine@bearstudio.fr']
+                        statusList= []
+                    }
+                }
+
+                importJob {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
+    }
+
     def "the task should fail if the import_file does not exists"() {
 
         given:

@@ -76,6 +76,7 @@ class DataOpsGradleTaskSpecification extends Specification {
         mockedResponse.body = this.getBinaryFileAsBuffer(body)
         mockWebServer.enqueue(mockedResponse)
     }
+
     Buffer getBinaryFileAsBuffer(File file) throws IOException {
         byte[] fileData = FileUtils.readFileToByteArray(file)
         Buffer buf = new Buffer()

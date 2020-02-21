@@ -6,8 +6,10 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJob
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.tasks.projects.importtask.ImportJobService
+import io.saagie.plugin.dataops.tasks.projects.importtask.ImportPipelineService
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
@@ -394,6 +396,31 @@ class SaagieClient {
         logger.info('Starting updateProjectJob task')
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
         String returnData = null
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
+        returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+
+        addJobVersionFromConfiguration()
+
+        return returnData
+    }
+
+
+    String updateProjectJobWithGraphQLFromParams(Job job, JobVersion jobVersion) {
+        logger.info('Starting updateProjectJob task')
+        logger.debug('Using config [job={}, jobVersion={}]', job, jobVersion)
+        String returnData = null
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequestFromParams(job)
+        returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+
+        addJobVersionFromConfiguration()
+
+        return returnData
+    }
+
+    String updateProjectJobFromParams(job, jobVersion) {
+        logger.info('Starting updateProjectJob task')
+        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
+        String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
         returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
 
@@ -401,6 +428,7 @@ class SaagieClient {
 
         return returnData
     }
+
     //getProjectUpdateJobFromDataRequest
     String updateProjectJobWithGraphQLFormatted(){
         logger.info('Starting updateProjectJobFromData task')
@@ -446,6 +474,7 @@ class SaagieClient {
         }
         return returnData
     }
+
 
     String addJobVersionFromConfiguration() {
         // 2. add jobVersion id there is a jobVersion config
@@ -1037,20 +1066,30 @@ class SaagieClient {
             if(configuration.job.ids) {
                 exportJobs = getListJobAndJobVersionsFromConfig()
             }
+            def listJobs = null;
+            Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
+            client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
+                handleErrors(responseJobList)
+                String responseBodyForJobList = responseJobList.body().string()
+                def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+                if (parsedResultForJobList.data?.jobs) {
+                    listJobs = parsedResultForJobList.data.jobs
+                }
+                def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
+                folder.exportJobList = exportJobs
+                folder.exportPipelineList = exportPipelines
+                folder.jobList = listJobs
+                folder.generateFolderFromParams()
+                ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
+                zippingFolder.generateZip(tempJobDirectory)
 
+                logger.debug("generatedZipPath after: {}, ", generatedZipPath)
+                return JsonOutput.toJson([
+                    status    : "success",
+                    exportfile: generatedZipPath
+                ])
+            }
 
-            def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
-            folder.exportJobList = exportJobs
-            folder.exportPipelineList = exportPipelines
-            folder.generateFolderFromParams()
-            ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
-            zippingFolder.generateZip(tempJobDirectory)
-
-            logger.debug("generatedZipPath after: {}, ", generatedZipPath)
-            return JsonOutput.toJson([
-                status    : "success",
-                exportfile: generatedZipPath
-            ])
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -1164,6 +1203,7 @@ class SaagieClient {
                 }
             }
             return exportPipeline
+
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -1269,7 +1309,7 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration?.project?.id ||
-            !configuration?.importJob?.import_file
+                !configuration?.importJob?.import_file
         )
 
         // Step 1. scan files and create job if needed, based on the existing rules
@@ -1300,8 +1340,11 @@ class SaagieClient {
         ]
 
         def callbackJobToDebug = { globalConfig, job ->
+
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             try {
+                configuration.job = globalConfig.job
+                configuration.jobVersion = globalConfig.jobVersion
                 // the job do not exists, create it
                 client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                     handleErrors(responseJobList)
@@ -1316,12 +1359,12 @@ class SaagieClient {
                             }
                         }
                         if (nameExist) {
-                            parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                            addJobVersionFromConfiguration()
                         } else {
-                            parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                            createProjectJobWithGraphQL()
                         }
                     } else {
-                        parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                        createProjectJobWithGraphQL()
                     }
                     response.job << [
                         id: job.key,
@@ -1338,34 +1381,41 @@ class SaagieClient {
             }
         }
 
-        def callbackPipelinesToDebug = { globalConfig, job ->
+        def callbackPipelinesToDebug = { globalConfig, pipeline ->
             Request pipelineListRequest = saagieUtils.getProjectPipelinesRequestGetNameAndId()
+            configuration.pipeline = globalConfig.pipeline
+            configuration.pipelineVersion = globalConfig.pipelineVersion
             try {
                 // the job do not exists, create it
                 client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
-                    handleErrors(responsePipelineList)
-                    String responseBodyForPipelineList = responsePipelineList.body().string()
-                    def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
-                    if (parsedResultForPipelineList.data?.pipelines) {
-                        def listPipelines = parsedResultForPipelineList.data.pipelines
-                        boolean nameExist = false
-                        listPipelines.each {
-                            if (it.name == globalConfig.pipeline.name) {
-                                nameExist = true
+                    try{
+                        handleErrors(responsePipelineList)
+                        String responseBodyForPipelineList = responsePipelineList.body().string()
+                        def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
+                        if (parsedResultForPipelineList.data?.pipelines) {
+                            def listPipelines = parsedResultForPipelineList.data.pipelines
+                            boolean nameExist = false
+                            listPipelines.each {
+                                if (it.name == globalConfig.pipeline.name) {
+                                    nameExist = true
+                                }
                             }
-                        }
-                        if (nameExist) {
-                            parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQL())
+                            if (nameExist) {
+                                updatePipelineVersion()
+                            } else {
+                                createProjectPipelineJob()
+                            }
                         } else {
-                            parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                            createProjectPipelineJob()
                         }
-                    } else {
-                        parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                        response.pipeline << [
+                            id: pipeline.key,
+                            name: globalConfig.pipeline.name
+                        ]
+                    } catch (GradleException exception) {
+                        response.status = "fail"
                     }
-                    response.job << [
-                        id: job.key,
-                        name: globalConfig.job.name
-                    ]
+
                 }
             } catch (InvalidUserDataException invalidUserDataException) {
                 throw invalidUserDataException
@@ -1377,16 +1427,21 @@ class SaagieClient {
             }
         }
 
-        ImportJobService.importAndCreateJobs(
-            jobsConfigFromExportedZip.jobs,
-            configuration,
-            callbackJobToDebug
-        )
-        ImportJobService.importAndCreateJobs(
-            jobsConfigFromExportedZip.jobs,
-            configuration,
-            callbackJobToDebug
-        )
+        if(jobsConfigFromExportedZip.jobs) {
+            ImportJobService.importAndCreateJobs(
+                jobsConfigFromExportedZip.jobs,
+                configuration,
+                callbackJobToDebug
+            )
+        }
+
+        if(pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
+            ImportPipelineService.importAndCreatePipelines(
+                pipelinesConfigFromExportedZip.pipelines,
+                configuration,
+                callbackPipelinesToDebug
+            )
+        }
 
         return response
     }

@@ -19,6 +19,7 @@ class FolderGenerator {
     String serverUrl
     String projectId
     String environment
+    def jobList = []
     String name
     Boolean overwrite
 
@@ -117,18 +118,32 @@ class FolderGenerator {
 
         if(exportPipeline.exists()) {
             def createFolderForPipeLine = folder.mkdirs()
-            if(createFolderForPipeLine) {
+            if(createFolderForPipeLine && jobList) {
+                def jobForPipeVersionArray = null
+                if(exportPipeline && exportPipeline.pipelineVersionDTO && exportPipeline.pipelineVersionDTO.jobs) {
+                    jobForPipeVersionArray = jobList.each { job ->
+                        exportPipeline.pipelineVersionDTO?.jobs?.each { jobId ->
+                            if(jobId == job.id){
+                                jobForPipeVersionArray.add({
+                                    id = job.id
+                                    name = job.name
+                                })
+                            }
+                        }
+                    }
+                }
+
                 def builder = new JsonBuilder([
                     pipeline: [
-                        name : exportPipeline.pipelineDTO.name,
-                        description : exportPipeline.pipelineDTO.description,
-                        isScheduled : exportPipeline.pipelineDTO.isScheduled,
-                        cronScheduling : exportPipeline.pipelineDTO.cronScheduling,
-                        alerting : exportPipeline.pipelineDTO.alerting
+                        name : exportPipeline.pipelineDTO?.name,
+                        description : exportPipeline.pipelineDTO?.description,
+                        isScheduled : exportPipeline.pipelineDTO?.isScheduled,
+                        cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
+                        alerting : exportPipeline.pipelineDTO?.alerting
                     ],
                     pipelineVersion: [
-                        releaseNote: exportPipeline.pipelineVersionDTO.releaseNote,
-                        jobs: exportPipeline.pipelineVersionDTO.jobs
+                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote,
+                        jobs: jobForPipeVersionArray
                     ]
                 ]).toPrettyString()
                 File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")

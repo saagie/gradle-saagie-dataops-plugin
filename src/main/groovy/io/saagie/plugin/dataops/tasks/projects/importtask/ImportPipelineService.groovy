@@ -17,10 +17,23 @@ class ImportPipelineService {
                     id: piplelineId
                 ]
 
-                globalConfig.pipeline = newPipelineConfigWithOverride as Pipeline
+                globalConfig.pipeline {
+                     id = newPipelineConfigWithOverride.id
+                     name = newPipelineConfigWithOverride.name
+                     description = newPipelineConfigWithOverride.description
+                     ids = newPipelineConfigWithOverride.ids
+                     include_job = newPipelineConfigWithOverride.include_job
+                     isScheduled = newPipelineConfigWithOverride.isScheduled
+                     cronScheduling = newPipelineConfigWithOverride.cronScheduling
+                     alerting {
+                         emails = newPipelineConfigWithOverride.alerting?.emails
+                         logins = newPipelineConfigWithOverride.alerting?.logins
+                         statusList = newPipelineConfigWithOverride.alerting?.statusList
+                     }
+                }
                 globalConfig.pipelineVersion {
-                    releaseNote = pipelineConfigOverride.pipelineVersion.releaseNote
-                    jobs = pipelineConfigOverride.pipelineVersion.jobs
+                    releaseNote = pipelineConfigOverride.pipelineVersion?.releaseNote
+                    jobs = pipelineConfigOverride.pipelineVersion?.jobs
                 }
                 mapClosure(globalConfig, pipeline)
             }

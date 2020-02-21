@@ -14,7 +14,9 @@ class Alerting implements IMapable {
 
     @Override
     Map toMap() {
-        if ((emails.empty && logins.empty) || statusList.empty) return null
+        if ((emails && logins) || (statusList && statusList.empty)) return null
+
+        if (((emails && emails.empty) && ( logins && logins.empty)) || (statusList && statusList.empty)) return null
 
         if (emails && (!logins || logins.empty)) {
             return [
