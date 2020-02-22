@@ -1380,7 +1380,7 @@ class SaagieClient {
 
             configuration.pipeline = globalConfig.pipeline
             configuration.pipelineVersion = globalConfig.pipelineVersion
-            configuration.job.id =  null
+            configuration.pipeline.id =  null
             listPipelines = getPipelineListByNameAndId()
             if (listPipelines) {
                 boolean nameExist = false
