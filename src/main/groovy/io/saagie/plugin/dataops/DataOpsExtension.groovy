@@ -9,6 +9,7 @@ import io.saagie.plugin.dataops.models.JobOverride
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
+import io.saagie.plugin.dataops.models.PipelineOverride
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
@@ -38,6 +39,8 @@ class DataOpsExtension {
     ImportJob importJob = new ImportJob()
 
     JobOverride jobOverride = new JobOverride()
+
+    PipelineOverride pipelineOverride = new PipelineOverride()
 
     Export export = new Export()
 
@@ -80,6 +83,10 @@ class DataOpsExtension {
 
     Object jobOverride(Closure closure) {
         jobOverride.with(closure)
+    }
+
+    Object pipelineOverride(Closure closure) {
+        pipelineOverride.with(closure)
     }
 
     Object export(Closure closure) {

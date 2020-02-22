@@ -16,16 +16,19 @@ class Pipeline implements IMapable {
 
     @Override
     Map toMap() {
+        def pipelineMap = [
+            id            : id,
+            description   : description,
+            isScheduled   : isScheduled,
+            cronScheduling: cronScheduling
+        ]
         if (name) {
-            return [
-                id            : id,
-                name          : name,
-                description   : description,
-                isScheduled   : isScheduled,
-                cronScheduling: cronScheduling,
-                alerting      : alerting.toMap(),
-            ]
+           pipelineMap.put('name', name)
         }
-        return null
+
+        if(alerting && alerting.emails){
+            pipelineMap << [alerting:alerting.toMap()]
+        }
+        return pipelineMap
     }
 }

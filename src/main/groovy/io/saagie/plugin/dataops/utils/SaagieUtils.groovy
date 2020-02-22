@@ -126,6 +126,27 @@ class SaagieUtils {
         ''')
     }
 
+    Request getProjectPipelinesRequestGetNameAndId() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
+
+        def listProjectJobs = gq('''
+            query pipelines($projectId: UUID!) {
+                pipelines(projectId: $projectId) {
+                    id
+                    name
+                }
+            }
+        ''', gqVariables)
+        return buildRequestFromQuery(listProjectJobs)
+    }
+
     Request getProjectJobsRequestBuild(String query) {
         Project project = configuration.project
         logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
@@ -327,6 +348,10 @@ class SaagieUtils {
 
     Request getProjectUpdateJobFromDataRequest() {
         Job job = configuration.job
+        getProjectUpdateJobFromDataRequestFromParams(job)
+    }
+
+    Request getProjectUpdateJobFromDataRequestFromParams(Job job) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
@@ -338,8 +363,6 @@ class SaagieUtils {
     }
 
     Request getProjectUpdateJobRequestFormat(String gqVariables) {
-
-
         def updateProjectJob = gq('''
             mutation editJobMutation($job: JobEditionInput!) {
                 editJob(job: $job) {
@@ -351,6 +374,7 @@ class SaagieUtils {
 
         return buildRequestFromQuery(updateProjectJob)
     }
+
     @Deprecated
     Request getAddJobVersionRequest() {
         Job job = configuration.job
@@ -608,6 +632,11 @@ class SaagieUtils {
     Request getAddPipelineVersionRequest() {
         Pipeline pipeline = configuration.pipeline
         PipelineVersion pipelineVersion = configuration.pipelineVersion
+        return getAddPipelineVersionRequestFromParams(pipeline, pipelineVersion)
+
+    }
+
+    Request getAddPipelineVersionRequestFromParams(Pipeline pipeline,PipelineVersion pipelineVersion){
         logger.debug('Generating getAddPipelineVersionRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -638,6 +667,7 @@ class SaagieUtils {
 
         return buildRequestFromQuery(addPipelineVersionRequest)
     }
+
 
     Request getProjectRunPipelineRequest() {
         Pipeline pipeline = configuration.pipeline
