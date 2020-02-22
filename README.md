@@ -11,7 +11,7 @@ This plugin is only compatible with gradle 3.0+
 
 ```
 plugins {
-  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.69"
+  id "io.saagie.gradle-saagie-dataops-plugin" version "1.1.70"
 }
 ```
 
