@@ -76,25 +76,28 @@ class FolderGenerator {
                 ]).toPrettyString()
                 File jobFile = new File("${urlJobIdFolder}${sl}job.json")
                 jobFile.write(builder)
-                try {
-                    File localPackage = new File("${urlJobIdFolder}${sl}package")
-                    localPackage.mkdirs()
-                    def urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+                if(exportJob.downloadUrl && exportJob.downloadUrlVersion){
+                    try {
+                        File localPackage = new File("${urlJobIdFolder}${sl}package")
+                        localPackage.mkdirs()
+                        def urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
                             "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
                             projectId +
                             "${sl}job${sl}"+
                             jobId +
                             "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
                             SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
-                    def packageUrl = "${urlJobIdFolder}${sl}package";
-                    saagieUtils.downloadFromHTTPSServer(
-                        urlToDownload,
-                        packageUrl,
-                        client
-                    )
-                } catch (IOException e) {
-                    throw new GradleException(e.message)
+                        def packageUrl = "${urlJobIdFolder}${sl}package";
+                        saagieUtils.downloadFromHTTPSServer(
+                            urlToDownload,
+                            packageUrl,
+                            client
+                        )
+                    } catch (IOException e) {
+                        throw new GradleException(e.message)
+                    }
                 }
+
             } else {
                 throw new GradleException("Cannot create directories for the job")
             }

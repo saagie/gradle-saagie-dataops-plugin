@@ -11,7 +11,7 @@ class ExportJob implements IExists{
 
     @Override
     boolean exists() {
-        return jobDTO.exists() && jobVersionDTO.exists() && downloadUrl
+        return jobDTO.exists() && jobVersionDTO.exists()
     }
 
     void setJobFromApiResult(jobDetailResult) {

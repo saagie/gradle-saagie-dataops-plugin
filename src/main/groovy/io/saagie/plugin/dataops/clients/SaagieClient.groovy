@@ -1143,13 +1143,6 @@ class SaagieClient {
                         logger.error(messageEmptyVersions)
                         throw new GradleException(messageEmptyVersions)
                     }
-
-
-                    if (!exportJob.downloadUrl) {
-                        def messageNoDownloadUrl = "The is no download URl"
-                        logger.error(messageNoDownloadUrl)
-                        throw new GradleException(messageNoDownloadUrl)
-                    }
                 }
             }
             return exportJob
