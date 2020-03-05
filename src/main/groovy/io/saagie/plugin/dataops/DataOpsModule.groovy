@@ -50,8 +50,8 @@ class DataOpsModule {
     final static String GROUP_LIST_TASK = 'groupList'
     final static String PROJECTS_CREATE_TASK = 'projectsCreate'
     final static String PROJECTS_UPDATE = 'projectsUpdate'
-    final static String PROJECTS_EXPORT_JOB = 'projectsExportJob'
-    final static String PROJECTS_IMPORT_JOB = 'projectsImportJob'
+    final static String PROJECTS_EXPORT_JOB = 'projectsExport'
+    final static String PROJECTS_IMPORT_JOB = 'projectsImport'
 
     final static String TASK_GROUP = 'Saagie'
 
