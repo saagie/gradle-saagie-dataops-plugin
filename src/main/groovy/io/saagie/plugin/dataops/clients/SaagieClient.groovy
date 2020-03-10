@@ -237,19 +237,8 @@ class SaagieClient {
                 } else {
                     Map createdJob = parsedResult.data.createJob
                     String jobId = createdJob.id
-                    Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
-                    client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
-                        handleErrors(uploadResponse)
-                        String uploadResponseBody = uploadResponse.body().string()
-                        def uploadFileParsedResult = slurper.parseText(uploadResponseBody)
-                        if (!uploadFileParsedResult) {
-                            def message = "Something went wrong when uploading project file job: $uploadResponseBody"
-                            logger.error(message)
-                            throw new GradleException(message)
-                        } else {
-                            return JsonOutput.toJson(createdJob)
-                        }
-                    }
+                    uploadIfJobHavePackage(jobId)
+                    return JsonOutput.toJson(createdJob)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -259,6 +248,30 @@ class SaagieClient {
         } catch (Exception exception) {
             logger.error('Unknown error in createProjectJob')
             throw exception
+        }
+    }
+
+    void uploadIfJobHavePackage (jobId) {
+        if(configuration?.jobVersion?.packageInfo?.name) {
+            Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
+            client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                handleErrors(uploadResponse)
+                String uploadResponseBody = uploadResponse.body().string()
+                def uploadFileParsedResult = slurper.parseText(uploadResponseBody)
+                if (!uploadFileParsedResult) {
+                    def message = "Something went wrong when uploading project file job: $uploadResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                }
+            }
+        }
+    }
+
+    String createProjectJobWithOrWithFile(){
+        if (configuration.jobVersion?.packageInfo?.name != null) {
+            createProjectJobWithGraphQL()
+        }else{
+            createProjectJob()
         }
     }
 
@@ -1355,10 +1368,10 @@ class SaagieClient {
                     configuration.job.id = foundNameId
                     addJobVersionFromConfiguration()
                 } else {
-                    createProjectJobWithGraphQL()
+                    createProjectJobWithOrWithFile()
                 }
             } else {
-                createProjectJobWithGraphQL()
+                createProjectJobWithOrWithFile()
             }
 
             response.job << [

@@ -277,7 +277,7 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([
             job: job.toMap(),
             jobVersion: jobVersion.toMap()
-        ])
+        ]);
 
         def createProjectJob = gq('''
             mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!) {
