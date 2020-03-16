@@ -1016,12 +1016,12 @@ class SaagieClient {
         logger.debug('Starting Export Job task')
         def sl = File.separator
         checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.export?.export_file_path
+            !configuration?.exportArtifacts?.export_file_path
         )
 
-        def overwrite = configuration.export.overwrite
+        def overwrite = configuration.exportArtifacts.overwrite
         def generatedZipName = 'project-export-' + configuration.project.id
-        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
+        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file_path).concat(sl)
 
         File exportPath = new File(exportConfigPath)
 
@@ -1107,7 +1107,7 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.export?.export_file_path
+            !configuration?.exportArtifacts?.export_file_path
         )
 
         Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
@@ -1168,7 +1168,7 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.export?.export_file_path
+            !configuration?.exportArtifacts?.export_file_path
         )
 
         Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
@@ -1220,7 +1220,7 @@ class SaagieClient {
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.export?.export_file_path
+            !configuration?.exportArtifacts?.export_file_path
         )
         def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
         def arrayPipelines = [];
@@ -1234,7 +1234,7 @@ class SaagieClient {
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.export?.export_file_path
+            !configuration?.exportArtifacts?.export_file_path
         )
         def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
         def arrayJobs = [];
@@ -1311,11 +1311,11 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration?.project?.id ||
-                !configuration?.importJob?.import_file
+                !configuration?.importArtifacts?.import_file
         )
 
         // Step 1. scan files and create job if needed, based on the existing rules
-        String exportedJobFilePath = configuration.importJob.import_file
+        String exportedJobFilePath = configuration.importArtifacts.import_file
 
         File exportedJob = new File(exportedJobFilePath)
         if (!exportedJob.exists() || !exportedJob.canRead()) {
