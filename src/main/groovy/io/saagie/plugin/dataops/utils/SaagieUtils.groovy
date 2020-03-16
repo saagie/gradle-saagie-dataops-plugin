@@ -11,6 +11,7 @@ import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.tasks.projects.importtask.ImportJobService
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -263,20 +264,18 @@ class SaagieUtils {
     Request getProjectCreateJobRequest() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        Map mapedJobAndJobVersion = ImportJobService.mapJobWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
-
-        job.projectId = configuration.project.id
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
-            .excludeFieldsByName('id')
             .excludeFieldsByName('usePreviousArtifact')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
-            jobVersion: jobVersion.toMap()
+            job: mapedJobAndJobVersion?.job,
+            jobVersion: mapedJobAndJobVersion?.jobVersion
         ]);
 
         def createProjectJob = gq('''
@@ -294,9 +293,9 @@ class SaagieUtils {
     Request getProjectCreateJobRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        Map mapedJobAndJobVersion = ImportJobService.mapJobWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
-        job.projectId = configuration.project.id
         File file = new File(jobVersion.packageInfo.name)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
@@ -310,8 +309,8 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
-            jobVersion: jobVersion.toMap()
+            job: mapedJobAndJobVersion?.job,
+            jobVersion: mapedJobAndJobVersion?.jobVersion
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
@@ -343,7 +342,6 @@ class SaagieUtils {
             job: job.toMap(),
         ])
         getProjectUpdateJobRequestFormat(gqVariables)
-
     }
 
     Request getProjectUpdateJobFromDataRequest() {

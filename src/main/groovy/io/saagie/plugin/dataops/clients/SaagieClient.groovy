@@ -1185,32 +1185,35 @@ class SaagieClient {
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
+                if (parsedResult.data == null || parsedResult.data.pipeline == null) {
                     def message = "Something went wrong when getting pipeline detail: $responseBody for pipeline id $pipelineId"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
                     def pipelineDetailResult = parsedResult.data.pipeline
-
-                    exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
-                    if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
-                        pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
-                        pipelineDetailResult.versions.each {
-                            if (it.isCurrent) {
-                                exportPipeline.setPipelineVersionFromApiResult(it)
+                    if (pipelineDetailResult) {
+                        exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
+                        if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
+                            pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                            pipelineDetailResult.versions.each {
+                                if (it.isCurrent) {
+                                    exportPipeline.setPipelineVersionFromApiResult(it)
+                                }
+                                if (it.jobs && pipeline.include_job) {
+                                    def jobIds = configuration.job.ids
+                                    configuration.job.ids = [jobIds, it.jobs.id].flatten()
+                                }
                             }
-                            if (it.jobs && pipeline.include_job) {
-                                def jobIds = configuration.job.ids
-                                configuration.job.ids = [jobIds, it.jobs.id].flatten()
-                            }
+                        } else {
+                            def messageEmptyVersions = "No versions for the pipeline $pipelineId"
+                            logger.error(messageEmptyVersions)
+                            throw new GradleException(messageEmptyVersions)
                         }
-                    } else {
-                        def messageEmptyVersions = "No versions for the pipeline $pipelineId"
-                        logger.error(messageEmptyVersions)
-                        throw new GradleException(messageEmptyVersions)
                     }
+
                 }
             }
+
             return exportPipeline
 
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1279,7 +1282,6 @@ class SaagieClient {
             logger.error('Unknown error in projectsCreate')
             throw exception
         }
-
     }
 
     String updateProject() {
@@ -1299,7 +1301,12 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map createdProjectResult = parsedResult.data.editProject
-                    return JsonOutput.toJson(createdProjectResult)
+                    return JsonOutput.toJson([
+                        id    : createdProjectResult.id,
+                        name: createdProjectResult.name,
+                        description: createdProjectResult.description,
+                        status: 'success'
+                    ])
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1347,18 +1354,18 @@ class SaagieClient {
             pipeline: []
         ]
         def listJobs = null
-        def callbackJobToDebug = { globalConfig, job, id ->
-
-            configuration.job = globalConfig.job
-            configuration.jobVersion = globalConfig.jobVersion
+        def callbackJobToDebug = { newMappedJobData, job, id ->
+            configuration.job = newMappedJobData.job
+            configuration.jobVersion = newMappedJobData.jobVersion
             configuration.job.id =  null
 
             listJobs = getJobListByNameAndId()
+
             if (listJobs) {
                 boolean nameExist = false
-                def foundNameId = null;
+                def foundNameId = null
                 listJobs.each {
-                    if (it.name == globalConfig.job.name) {
+                    if (it.name == newMappedJobData.job.name) {
                         nameExist = true
                         foundNameId = it.id
                     }
@@ -1376,23 +1383,22 @@ class SaagieClient {
 
             response.job << [
                 id  : job.key,
-                name: globalConfig.job.name
+                name: newMappedJobData.job.name
             ]
 
         }
 
         def listPipelines = null;
-        def callbackPipelinesToDebug = { globalConfig, pipeline, id ->
-
-            configuration.pipeline = globalConfig.pipeline
-            configuration.pipelineVersion = globalConfig.pipelineVersion
+        def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id ->
+            configuration.pipeline = newMappedPipeline.pipeline
+            configuration.pipelineVersion = newMappedPipeline.pipelineVersion
             configuration.pipeline.id =  null
             listPipelines = getPipelineListByNameAndId()
             if (listPipelines) {
                 boolean nameExist = false
                 def pipelineFoundId = null;
                 listPipelines.each {
-                    if (it.name == globalConfig.pipeline.name) {
+                    if (it.name == newMappedPipeline.pipeline.name) {
                         pipelineFoundId = it.id
                         nameExist = true
                     }
@@ -1411,7 +1417,7 @@ class SaagieClient {
 
             response.pipeline << [
                 id  : pipeline.key,
-                name: globalConfig.pipeline.name
+                name: newMappedPipeline.pipeline.name
             ]
         }
 
