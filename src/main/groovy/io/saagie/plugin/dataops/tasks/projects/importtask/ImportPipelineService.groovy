@@ -4,7 +4,9 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.AlertingDTO
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineOverride
+import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.PropertyOverride
+import io.saagie.plugin.dataops.models.PipelineMapper
 import io.saagie.plugin.dataops.utils.SaagieUtils
 
 class ImportPipelineService {
@@ -18,6 +20,7 @@ class ImportPipelineService {
                 def newPipelineConfigWithOverride = [
                     *:pipelineConfigOverride.pipeline
                 ]
+
                 if(globalConfig.pipelineOverride) {
                     newPipelineConfigWithOverride << [ *: [
                         isScheduled : globalConfig.pipelineOverride?.isScheduled,
@@ -25,10 +28,12 @@ class ImportPipelineService {
                     ]]
 
                     if(globalConfig.pipelineOverride.alerting && globalConfig.pipelineOverride.alerting.emails){
-                        newJobConfigWithOverride << [*:[alerting : globalConfig.pipelineOverride?.alerting]]
+                        newPipelineConfigWithOverride << [*:[alerting : globalConfig.pipelineOverride?.alerting]]
                     }
                 }
-                globalConfig.pipeline {
+
+                PipelineMapper newMappedPipeLineData = new PipelineMapper()
+                newMappedPipeLineData.pipeline {
                      name = newPipelineConfigWithOverride.name
                      description = newPipelineConfigWithOverride.description
                      isScheduled = newPipelineConfigWithOverride.isScheduled
@@ -36,18 +41,19 @@ class ImportPipelineService {
                 }
 
                 if(newPipelineConfigWithOverride.alerting?.emails) {
-                    globalConfig.pipeline.alerting {
+                    newMappedPipeLineData.pipeline.alerting {
                         emails = newPipelineConfigWithOverride.alerting?.emails
                         statusList = newPipelineConfigWithOverride.alerting?.statusList
                         logins = newPipelineConfigWithOverride.alerting?.logins
                     }
                 }
 
-                globalConfig.pipelineVersion {
+                newMappedPipeLineData.pipelineVersion {
                     releaseNote = pipelineConfigOverride.pipelineVersion?.releaseNote
                     jobs = getJobsNameFromJobList(jobList, pipelineConfigOverride.pipelineVersion?.jobs)
                 }
-                mapClosure(globalConfig, pipeline, pipeline.key)
+
+                mapClosure(newMappedPipeLineData, pipeline, pipeline.key)
             }
     }
 
