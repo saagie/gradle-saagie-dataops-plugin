@@ -496,7 +496,9 @@ class SaagieClient {
             if (configuration.jobVersion.packageInfo?.name) {
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL()
             } else {
-                configuration.jobVersion.usePreviousArtifact = true
+                if(configuration.jobVersion.packageInfo?.downloadUrl){
+                    configuration.jobVersion.usePreviousArtifact = true
+                }
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
             }
             client.newCall(addJobVersionRequest).execute().withCloseable { updateResponse ->

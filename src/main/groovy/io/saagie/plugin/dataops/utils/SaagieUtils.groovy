@@ -449,12 +449,14 @@ class SaagieUtils {
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
 
-        def jsonGenerator = new JsonGenerator.Options()
+        def jsonGeneratorParams = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .excludeFieldsByName('packageInfo')
-            .build()
-
+        if (!configuration.jobVersion.packageInfo?.downloadUrl) {
+            jsonGeneratorParams =  jsonGeneratorParams.excludeFieldsByName('usePreviousArtifact')
+        }
+        def jsonGenerator = jsonGeneratorParams.build()
         def gqVariables = jsonGenerator.toJson([
             jobId     : job.id,
             jobVersion: jobVersion.toMap()
