@@ -36,13 +36,13 @@ class DataOpsExtension {
 
     PipelineVersion pipelineVersion = new PipelineVersion()
 
-    ImportJob importJob = new ImportJob()
+    ImportJob importArtifacts = new ImportJob()
 
     JobOverride jobOverride = new JobOverride()
 
     PipelineOverride pipelineOverride = new PipelineOverride()
 
-    Export export = new Export()
+    Export exportArtifacts = new Export()
 
     // ====== Closures to create a proper DSL
     Object server(Closure closure) {
@@ -77,8 +77,8 @@ class DataOpsExtension {
         pipelineinstance.with(closure)
     }
 
-    Object importJob(Closure closure) {
-        importJob.with(closure)
+    Object importArtifacts(Closure closure) {
+        importArtifacts.with(closure)
     }
 
     Object jobOverride(Closure closure) {
@@ -89,7 +89,7 @@ class DataOpsExtension {
         pipelineOverride.with(closure)
     }
 
-    Object export(Closure closure) {
-        export.with(closure)
+    Object exportArtifacts(Closure closure) {
+        exportArtifacts.with(closure)
     }
 }

@@ -63,7 +63,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     id = 'project-id'
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = '${exportedConfig.absolutePath}'
                 }
                 
@@ -109,7 +109,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     id = 'project-id'
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = '${exportedConfig.absolutePath}'
                 }
             }
@@ -145,7 +145,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     id = 'project-id'
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = '${exportedConfig.absolutePath}'
                 }
             }
@@ -191,7 +191,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     }
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = '${exportedConfig.absolutePath}'
                 }
             }
@@ -228,7 +228,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     id = 'project-id'
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = '${exportedConfig.absolutePath}'
                 }
             }
@@ -258,7 +258,7 @@ class JobImportTaskTest extends DataOpsGradleTaskSpecification {
                     id = 'project-id'
                 }
 
-                importJob {
+                importArtifacts {
                     import_file = 'invalid/path/test.zip'
                 }
             }

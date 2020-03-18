@@ -53,7 +53,7 @@ class SaagieClientTest extends Specification {
                 name = tempFile.absolutePath
             }
         }
-        configuration.export {
+        configuration.exportArtifacts {
             export_file_path = '/home/saagie/export/'
             overwrite = false
         }
