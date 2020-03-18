@@ -56,7 +56,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                     id = 'job-id'
                 }
 
-                export {
+                exportArtifacts {
                     export_file_path = 'invalide/path/directory'
                 }
             }
@@ -99,7 +99,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                     ids = ['job-id']
                 }
 
-                export {
+                exportArtifacts {
                     export_file_path = '${tempJobDirectory.getAbsolutePath()}'
                     overwrite = true
                 }
@@ -144,7 +144,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                     ids = ['pipeline-1', 'pipeline-2']
                 }
 
-                export {
+                exportArtifacts {
                     export_file_path = '${tempJobDirectory.getAbsolutePath()}'
                    
                 }
@@ -197,7 +197,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                     include_job = true
                 }
 
-                export {
+                exportArtifacts {
                     export_file_path = '${tempJobDirectory.getAbsolutePath()}'
                     overwrite = true
                 }
@@ -248,7 +248,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                     ids = ['pipeline-1', 'pipeline-2']
                 }
 
-                export {
+                exportArtifacts {
                     export_file_path = '${tempJobDirectory.getAbsolutePath()}'
                     overwrite = true
                 }

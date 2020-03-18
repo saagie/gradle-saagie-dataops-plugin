@@ -77,7 +77,7 @@ class DataOpsExtension {
         pipelineinstance.with(closure)
     }
 
-    Object importJob(Closure closure) {
+    Object importArtifacts(Closure closure) {
         importArtifacts.with(closure)
     }
 
@@ -89,7 +89,7 @@ class DataOpsExtension {
         pipelineOverride.with(closure)
     }
 
-    Object export(Closure closure) {
+    Object exportArtifacts(Closure closure) {
         exportArtifacts.with(closure)
     }
 }
