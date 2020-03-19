@@ -50,7 +50,7 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"id":"project-id","name":"project name","description":"project description","status":"success"}')
+        result.output.contains('{"status":"success"}')
     }
 
     def "the task should work when all params are provided"() {
@@ -94,7 +94,7 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"id":"project-id","name":"project name","description":"project description","status":"success"}')
+        result.output.contains('{"status":"success"}')
     }
 
     def "the task should fail if required params are not provided"() {
@@ -159,6 +159,6 @@ class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown()
-        result.output.contains('{"id":"project-id","name":"project name","description":"project description","status":"success"}')
+        result.output.contains('{"status":"success"}')
     }
 }

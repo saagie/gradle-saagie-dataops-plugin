@@ -1132,7 +1132,7 @@ class SaagieClient {
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
+                if (parsedResult.data == null || parsedResult.data.job == null) {
                     def message = "Something went wrong when getting job detail: $responseBody for job id $jobId"
                     logger.error(message)
                     throw new GradleException(message)
@@ -1304,9 +1304,6 @@ class SaagieClient {
                 } else {
                     Map createdProjectResult = parsedResult.data.editProject
                     return JsonOutput.toJson([
-                        id    : createdProjectResult.id,
-                        name: createdProjectResult.name,
-                        description: createdProjectResult.description,
                         status: 'success'
                     ])
                 }
