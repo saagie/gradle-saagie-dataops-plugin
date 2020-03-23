@@ -534,6 +534,15 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
+    static cleanDirectory(File temp,Logger logger) {
+        try {
+            temp.deleteDir()
+        } catch (Exception exception) {
+            logger.warn('The directory couldn\'t be cleaned')
+            logger.warn(exception.message)
+        }
+    }
+
     Request getCreatePipelineRequest() {
         Project project = configuration.project
         Pipeline pipeline = configuration.pipeline

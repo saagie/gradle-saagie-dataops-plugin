@@ -1337,16 +1337,16 @@ class SaagieClient {
 
         def tempFolder = null
         try {
-            tempFolder = Files.createTempDirectory('job-exports').toFile()
+            tempFolder = Files.createTempDirectory('artifacts-exports').toFile()
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
         } catch (IOException e) {
-            logger.error('An error occurred when unzipping the job export file.', e.message)
+            logger.error('An error occurred when unzipping the artifacts export file.', e.message)
         }
 
         def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
-        def exportedJobPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
-        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
-        def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedJobPathRoot)
+        def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
+        def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
         def response = [
             status  : 'success',
             job     : [],
@@ -1438,9 +1438,10 @@ class SaagieClient {
                 newJobList
             )
         }
-
+        SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
         return response
     }
+
 
     private getJobListByNameAndId() {
         def listJobs = null
