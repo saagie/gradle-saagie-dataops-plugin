@@ -14,6 +14,7 @@ import javax.net.ssl.X509TrustManager
 import java.security.SecureRandom
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 
 @TypeChecked
 class HttpClientBuilder {
@@ -45,8 +46,11 @@ class HttpClientBuilder {
             SSLContext trustAllSslContext  = SSLContext.getInstance("SSL")
             trustAllSslContext.init(null, trustAllCerts, new SecureRandom())
             SSLSocketFactory trustAllSslSocketFactory = trustAllSslContext.getSocketFactory()
-            client = client.newBuilder()
-                .sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0])
+            def clientBuilder = client.newBuilder()
+            clientBuilder.connectTimeout(configuration.server.timeout, TimeUnit.SECONDS);
+            clientBuilder.readTimeout(configuration.server.timeout, TimeUnit.SECONDS);
+            clientBuilder.writeTimeout(configuration.server.timeout, TimeUnit.SECONDS);
+            client  = clientBuilder.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0])
                 .hostnameVerifier(new HostnameVerifier() {
                     @Override
                     boolean verify(String hostname, SSLSession session) {
