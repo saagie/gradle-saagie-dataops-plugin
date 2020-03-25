@@ -36,7 +36,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "the task should fail if the export_file_path does not exists"() {
+    def "the task should fail if the export_file does not exists"() {
         given:
         buildFile << """
              saagie {
@@ -57,7 +57,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file_path = 'invalide/path/directory'
+                    export_file = 'invalide/path/directory'
                 }
             }
         """
@@ -100,7 +100,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}'
                     overwrite = true
                 }
             }
@@ -145,7 +145,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}'
                    
                 }
             }
@@ -198,7 +198,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}'
                     overwrite = true
                 }
             }
@@ -249,7 +249,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file_path = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
                     overwrite = true
                 }
             }
@@ -258,11 +258,11 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName)
 
-        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
 
         then:
         notThrown(Exception)
-        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
         result.output.contains(computedValue)
     }
 }
