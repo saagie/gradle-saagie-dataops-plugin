@@ -1121,6 +1121,9 @@ class SaagieClient {
         if(url){
             tempJobDirectory = new File(url)
             bool = tempJobDirectory.exists()
+            if(!bool){
+                throw new GradleException("Could not find temporary directory, verify again please")
+            }
         }
 
         if(!bool){
