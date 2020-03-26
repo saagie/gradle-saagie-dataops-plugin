@@ -54,7 +54,7 @@ class SaagieClientTest extends Specification {
             }
         }
         configuration.exportArtifacts {
-            export_file_path = '/home/saagie/export/'
+            export_file = '/home/saagie/export/'
             overwrite = false
         }
         configuration.jobinstance {
