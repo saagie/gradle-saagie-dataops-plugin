@@ -57,7 +57,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file = 'invalide/path/directory'
+                    export_file = 'invalide/path/directory.zip'
                 }
             }
         """
@@ -100,7 +100,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
                     overwrite = true
                 }
             }
@@ -109,12 +109,14 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName)
 
-        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
 
         then:
         notThrown(Exception)
-        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
         result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
     }
 
     def "projectsExportJob should export only pipeLines"() {
@@ -145,7 +147,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
                    
                 }
             }
@@ -154,12 +156,14 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName, '-d')
 
-        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
 
         then:
         notThrown(Exception)
-        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
         result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
     }
 
     def "projectsExportJob should export job, job version and pipeLines with include_job true"() {
@@ -198,7 +202,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 exportArtifacts {
-                    export_file = '${tempJobDirectory.getAbsolutePath()}'
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
                     overwrite = true
                 }
             }
@@ -207,12 +211,14 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName)
 
-        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip"}"""
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
 
         then:
         notThrown(Exception)
-        assert new File("${tempJobDirectory.getAbsolutePath()}/project-export-project-id.zip").exists()
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
         result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
     }
 
     def "projectsExportJob should export job, job version and pipeLines with include_job false (default)"() {
@@ -264,5 +270,7 @@ class JobExportTaskTests extends DataOpsGradleTaskSpecification {
         notThrown(Exception)
         assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
         result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
     }
 }

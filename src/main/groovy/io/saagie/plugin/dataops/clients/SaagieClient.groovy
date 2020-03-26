@@ -1035,7 +1035,7 @@ class SaagieClient {
         )
 
         def overwrite = configuration.exportArtifacts.overwrite
-        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file).concat(sl)
+        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file)
         def pathWithoutFile = FolderGenerator.extractUrlWithoutFileName(configuration.exportArtifacts.export_file)
         def fileName = FolderGenerator.extractNameFileFromUrlWithoutExtension(FolderGenerator.extractNameFileFromUrl(configuration.exportArtifacts.export_file))
         File exportPath = new File(pathWithoutFile)
@@ -1048,7 +1048,7 @@ class SaagieClient {
         if (overwrite && zipFolder.exists()) {
             zipFolder.delete()
         } else if (!overwrite && zipFolder.exists()) {
-            return JsonOutput.toJson([status: "success", exportfile: path])
+            return JsonOutput.toJson([status: "success", exportfile: exportConfigPath])
         }
 
         logger.debug("exportConfigPath : {}, ", exportConfigPath)

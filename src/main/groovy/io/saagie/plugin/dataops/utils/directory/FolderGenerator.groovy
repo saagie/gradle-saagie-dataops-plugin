@@ -174,6 +174,9 @@ class FolderGenerator {
     }
 
     static extractNameFileFromUrlWithoutExtension(String text){
+        if(text.lastIndexOf('.') < 0){
+            throw new GradleException("The file you want to export doesn't contain an extension")
+        }
          return text.replace(text.substring(text.lastIndexOf('.'),text.length()), "")
     }
     static extractUrlWithoutFileName(String urlString) {
