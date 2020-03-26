@@ -7,6 +7,8 @@ class ImportJob implements IExists, IMapable {
      */
     String import_file
 
+    String temporary_directory
+
     @Override
     boolean exists() {
         return import_file

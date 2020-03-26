@@ -1031,19 +1031,16 @@ class SaagieClient {
         logger.debug('Starting Export Job task')
         def sl = File.separator
         checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.exportArtifacts?.export_file_path
+            !configuration?.exportArtifacts?.export_file
         )
 
         def overwrite = configuration.exportArtifacts.overwrite
-        def generatedZipName = 'project-export-' + configuration.project.id
-        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file_path).concat(sl)
-
-        File exportPath = new File(exportConfigPath)
-
-        def generatedZipPath = exportConfigPath + generatedZipName + '.zip'
-
-        logger.debug("generatedZipPath before: {}, ", generatedZipPath)
-        File zipFolder = new File(generatedZipPath)
+        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file)
+        def pathWithoutFile = FolderGenerator.extractUrlWithoutFileName(configuration.exportArtifacts.export_file)
+        def fileName = FolderGenerator.extractNameFileFromUrlWithoutExtension(FolderGenerator.extractNameFileFromUrl(configuration.exportArtifacts.export_file))
+        File exportPath = new File(pathWithoutFile)
+        logger.debug("path before: {}, ", exportConfigPath)
+        File zipFolder = new File(exportConfigPath)
         if (!exportPath.exists()) {
             throw new GradleException("configuration export path does not exist")
         }
@@ -1051,24 +1048,24 @@ class SaagieClient {
         if (overwrite && zipFolder.exists()) {
             zipFolder.delete()
         } else if (!overwrite && zipFolder.exists()) {
-            return JsonOutput.toJson([status: "success", exportfile: generatedZipPath])
+            return JsonOutput.toJson([status: "success", exportfile: exportConfigPath])
         }
 
         logger.debug("exportConfigPath : {}, ", exportConfigPath)
 
-        File tempJobDirectory = File.createTempDir("job", ".tmp")
-        if (tempJobDirectory.canWrite()) {
-            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
-        } else {
-            throw new GradleException("Cannot Write inside temporary directory")
-        }
+        boolean bool = false
+        def tempJobDirectory = null
+
+         (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
+
         FolderGenerator folder = [
             tempJobDirectory.getAbsolutePath(),
             saagieUtils,
             client,
             configuration,
-            generatedZipName,
-            overwrite]
+            fileName,
+            overwrite
+        ]
 
         try {
 
@@ -1093,18 +1090,18 @@ class SaagieClient {
                     listJobs = parsedResultForJobList.data.jobs
                 }
 
-                def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedZipName
+                def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + fileName
                 folder.exportJobList = exportJobs
                 folder.exportPipelineList = exportPipelines
                 folder.jobList = listJobs
                 folder.generateFolderFromParams()
-                ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
+                ZippingFolder zippingFolder = [exportConfigPath, inputDirectoryToZip, bool]
                 zippingFolder.generateZip(tempJobDirectory)
 
-                logger.debug("generatedZipPath after: {}, ", generatedZipPath)
+                logger.debug("path after: {}, ", exportConfigPath)
                 return JsonOutput.toJson([
                     status    : "success",
-                    exportfile: generatedZipPath
+                    exportfile: exportConfigPath
                 ])
             }
 
@@ -1118,11 +1115,33 @@ class SaagieClient {
         }
     }
 
+    static getTemporaryFile(String url, boolean bool) {
+        def tempJobDirectory = null
+
+        if(url){
+            tempJobDirectory = new File(url)
+            bool = tempJobDirectory.exists()
+        }
+
+        if(!bool){
+            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
+            System.out.println("Directory created successfully");
+        }
+
+        if (tempJobDirectory.canWrite()) {
+            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
+        } else {
+            throw new GradleException("Cannot Write inside temporary directory")
+        }
+
+        return [ bool, tempJobDirectory]
+    }
+
     ExportJob getJobAndJobVersionDetailToExport(String jobId) {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.exportArtifacts?.export_file_path
+            !configuration?.exportArtifacts?.export_file
         )
 
         Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
@@ -1176,7 +1195,7 @@ class SaagieClient {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.exportArtifacts?.export_file_path
+            !configuration?.exportArtifacts?.export_file
         )
 
         Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
@@ -1231,7 +1250,7 @@ class SaagieClient {
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
-            !configuration?.exportArtifacts?.export_file_path
+            !configuration?.exportArtifacts?.export_file
         )
         def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
         def arrayPipelines = [];
@@ -1245,7 +1264,7 @@ class SaagieClient {
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
-            !configuration?.exportArtifacts?.export_file_path
+            !configuration?.exportArtifacts?.export_file
         )
         def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
         def arrayJobs = [];
@@ -1336,8 +1355,12 @@ class SaagieClient {
         }
 
         def tempFolder = null
+        boolean bool = false
+
+
+        (bool, tempFolder) = getTemporaryFile(configuration.importArtifacts.temporary_directory, bool)
+
         try {
-            tempFolder = Files.createTempDirectory('artifacts-exports').toFile()
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
         } catch (IOException e) {
             logger.error('An error occurred when unzipping the artifacts export file.', e.message)
@@ -1438,7 +1461,13 @@ class SaagieClient {
                 newJobList
             )
         }
-        SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
+
+        if(bool){
+            SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
+        }else{
+            SaagieUtils.cleanDirectory(tempFolder, logger)
+        }
+
         return response
     }
 

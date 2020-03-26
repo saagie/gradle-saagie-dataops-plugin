@@ -22,7 +22,7 @@ class FolderGenerator {
     def jobList = []
     String name
     Boolean overwrite
-
+    def sl = File.separator;
     FolderGenerator(inputDire, saagieUtils, client, configuration, name, overwrite) {
         this.inputDire = inputDire
         this.saagieUtils = saagieUtils
@@ -39,7 +39,6 @@ class FolderGenerator {
 
     void generateFolderForJob(ExportJob exportJob) {
         def jobId = exportJob.jobDTO.id
-        def sl = File.separator;
         def urlJobIdFolder = "${inputDire}${sl}${name}${sl}Job${sl}${jobId}"
         def folder = new File(urlJobIdFolder);
 
@@ -107,7 +106,6 @@ class FolderGenerator {
     void generateFolderForPipeline(ExportPipeline exportPipeline) {
 
         def pipelineId = exportPipeline.pipelineDTO.id
-        def sl = File.separator;
         def urlPipelineIdFolder = "${inputDire}${sl}${name}${sl}Pipeline${sl}${pipelineId}"
         def folder = new File(urlPipelineIdFolder);
 
@@ -169,6 +167,21 @@ class FolderGenerator {
         exportPipelineList.each { exportPipeline ->
             generateFolderForPipeline(exportPipeline)
         }
+    }
+
+    static extractNameFileFromUrl(String url){
+        return url.substring( url.lastIndexOf('/')+1, url.length() )
+    }
+
+    static extractNameFileFromUrlWithoutExtension(String text){
+        if(text.lastIndexOf('.') < 0){
+            throw new GradleException("The file you want to export doesn't contain an extension")
+        }
+         return text.replace(text.substring(text.lastIndexOf('.'),text.length()), "")
+    }
+    static extractUrlWithoutFileName(String urlString) {
+        return urlString.replace(extractNameFileFromUrl(urlString),"");
+
     }
 }
 

@@ -11,10 +11,12 @@ class ZippingFolder {
     static final Logger logger = Logging.getLogger(ZippingFolder.class)
     String inputDir
     String zipFileName
+    Boolean isNotDefaultTemp
 
-    ZippingFolder (String zipFileName, String inputDir) {
+    ZippingFolder (String zipFileName, String inputDir, isNotDefaultTemp) {
         this.inputDir = inputDir
         this.zipFileName = zipFileName
+        this.isNotDefaultTemp = isNotDefaultTemp
     }
 
     void generateZip(File tempFile) throws IOException{
@@ -25,8 +27,12 @@ class ZippingFolder {
             zipFile(fileToZip, fileToZip.getName(), zipOut)
             zipOut.close()
             fos.close()
-            tempFile.deleteDir()
-        }catch (IOException ex) {
+            if(isNotDefaultTemp){
+                deleteInsideDirectory(tempFile)
+            } else {
+                tempFile.deleteDir()
+            }
+        } catch (IOException ex) {
             throw new GradleException(ex.message)
         }
     }
@@ -58,5 +64,13 @@ class ZippingFolder {
             zipOut.write(bytes, 0, length)
         }
         fis.close()
+    }
+
+    static deleteInsideDirectory(File folder) {
+        String[]entries = folder.list();
+        for(String s: entries){
+            File currentFile = new File(folder.getPath(),s);
+            currentFile.deleteDir();
+        }
     }
 }
