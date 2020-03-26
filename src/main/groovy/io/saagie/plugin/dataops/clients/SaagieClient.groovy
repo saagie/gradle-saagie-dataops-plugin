@@ -1461,7 +1461,13 @@ class SaagieClient {
                 newJobList
             )
         }
-        SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
+
+        if(bool){
+            SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
+        }else{
+            SaagieUtils.cleanDirectory(tempFolder, logger)
+        }
+
         return response
     }
 
