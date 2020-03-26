@@ -1054,23 +1054,9 @@ class SaagieClient {
         logger.debug("exportConfigPath : {}, ", exportConfigPath)
 
         boolean bool = false
-        File tempJobDirectory = null
+        def tempJobDirectory = null
 
-        if(configuration.exportArtifacts.temporary_directory){
-            tempJobDirectory = new File(configuration.exportArtifacts.temporary_directory)
-            bool = tempJobDirectory.exists()
-        }
-
-        if(!bool){
-            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
-            System.out.println("Directory created successfully");
-        }
-
-        if (tempJobDirectory.canWrite()) {
-            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
-        } else {
-            throw new GradleException("Cannot Write inside temporary directory")
-        }
+         (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
 
         FolderGenerator folder = [
             tempJobDirectory.getAbsolutePath(),
@@ -1127,6 +1113,28 @@ class SaagieClient {
             logger.error('Unknown error in getJobAndJobVersionDetailToExport')
             throw exception
         }
+    }
+
+    static getTemporaryFile(String url, boolean bool) {
+        def tempJobDirectory = null
+
+        if(url){
+            tempJobDirectory = new File(url)
+            bool = tempJobDirectory.exists()
+        }
+
+        if(!bool){
+            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
+            System.out.println("Directory created successfully");
+        }
+
+        if (tempJobDirectory.canWrite()) {
+            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
+        } else {
+            throw new GradleException("Cannot Write inside temporary directory")
+        }
+
+        return [ bool, tempJobDirectory]
     }
 
     ExportJob getJobAndJobVersionDetailToExport(String jobId) {
@@ -1347,8 +1355,12 @@ class SaagieClient {
         }
 
         def tempFolder = null
+        boolean bool = false
+
+
+        (bool, tempFolder) = getTemporaryFile(configuration.importArtifacts.temporary_directory, bool)
+
         try {
-            tempFolder = Files.createTempDirectory('artifacts-exports').toFile()
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
         } catch (IOException e) {
             logger.error('An error occurred when unzipping the artifacts export file.', e.message)
