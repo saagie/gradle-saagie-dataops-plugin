@@ -40,7 +40,7 @@ class JobStopTaskTests extends DataOpsGradleTaskSpecification {
         BuildResult result = gradle(taskName)
 
         then:
-        result.output.contains('{"id":"stopped-job-id"}')
+        result.output.contains('{"status":"SUCCESS"}}')
     }
 
     def "projectsStopJobInstance should fail if job instance id is missing"() {

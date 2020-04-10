@@ -880,6 +880,29 @@ class SaagieUtils {
                     id
                     name
                     description
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        jobs {
+                          id
+                        }
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+                   
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
                 }
             }
         ''', gqVariables)

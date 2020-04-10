@@ -730,7 +730,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map stoppedJobInstance = parsedResult.data.stopJobInstance
+                    String stoppedJobInstanceStatus = parsedResult.data.stopJobInstance ? 'success' : 'failure'
+                    Map stoppedJobInstance = [status: stoppedJobInstanceStatus]
                     return JsonOutput.toJson(stoppedJobInstance)
                 }
             }
