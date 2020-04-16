@@ -7,14 +7,14 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_ARCHIVE_JOB_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_DELETE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsArchiveJob task tests')
-class JobArchiveTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_ARCHIVE_JOB_TASK
+class JobDeleteTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECTS_DELETE_JOB_TASK
 
-    def "projectsArchiveJob should archive a job and return the archive status"() {
+    def "projectsDeleteJob should delete a job and return the delete status"() {
         given:
         def mockedRunJobResponse = new MockResponse()
         mockedRunJobResponse.responseCode = 200
@@ -45,7 +45,7 @@ class JobArchiveTaskTests extends DataOpsGradleTaskSpecification {
         result.output.contains('{"status":"success"}')
     }
 
-    def "projectsArchiveJob should fail if job id is missing"() {
+    def "projectsDeleteJob should fail if job id is missing"() {
         given:
         buildFile << """
             saagie {
@@ -68,7 +68,7 @@ class JobArchiveTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsArchiveJob should fail if job id doesn't exists"() {
+    def "projectsDeleteJob should fail if job id doesn't exists"() {
         given:
         def mockedRunJobResponse = new MockResponse()
         mockedRunJobResponse.responseCode = 200
@@ -96,7 +96,7 @@ class JobArchiveTaskTests extends DataOpsGradleTaskSpecification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains('Something went wrong when archiving job: {"data":{"archiveJob":null},"errors":[{"cause":null,"extensions":{"job":"NOT_EXISTS"},"errorType":"ValidationError","locations":null,"message":"Job not valid","path":null,"localizedMessage":"Job not valid","suppressed":[]}]}')
+        e.message.contains('Something went wrong when deleting job: {"data":{"archiveJob":null},"errors":[{"cause":null,"extensions":{"job":"NOT_EXISTS"},"errorType":"ValidationError","locations":null,"message":"Job not valid","path":null,"localizedMessage":"Job not valid","suppressed":[]}]}')
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 }

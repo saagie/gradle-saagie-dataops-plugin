@@ -1,12 +1,12 @@
 package io.saagie.plugin.dataops
 
 import io.saagie.plugin.dataops.tasks.group.GroupListTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectArchiveJobTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectDeleteJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectDeletePipelineTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectDeleteTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectGetJobInstanceStatus
+import io.saagie.plugin.dataops.tasks.projects.ProjectGetJobInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectGetPipelineInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectListJobsTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectListTask
@@ -15,7 +15,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectRunJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectRunPipelineTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectStopJobInstanceTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectStopPipelineInstanceTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectUpdateJob
+import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradeJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
@@ -33,7 +33,7 @@ class DataOpsModule {
     final static String PROJECTS_LIST_TECHNOLOGIES_TASK = 'projectsListTechnologies'
     final static String PROJECTS_CREATE_JOB_TASK = 'projectsCreateJob'
     final static String PROJECTS_RUN_JOB_TASK = 'projectsRunJob'
-    final static String PROJECTS_UPDATE_JOB_TASK = 'projectsUpdateJob'
+    final static String PROJECTS_UPGRADE_JOB_TASK = 'projectsUpgradeJob'
     final static String PROJECTS_GET_JOB_INSTANCE_STATUS = 'projectsGetJobInstanceStatus'
     final static String PROJECTS_CREATE_PIPELINE_TASK = 'projectsCreatePipeline'
     final static String PROJECT_DELETE_TASK = 'projectsDelete'
@@ -41,7 +41,7 @@ class DataOpsModule {
     final static String PROJECTS_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
     final static String PROJECTS_RUN_PIPELINE_TASK = 'projectsRunPipeline'
     final static String PROJECTS_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
-    final static String PROJECTS_ARCHIVE_JOB_TASK = 'projectsArchiveJob'
+    final static String PROJECTS_DELETE_JOB_TASK = 'projectsDeleteJob'
     final static String PROJECTS_STOP_PIPELINE_INSTANCE_TASK = 'projectsStopPipelineInstance'
     final static String PROJECTS_DELETE_PIPELINE_TASK = 'projectsDeletePipeline'
     final static String PLATFORM_LIST_TASK = 'platformList'
@@ -87,11 +87,11 @@ class DataOpsModule {
             taskName = PROJECTS_CREATE_JOB_TASK
         }
 
-        project.task(PROJECTS_UPDATE_JOB_TASK, type: ProjectUpdateJob) {
+        project.task(PROJECTS_UPGRADE_JOB_TASK, type: ProjectUpgradeJobTask) {
             group = TASK_GROUP
-            description = 'Update a existing job in a project'
+            description = 'Upgrade a existing job in a project'
             configuration = project.saagie
-            taskName = PROJECTS_UPDATE_JOB_TASK
+            taskName = PROJECTS_UPGRADE_JOB_TASK
         }
 
         project.task(PROJECTS_RUN_JOB_TASK, type: ProjectRunJobTask) {
@@ -101,7 +101,7 @@ class DataOpsModule {
             taskName = PROJECTS_RUN_JOB_TASK
         }
 
-        project.task(PROJECTS_GET_JOB_INSTANCE_STATUS, type: ProjectGetJobInstanceStatus) {
+        project.task(PROJECTS_GET_JOB_INSTANCE_STATUS, type: ProjectGetJobInstanceStatusTask) {
             group = TASK_GROUP
             description = 'Get the status of a job instance'
             configuration = project.saagie
@@ -157,11 +157,11 @@ class DataOpsModule {
             taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
         }
 
-        project.task(PROJECTS_ARCHIVE_JOB_TASK, type: ProjectArchiveJobTask) {
+        project.task(PROJECTS_DELETE_JOB_TASK, type: ProjectDeleteJobTask) {
             group = TASK_GROUP
-            description = 'Archive a task'
+            description = 'Delete a job'
             configuration = project.saagie
-            taskName = PROJECTS_ARCHIVE_JOB_TASK
+            taskName = PROJECTS_DELETE_JOB_TASK
         }
 
         project.task(PROJECTS_STOP_PIPELINE_INSTANCE_TASK, type: ProjectStopPipelineInstanceTask) {

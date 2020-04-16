@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectGetJobInstanceStatus extends DefaultTask {
+class ProjectDeleteJobTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -15,9 +15,9 @@ class ProjectGetJobInstanceStatus extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def getJobInstanceStatus() {
+    def deleteProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.getJobInstanceStatus()
+        def result = saagieClient.deleteProjectJob()
         logger.quiet(result)
         return result
     }

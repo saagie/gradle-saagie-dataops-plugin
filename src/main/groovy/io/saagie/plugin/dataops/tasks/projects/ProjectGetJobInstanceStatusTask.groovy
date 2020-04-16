@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectArchiveJobTask extends DefaultTask {
+class ProjectGetJobInstanceStatusTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -15,9 +15,9 @@ class ProjectArchiveJobTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def archiveProjectJob() {
+    def getJobInstanceStatus() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.archiveProjectJob()
+        def result = saagieClient.getJobInstanceStatus()
         logger.quiet(result)
         return result
     }

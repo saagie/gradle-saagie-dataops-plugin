@@ -15,7 +15,7 @@ class ProjectsImportJobTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def createProject() {
+    def importProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
 
         def result = saagieClient.importJob()

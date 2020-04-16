@@ -12,7 +12,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
-class ProjectUpdateJob extends DefaultTask {
+class ProjectUpgradeJobTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName
@@ -20,9 +20,9 @@ class ProjectUpdateJob extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def getProjectJobs() {
+    def upgradeProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.updateProjectJobWithGraphQL()
+        def result = saagieClient.upgradeProjectJobWithGraphQL()
         logger.quiet(result)
         return result
     }

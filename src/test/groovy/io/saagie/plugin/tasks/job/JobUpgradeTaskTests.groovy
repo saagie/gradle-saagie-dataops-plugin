@@ -7,14 +7,14 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPDATE_JOB_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPGRADE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsUpdateJob task tests')
-class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_UPDATE_JOB_TASK
+class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECTS_UPGRADE_JOB_TASK
 
-    def "projectsUpdateJob should update the specified job with only job config"() {
+    def "projectsUpgradeJob should update the specified job with only job config"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
         mockedJobCreationResponse.responseCode = 200
@@ -47,7 +47,7 @@ class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"id":"jobId"}')
+        result.output.contains('{"status":"success","version":"0"}')
     }
 
     def "projectsUpdateJob should fail if job id is missing"() {
@@ -85,7 +85,7 @@ class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
     def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
         given:
         enqueueRequest('{"data":{"editJob":{"id":"jobId"}}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":"2"}}}')
 
         jobFile << 'println("Hello gradle")'
         buildFile << """
@@ -114,7 +114,7 @@ class JobUpdateTaskTests extends DataOpsGradleTaskSpecification {
         BuildResult result = gradle(taskName)
 
         then:
-        result.output.contains('{"id":"jobId"}')
+        result.output.contains('{"status":"success","version":"2"}')
     }
 
     def "projectsUpdateJob should fail if jobVersion is provided without a runtimeVersion"() {

@@ -405,16 +405,15 @@ class SaagieClient {
         }
     }
 
-    String updateProjectJobWithGraphQL() {
+    String upgradeProjectJobWithGraphQL() {
         logger.info('Starting updateProjectJob task')
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
         String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
-        returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
-
-        addJobVersionFromConfiguration()
-
-        return returnData
+        updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+        def updatedJobVersion = addJobVersionFromConfiguration()
+         Map upgradeStatus = [status: 'success', version: updatedJobVersion]
+        return JsonOutput.toJson(upgradeStatus)
     }
 
 
@@ -512,11 +511,11 @@ class SaagieClient {
                 } else {
                     String newJobVersion = updatedJobVersion.data.addJobVersion.number
                     logger.info('Added new version: {}', newJobVersion)
+                    return newJobVersion
                 }
-                return updatedJobVersion
             }
         } else {
-            return '{"data":"no versions data found in the configuration"}'
+            return 0
         }
     }
 
@@ -812,7 +811,7 @@ class SaagieClient {
         }
     }
 
-    String archiveProjectJob() {
+    String deleteProjectJob() {
         logger.info('Starting archiveProjectJob task')
         checkRequiredConfig(!configuration?.job?.id)
 
@@ -825,7 +824,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.errors) {
-                    def message = "Something went wrong when archiving job: $responseBody"
+                    def message = "Something went wrong when deleting job: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -839,7 +838,7 @@ class SaagieClient {
         } catch (GradleException stopActionException) {
             throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknown error in archiveProjectJob')
+            logger.error('Unknown error in deleteProjectJob')
             throw exception
         }
     }
@@ -861,7 +860,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map stoppedPipeline = parsedResult.data.stopPipelineInstance
+                    String stoppedPipelineInstanceStatus = parsedResult.data.stopPipelineInstance ? 'success' : 'failure'
+                    Map stoppedPipeline = [status: stoppedPipelineInstanceStatus]
                     return JsonOutput.toJson(stoppedPipeline)
                 }
             }

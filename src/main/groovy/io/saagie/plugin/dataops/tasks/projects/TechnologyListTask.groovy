@@ -15,7 +15,7 @@ class TechnologyListTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def listTechnologies() {
+    def getProjectTechnologies() {
         saagieClient = new SaagieClient(configuration, taskName)
         def result = saagieClient.listTechnologies()
         logger.quiet(result)

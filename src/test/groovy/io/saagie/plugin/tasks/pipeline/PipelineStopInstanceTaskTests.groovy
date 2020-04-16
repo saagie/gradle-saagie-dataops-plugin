@@ -42,7 +42,7 @@ class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
         then:
         notThrown(Exception)
         !result.output.contains('{"data"')
-        result.output.contains('{"id":"pipeline-instance-id","status":"KILLED"}')
+        result.output.contains('{"status":"success"}')
     }
 
     def "projectsStopPipelineInstance should fail if pipeline instance id is missing"() {
