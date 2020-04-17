@@ -15,7 +15,7 @@ class ProjectListTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def projectList() {
+    def getProjects() {
         saagieClient = new SaagieClient(configuration, taskName)
         def result = saagieClient.getProjects()
         logger.quiet(result)

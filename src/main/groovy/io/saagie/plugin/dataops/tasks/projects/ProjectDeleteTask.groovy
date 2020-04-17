@@ -15,7 +15,7 @@ class ProjectDeleteTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def projectsDelete() {
+    def DeleteProject() {
         saagieClient = new SaagieClient(configuration, taskName)
         def taskResponse = saagieClient.deleteProject()
         logger.quiet(taskResponse)

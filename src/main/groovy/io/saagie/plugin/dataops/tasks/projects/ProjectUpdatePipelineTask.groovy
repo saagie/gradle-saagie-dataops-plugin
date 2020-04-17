@@ -15,7 +15,7 @@ class ProjectUpdatePipelineTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def createProjectPipeline() {
+    def updateProjectPipeline() {
         saagieClient = new SaagieClient(configuration, taskName)
         def result = saagieClient.updateProjectPipeline()
         logger.quiet(result)

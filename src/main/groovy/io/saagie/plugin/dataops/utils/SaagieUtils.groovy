@@ -24,6 +24,7 @@ import okio.Buffer
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import groovy.json.JsonOutput
 
 @TypeChecked
 class SaagieUtils {
@@ -720,7 +721,7 @@ class SaagieUtils {
 
     Request getProjectArchiveJobRequest() {
         Job job = configuration.job
-        logger.debug('Generating getProjectArchiveJobRequest [jobId={}]', job.id)
+        logger.debug('Generating getProjectDeleteJobRequest [jobId={}]', job.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -794,6 +795,15 @@ class SaagieUtils {
         ''', gqVariables)
 
         return buildRequestFromQuery(runProjectJobRequest)
+    }
+
+    private boolean checkIfStringIsJson(String query) {
+        try {
+            JsonOutput.prettyPrint(query)
+            return true
+        } catch (ignored) {
+            return false
+        }
     }
 
     private Request buildMultipartRequestFromQuery(String query) {
@@ -880,6 +890,29 @@ class SaagieUtils {
                     id
                     name
                     description
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        jobs {
+                          id
+                        }
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+                   
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
                 }
             }
         ''', gqVariables)

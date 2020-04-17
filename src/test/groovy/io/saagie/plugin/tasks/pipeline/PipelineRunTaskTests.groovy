@@ -7,18 +7,19 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_RUN_PIPELINE_TASK
 import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_PIPELINE_INSTANCE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsStopPipelineInstance task tests')
-class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_STOP_PIPELINE_INSTANCE_TASK
+@Title('projectsRunPipelineInstance task tests')
+class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECTS_RUN_PIPELINE_TASK
 
-    def "projectsStopPipelineInstance should stop a pipeline instance"() {
+    def "projectsRunPipelineInstance should run a pipeline instance"() {
         given:
         def mockedCreatePipelineResponse = new MockResponse()
         mockedCreatePipelineResponse.responseCode = 200
-        mockedCreatePipelineResponse.body = '''{"data":{"stopPipelineInstance":{"id":"pipeline-instance-id","status":"KILLED"}}}'''
+        mockedCreatePipelineResponse.body = '''{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}'''
         mockWebServer.enqueue(mockedCreatePipelineResponse)
 
         buildFile << """
@@ -30,22 +31,22 @@ class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
                     environment = 2
                 }
 
-                pipelineinstance {
+                pipeline {
                     id = 'pipeline-instance-id'
                 }
             }
         """
 
         when:
-        BuildResult result = gradle 'projectsStopPipelineInstance'
+        BuildResult result = gradle(taskName)
 
         then:
         notThrown(Exception)
         !result.output.contains('{"data"')
-        result.output.contains('{"status":"success"}')
+        result.output.contains('{"runPipeline":{"id":"pipeline-instance-id"}}')
     }
 
-    def "projectsStopPipelineInstance should fail if pipeline instance id is missing"() {
+    def "projectsRunPipelineInstance should fail if pipeline id is missing"() {
         given:
         buildFile << """
             saagie {
@@ -68,7 +69,7 @@ class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsStopPipelineInstance should fail if pipeline instance id do not exists"() {
+    def "projectsStopPipelineInstance should fail if pipeline id do not exists"() {
         given:
         def mockedCreatePipelineResponse = new MockResponse()
         mockedCreatePipelineResponse.responseCode = 200
@@ -84,7 +85,7 @@ class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
                     environment = 2
                 }
 
-                pipelineinstance {
+                pipeline {
                     id = 'pipeline-instance-id'
                 }
 

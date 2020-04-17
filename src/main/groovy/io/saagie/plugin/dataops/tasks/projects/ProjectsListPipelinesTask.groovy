@@ -15,7 +15,7 @@ class ProjectsListPipelinesTask extends DefaultTask {
     @Internal SaagieClient saagieClient
 
     @TaskAction
-    def listAllPipelines() {
+    def getProjectPipelines() {
         saagieClient = new SaagieClient(configuration, taskName)
         def result = saagieClient.listAllPipelines()
         logger.quiet(result)
