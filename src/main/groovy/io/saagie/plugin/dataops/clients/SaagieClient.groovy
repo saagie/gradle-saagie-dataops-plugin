@@ -610,7 +610,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map updatedPipeline = parsedResult.data.editPipeline
+                    String updatedPipelineStatus = parsedResult.data.editPipeline ? 'success' : 'failure'
+                    Map updatedPipeline = [status: updatedPipelineStatus]
                     return JsonOutput.toJson(updatedPipeline)
                 }
             }
@@ -698,7 +699,7 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map runPipeline = parsedResult.data.runPipeline
+                    Map runPipeline = parsedResult.data
                     return JsonOutput.toJson(runPipeline)
                 }
             }

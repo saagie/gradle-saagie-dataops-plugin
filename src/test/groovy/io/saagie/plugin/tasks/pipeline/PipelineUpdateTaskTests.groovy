@@ -57,7 +57,7 @@ class PipelineUpdateTaskTests extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('')
+        result.output.contains('{"status":"success"}')
     }
 
     def "projectsUpdatePipeline should fail if no pipeline id is provided"() {

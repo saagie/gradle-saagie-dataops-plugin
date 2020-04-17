@@ -57,7 +57,29 @@ class DataOpsModule {
 
     static void load(Project project) {
         project.extensions.create('saagie', DataOpsExtension);
-        project.ext.SaagieDataOpsExtension = DataOpsExtension;
+        project.ext.ProjectDeleteJobTask = ProjectDeleteJobTask;
+        project.ext.ProjectCreateJobTask = ProjectCreateJobTask;
+        project.ext.ProjectCreatePipelineTask = ProjectCreatePipelineTask;
+        project.ext.ProjectDeletePipelineTask = ProjectDeletePipelineTask;
+        project.ext.ProjectDeleteTask = ProjectDeleteTask;
+        project.ext.ProjectGetJobInstanceStatusTask = ProjectGetJobInstanceStatusTask;
+        project.ext.ProjectGetPipelineInstanceStatusTask = ProjectGetPipelineInstanceStatusTask;
+        project.ext.ProjectListJobsTask = ProjectListJobsTask;
+        project.ext.ProjectListTask = ProjectListTask;
+        project.ext.ProjectListTechnologiesTask = ProjectListTechnologiesTask;
+        project.ext.ProjectRunJobTask = ProjectRunJobTask;
+        project.ext.ProjectRunPipelineTask = ProjectRunPipelineTask;
+        project.ext.ProjectStopJobInstanceTask = ProjectStopJobInstanceTask;
+        project.ext.ProjectStopPipelineInstanceTask = ProjectStopPipelineInstanceTask;
+        project.ext.ProjectUpgradeJobTask = ProjectUpgradeJobTask;
+        project.ext.ProjectUpdatePipelineTask = ProjectUpdatePipelineTask;
+        project.ext.ProjectsCreateTask = ProjectsCreateTask;
+        project.ext.ProjectsImportJobTask = ProjectsImportJobTask;
+        project.ext.ProjectsExportJobTask = ProjectsExportJobTask;
+        project.ext.ProjectsListPipelinesTask = ProjectsListPipelinesTask;
+        project.ext.ProjectsUpdateTask = ProjectsUpdateTask;
+        project.ext.TechnologyListTask = TechnologyListTask;
+        project.ext.PlatformListTask = PlatformListTask
 
         project.task(PROJECTS_LIST_TASK, type: ProjectListTask) {
             group = TASK_GROUP
