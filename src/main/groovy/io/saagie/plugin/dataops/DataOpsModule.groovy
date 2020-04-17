@@ -57,29 +57,29 @@ class DataOpsModule {
 
     static void load(Project project) {
         project.extensions.create('saagie', DataOpsExtension);
-        project.ext.ProjectDeleteJobTask = ProjectDeleteJobTask;
-        project.ext.ProjectCreateJobTask = ProjectCreateJobTask;
-        project.ext.ProjectCreatePipelineTask = ProjectCreatePipelineTask;
-        project.ext.ProjectDeletePipelineTask = ProjectDeletePipelineTask;
-        project.ext.ProjectDeleteTask = ProjectDeleteTask;
-        project.ext.ProjectGetJobInstanceStatusTask = ProjectGetJobInstanceStatusTask;
-        project.ext.ProjectGetPipelineInstanceStatusTask = ProjectGetPipelineInstanceStatusTask;
-        project.ext.ProjectListJobsTask = ProjectListJobsTask;
-        project.ext.ProjectListTask = ProjectListTask;
-        project.ext.ProjectListTechnologiesTask = ProjectListTechnologiesTask;
-        project.ext.ProjectRunJobTask = ProjectRunJobTask;
-        project.ext.ProjectRunPipelineTask = ProjectRunPipelineTask;
-        project.ext.ProjectStopJobInstanceTask = ProjectStopJobInstanceTask;
-        project.ext.ProjectStopPipelineInstanceTask = ProjectStopPipelineInstanceTask;
-        project.ext.ProjectUpgradeJobTask = ProjectUpgradeJobTask;
-        project.ext.ProjectUpdatePipelineTask = ProjectUpdatePipelineTask;
-        project.ext.ProjectsCreateTask = ProjectsCreateTask;
-        project.ext.ProjectsImportJobTask = ProjectsImportJobTask;
-        project.ext.ProjectsExportJobTask = ProjectsExportJobTask;
-        project.ext.ProjectsListPipelinesTask = ProjectsListPipelinesTask;
-        project.ext.ProjectsUpdateTask = ProjectsUpdateTask;
-        project.ext.TechnologyListTask = TechnologyListTask;
-        project.ext.PlatformListTask = PlatformListTask
+        project.extensions.create('ProjectDeleteJobTask', ProjectDeleteJobTask);
+        project.extensions.create('ProjectCreateJobTask', ProjectCreateJobTask)
+        project.extensions.create('ProjectCreatePipelineTask', ProjectCreatePipelineTask)
+        project.extensions.create('ProjectDeletePipelineTask', ProjectDeletePipelineTask)
+        project.extensions.create('ProjectDeleteTask', ProjectDeleteTask)
+        project.extensions.create('ProjectGetJobInstanceStatusTask', ProjectGetJobInstanceStatusTask)
+        project.extensions.create('ProjectGetPipelineInstanceStatusTask', ProjectGetPipelineInstanceStatusTask)
+        project.extensions.create('ProjectListJobsTask', ProjectListJobsTask)
+        project.extensions.create('ProjectListTask', ProjectListTask)
+        project.extensions.create('ProjectListTechnologiesTask', ProjectListTechnologiesTask)
+        project.extensions.create('ProjectRunJobTask', ProjectRunJobTask)
+        project.extensions.create('ProjectRunPipelineTask', ProjectRunPipelineTask)
+        project.extensions.create('ProjectStopJobInstanceTask', ProjectStopJobInstanceTask)
+        project.extensions.create('ProjectStopPipelineInstanceTask', ProjectStopPipelineInstanceTask)
+        project.extensions.create('ProjectUpgradeJobTask', ProjectUpgradeJobTask)
+        project.extensions.create('ProjectUpdatePipelineTask', ProjectUpdatePipelineTask)
+        project.extensions.create('ProjectsCreateTask', ProjectsCreateTask)
+        project.extensions.create('ProjectsImportJobTask', ProjectsImportJobTask)
+        project.extensions.create('ProjectsExportJobTask', ProjectsExportJobTask)
+        project.extensions.create('ProjectsListPipelinesTask', ProjectsListPipelinesTask)
+        project.extensions.create('ProjectsUpdateTask', ProjectsUpdateTask)
+        project.extensions.create('TechnologyListTask', TechnologyListTask)
+        project.extensions.create('PlatformListTask', PlatformListTask)
 
         project.task(PROJECTS_LIST_TASK, type: ProjectListTask) {
             group = TASK_GROUP
