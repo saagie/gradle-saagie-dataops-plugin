@@ -27,12 +27,6 @@ class ZipUtils {
         zipFile.close()
     }
 
-    /**
-     * Unzip provided zip file
-     * @param zipFileName Path to the zip file to unzip
-     * @param outputDir Directory where to store the unzipped files
-     * @return {File} zipFileOutput The File object representing the output dir
-     */
     static File unzip(String zipFileName, String outputDir) {
         def zip = new ZipFile(new File(zipFileName))
         zip.entries().each{
