@@ -7,6 +7,7 @@ import org.gradle.api.Project
 
 @TypeChecked
 class DataOpsPlugin implements Plugin<Project> {
+
     @Override
     void apply(Project project) {
         DataOpsModule.load(project);
