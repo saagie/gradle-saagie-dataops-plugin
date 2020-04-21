@@ -601,11 +601,16 @@ class SaagieUtils {
         PipelineInstance pipelineinstance = configuration.pipelineinstance
         logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineinstance.id)
 
+
+        return getProjectPipelineInstanceStatusRequestWithparam(pipelineinstance.id)
+    }
+
+    Request getProjectPipelineInstanceStatusRequestWithparam(String id) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ id: pipelineinstance.id ])
+        def gqVariables = jsonGenerator.toJson([ id: id ])
 
         def getPipelineInstanceStatus = gq('''
             query getPipelineInstanceStatus($id: UUID!) {
@@ -1087,6 +1092,32 @@ class SaagieUtils {
         ''', gqVariables)
 
         return buildRequestFromQuery(updateProjectRequest)
+    }
+
+    Request getListVersionForJobRequest(String jobId) {
+        Project project = configuration.project
+        logger.debug('Generating getListVersionForJobRequest for getting list a new job [id={}]', jobId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: jobId
+        ])
+
+        def listVersionForAJobRequest = gq('''
+           query job($jobId: UUID!) {
+                job(id: $jobId) {
+                    versions {
+                        number
+                        isCurrent
+                    }
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listVersionForAJobRequest)
     }
 
     private Request buildRequestFromQuery(String query) {

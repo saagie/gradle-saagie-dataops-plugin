@@ -406,7 +406,7 @@ class SaagieClient {
     }
 
     String upgradeProjectJobWithGraphQL() {
-        logger.info('Starting updateProjectJob task')
+        logger.info('Starting upgradeProjectJob task')
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
         String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
@@ -514,8 +514,27 @@ class SaagieClient {
                     return newJobVersion
                 }
             }
-        } else {
-            return 0
+        } else if (configuration?.job?.id) {
+            Request lisJobVersion  = saagieUtils.getListVersionForJobRequest(configuration?.job?.id)
+            client.newCall(lisJobVersion).execute().withCloseable { listJobVersionsResponse ->
+                handleErrors(listJobVersionsResponse)
+                String listJobVersionResponseBody = listJobVersionsResponse.body().string()
+                def listJobVersionsData = slurper.parseText(listJobVersionResponseBody)
+                if (listJobVersionsData.data == null) {
+                    def message = "Something went wrong when getting list job versions: $listJobVersionResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    logger.info('getting list job versions: {}', listJobVersionsData.data.job.versions)
+                    String currentNumber
+                    listJobVersionsData.data.job.versions.each {
+                        if (it.isCurrent) {
+                            currentNumber =  it.number
+                        }
+                    }
+                    return currentNumber
+                }
+            }
         }
     }
 
@@ -582,7 +601,7 @@ class SaagieClient {
     }
 
     String updateProjectPipeline() {
-        logger.info('Starting updateProjectPipeline task')
+        logger.info('Starting upgradeProjectPipeline task')
 
         // 1. try to update pipeline infos
         checkRequiredConfig(!configuration?.pipeline?.id)
@@ -689,6 +708,7 @@ class SaagieClient {
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
         Request projectRunPipelineRequest = saagieUtils.getProjectRunPipelineRequest()
+        Map runPipelineData;
         try {
             client.newCall(projectRunPipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -699,10 +719,36 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map runPipeline = parsedResult.data
-                    return JsonOutput.toJson(runPipeline)
+                    runPipelineData = parsedResult.data
                 }
             }
+
+            if(runPipelineData?.runPipeline?.id){
+                Request projectGetPipelineInstanceStatus = saagieUtils.getProjectPipelineInstanceStatusRequestWithparam(runPipelineData.runPipeline.id);
+                client.newCall(projectGetPipelineInstanceStatus).execute().withCloseable { response ->
+                    handleErrors(response)
+                    String responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        def message = "Something went wrong when intance pipeline: $responseBody"
+                        logger.error(message)
+                        throw new GradleException(message)
+                    } else {
+                        Map instancePipelineData = parsedResult.data
+                        Map updatedPipeline = [runPipeline: [id: runPipelineData.runPipeline.id, status: instancePipelineData.pipelineInstance.status ]]
+                        return JsonOutput.toJson(updatedPipeline)
+                    }
+                }
+            } else {
+                def message = "Something went wrong when intance pipeline"
+                logger.error(message)
+                throw new GradleException(message)
+            }
+
+
+
+
+
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -813,7 +859,7 @@ class SaagieClient {
     }
 
     String deleteProjectJob() {
-        logger.info('Starting archiveProjectJob task')
+        logger.info('Starting deleteProjectJob task')
         checkRequiredConfig(!configuration?.job?.id)
 
         logger.debug('Using config [jobId={}]', configuration.job.id)

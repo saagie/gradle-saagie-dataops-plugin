@@ -35,7 +35,7 @@ class DataOpsPluginTest extends DataOpsGradleTaskSpecification {
         result.output.contains 'projectsRunJob - Run an existing job'
         result.output.contains 'projectsRunPipeline - Run a pipeline'
         result.output.contains 'projectsStopPipelineInstance - Stop a pipeline instance'
-        result.output.contains 'projectsUpdatePipeline - Update a pipeline'
+        result.output.contains 'projectsUpgradePipeline - Upgrade a pipeline'
         result.output.contains 'projectsUpgradeJob - Upgrade a existing job in a project'
         result.output.contains 'platformList - List available platforms'
         result.output.contains 'projectsListPipelines - List all pipelines of a project'

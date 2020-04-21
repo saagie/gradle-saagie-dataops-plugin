@@ -10,7 +10,7 @@ import spock.lang.Title
 import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_DELETE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsArchiveJob task tests')
+@Title('projectsDeleteJob task tests')
 class JobDeleteTaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_DELETE_JOB_TASK
 

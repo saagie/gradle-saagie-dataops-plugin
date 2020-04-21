@@ -7,12 +7,12 @@ import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPDATE_PIPELINE_TASK
+import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPGRADE_PIPELINE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsUpdatePipeline task tests")
-class PipelineUpdateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_UPDATE_PIPELINE_TASK
+class PipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
+    @Shared String taskName = PROJECTS_UPGRADE_PIPELINE_TASK
 
     def "projectsUpdatePipeline should update pipeline infos"() {
         given:
@@ -60,7 +60,7 @@ class PipelineUpdateTaskTests extends DataOpsGradleTaskSpecification {
         result.output.contains('{"status":"success"}')
     }
 
-    def "projectsUpdatePipeline should fail if no pipeline id is provided"() {
+    def "projectsUpgradePipeline should fail if no pipeline id is provided"() {
         given:
 
         buildFile << '''
@@ -90,6 +90,6 @@ class PipelineUpdateTaskTests extends DataOpsGradleTaskSpecification {
         UnexpectedBuildFailure exception = thrown()
         result == null
         exception.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        exception.getBuildResult().task(':projectsUpdatePipeline').outcome == FAILED
+        exception.getBuildResult().task(':projectsUpgradePipeline').outcome == FAILED
     }
 }
