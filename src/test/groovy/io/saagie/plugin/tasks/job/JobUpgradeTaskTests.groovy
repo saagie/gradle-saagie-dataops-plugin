@@ -10,7 +10,7 @@ import spock.lang.Title
 import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_UPGRADE_JOB_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('projectsUpdateJob task tests')
+@Title('projectsUpgradeJob task tests')
 class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = PROJECTS_UPGRADE_JOB_TASK
 
@@ -50,7 +50,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
         result.output.contains('{"status":"success","version":"0"}')
     }
 
-    def "projectsUpdateJob should fail if job id is missing"() {
+    def "projectsUpgradeJob should fail if job id is missing"() {
         given:
         buildFile << '''
             saagie {
@@ -82,7 +82,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "projectsUpdateJob should add a new job version and upload script if config is provided"() {
+    def "projectsUpgradeJob should add a new job version and upload script if config is provided"() {
         given:
         enqueueRequest('{"data":{"editJob":{"id":"jobId"}}}')
         enqueueRequest('{"data":{"addJobVersion":{"number":"2"}}}')
@@ -117,7 +117,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
         result.output.contains('{"status":"success","version":"2"}')
     }
 
-    def "projectsUpdateJob should fail if jobVersion is provided without a runtimeVersion"() {
+    def "projectsUpgradeJob should fail if jobVersion is provided without a runtimeVersion"() {
         given: "Build file without jobVersion.runtimeVersion"
         buildFile << """
             saagie {

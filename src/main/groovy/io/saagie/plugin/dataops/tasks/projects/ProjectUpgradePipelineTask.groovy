@@ -7,7 +7,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectUpdatePipelineTask extends DefaultTask {
+class ProjectUpgradePipelineTask extends DefaultTask {
     @Input DataOpsExtension configuration
 
     @Input String taskName

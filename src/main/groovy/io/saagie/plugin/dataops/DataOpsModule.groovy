@@ -16,7 +16,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectRunPipelineTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectStopJobInstanceTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectStopPipelineInstanceTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradeJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectUpdatePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsImportJobTask
@@ -38,7 +38,7 @@ class DataOpsModule {
     final static String PROJECTS_CREATE_PIPELINE_TASK = 'projectsCreatePipeline'
     final static String PROJECT_DELETE_TASK = 'projectsDelete'
     final static String PROJECTS_GET_PIPELINE_INSTANCE_STATUS = 'projectsGetPipelineInstanceStatus'
-    final static String PROJECTS_UPDATE_PIPELINE_TASK = 'projectsUpdatePipeline'
+    final static String PROJECTS_UPGRADE_PIPELINE_TASK = 'projectsUpgradePipeline'
     final static String PROJECTS_RUN_PIPELINE_TASK = 'projectsRunPipeline'
     final static String PROJECTS_STOP_JOB_INSTANCE_TASK = 'projectsStopJobInstance'
     final static String PROJECTS_DELETE_JOB_TASK = 'projectsDeleteJob'
@@ -57,6 +57,7 @@ class DataOpsModule {
 
     static void load(Project project) {
         project.extensions.create('saagie', DataOpsExtension);
+        project.ext.SaagieDataOpsExtension = DataOpsExtension;
 
         project.task(PROJECTS_LIST_TASK, type: ProjectListTask) {
             group = TASK_GROUP
@@ -135,11 +136,11 @@ class DataOpsModule {
             taskName = PROJECTS_GET_PIPELINE_INSTANCE_STATUS
         }
 
-        project.task(PROJECTS_UPDATE_PIPELINE_TASK, type: ProjectUpdatePipelineTask) {
+        project.task(PROJECTS_UPGRADE_PIPELINE_TASK, type: ProjectUpgradePipelineTask) {
             group = TASK_GROUP
-            description = 'Update a pipeline'
+            description = 'Upgrade a pipeline'
             configuration = project.saagie
-            taskName = PROJECTS_UPDATE_PIPELINE_TASK
+            taskName = PROJECTS_UPGRADE_PIPELINE_TASK
         }
 
         project.task(PROJECTS_RUN_PIPELINE_TASK, type: ProjectRunPipelineTask) {

@@ -8,7 +8,6 @@ import spock.lang.Shared
 import spock.lang.Title
 
 import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_RUN_PIPELINE_TASK
-import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_PIPELINE_INSTANCE_TASK
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsRunPipelineInstance task tests')
@@ -17,10 +16,10 @@ class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
 
     def "projectsRunPipelineInstance should run a pipeline instance"() {
         given:
-        def mockedCreatePipelineResponse = new MockResponse()
-        mockedCreatePipelineResponse.responseCode = 200
-        mockedCreatePipelineResponse.body = '''{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}'''
-        mockWebServer.enqueue(mockedCreatePipelineResponse)
+        enqueueRequest('{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}')
+        enqueueRequest('{"data":{"pipelineInstance":{"status":"RUNNING"}}}')
+
+
 
         buildFile << """
             saagie {
@@ -43,7 +42,7 @@ class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
         then:
         notThrown(Exception)
         !result.output.contains('{"data"')
-        result.output.contains('{"runPipeline":{"id":"pipeline-instance-id"}}')
+        result.output.contains('{"runPipeline":{"id":"pipeline-instance-id","status":"RUNNING"}}')
     }
 
     def "projectsRunPipelineInstance should fail if pipeline id is missing"() {
