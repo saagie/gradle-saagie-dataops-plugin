@@ -20,6 +20,8 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
         mockedJobCreationResponse.responseCode = 200
         mockedJobCreationResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
         mockWebServer.enqueue(mockedJobCreationResponse)
+        enqueueRequest('{"data":{"job":{"versions":[{"number":3,"isCurrent":true},{"number":2,"isCurrent":false},{"number":1,"isCurrent":false}]}}}')
+
 
         buildFile << '''
             saagie {
@@ -47,7 +49,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{"status":"success","version":"0"}')
+        result.output.contains('{"status":"success","version":"3"}')
     }
 
     def "projectsUpgradeJob should fail if job id is missing"() {
@@ -116,6 +118,36 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
         then:
         result.output.contains('{"status":"success","version":"2"}')
     }
+
+
+    def "projectsUpgradeJob should return current job version and update job if current no job version provided"() {
+        given:
+        enqueueRequest('{"data":{"editJob":{"id":"jobId"}}}')
+        enqueueRequest('{"data":{"job":{"versions":[{"number":3,"isCurrent":true},{"number":2,"isCurrent":false},{"number":1,"isCurrent":false}]}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'user.user'
+                    password = 'password'
+                    environment = 4
+                }
+
+                job {
+                    id = 'jobId'
+                    description = 'updated description'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        result.output.contains('{"status":"success","version":"3"}')
+    }
+
 
     def "projectsUpgradeJob should fail if jobVersion is provided without a runtimeVersion"() {
         given: "Build file without jobVersion.runtimeVersion"

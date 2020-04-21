@@ -514,8 +514,27 @@ class SaagieClient {
                     return newJobVersion
                 }
             }
-        } else {
-            return 0
+        } else if (configuration?.job?.id) {
+            Request lisJobVersion  = saagieUtils.getListVersionForJobRequest(configuration?.job?.id)
+            client.newCall(lisJobVersion).execute().withCloseable { listJobVersionsResponse ->
+                handleErrors(listJobVersionsResponse)
+                String listJobVersionResponseBody = listJobVersionsResponse.body().string()
+                def listJobVersionsData = slurper.parseText(listJobVersionResponseBody)
+                if (listJobVersionsData.data == null) {
+                    def message = "Something went wrong when getting list job versions: $listJobVersionResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    logger.info('getting list job versions: {}', listJobVersionsData.data.job.versions)
+                    String currentNumber
+                    listJobVersionsData.data.job.versions.each {
+                        if (it.isCurrent) {
+                            currentNumber =  it.number
+                        }
+                    }
+                    return currentNumber
+                }
+            }
         }
     }
 

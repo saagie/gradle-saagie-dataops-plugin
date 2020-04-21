@@ -1094,6 +1094,32 @@ class SaagieUtils {
         return buildRequestFromQuery(updateProjectRequest)
     }
 
+    Request getListVersionForJobRequest(String jobId) {
+        Project project = configuration.project
+        logger.debug('Generating getListVersionForJobRequest for getting list a new job [id={}]', jobId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: jobId
+        ])
+
+        def listVersionForAJobRequest = gq('''
+           query job($jobId: UUID!) {
+                job(id: $jobId) {
+                    versions {
+                        number
+                        isCurrent
+                    }
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listVersionForAJobRequest)
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
