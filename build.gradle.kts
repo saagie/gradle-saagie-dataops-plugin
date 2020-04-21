@@ -15,7 +15,7 @@ val previousVersion: String by project
 plugins {
     id("net.researchgate.release") version "2.8.1"
     id("io.codearte.nexus-staging") version "0.21.1"
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
