@@ -601,11 +601,16 @@ class SaagieUtils {
         PipelineInstance pipelineinstance = configuration.pipelineinstance
         logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineinstance.id)
 
+
+        return getProjectPipelineInstanceStatusRequestWithparam(pipelineinstance.id)
+    }
+
+    Request getProjectPipelineInstanceStatusRequestWithparam(String id) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ id: pipelineinstance.id ])
+        def gqVariables = jsonGenerator.toJson([ id: id ])
 
         def getPipelineInstanceStatus = gq('''
             query getPipelineInstanceStatus($id: UUID!) {

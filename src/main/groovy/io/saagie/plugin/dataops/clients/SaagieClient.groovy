@@ -689,8 +689,7 @@ class SaagieClient {
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
         Request projectRunPipelineRequest = saagieUtils.getProjectRunPipelineRequest()
-        Request projectGetPipelineInstanceStatus = saagieUtils.getProjectPipelineInstanceStatusRequest();
-        Map runPipeline;
+        Map runPipelineData;
         try {
             client.newCall(projectRunPipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -701,24 +700,34 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    runPipeline = parsedResult.data
+                    runPipelineData = parsedResult.data
                 }
             }
 
-            client.newCall(projectGetPipelineInstanceStatus).execute().withCloseable { response ->
-                handleErrors(response)
-                String responseBody = response.body().string()
-                def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
-                    def message = "Something went wrong when intance pipeline: $responseBody"
-                    logger.error(message)
-                    throw new GradleException(message)
-                } else {
-                    Map instancePipeline = parsedResult.data
-                    Map updatedPipeline = [runPipeline: [id: runPipeline.runPipeline.id, status: instancePipeline.pipelineInstance.status ]]
-                    return JsonOutput.toJson(updatedPipeline)
+            if(runPipelineData?.runPipeline?.id){
+                Request projectGetPipelineInstanceStatus = saagieUtils.getProjectPipelineInstanceStatusRequestWithparam(runPipelineData.runPipeline.id);
+                client.newCall(projectGetPipelineInstanceStatus).execute().withCloseable { response ->
+                    handleErrors(response)
+                    String responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        def message = "Something went wrong when intance pipeline: $responseBody"
+                        logger.error(message)
+                        throw new GradleException(message)
+                    } else {
+                        Map instancePipelineData = parsedResult.data
+                        Map updatedPipeline = [runPipeline: [id: runPipelineData.runPipeline.id, status: instancePipelineData.pipelineInstance.status ]]
+                        return JsonOutput.toJson(updatedPipeline)
+                    }
                 }
+            } else {
+                def message = "Something went wrong when intance pipeline"
+                logger.error(message)
+                throw new GradleException(message)
             }
+
+
+
 
 
         } catch (InvalidUserDataException invalidUserDataException) {
