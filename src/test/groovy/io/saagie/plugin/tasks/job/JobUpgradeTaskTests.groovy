@@ -30,7 +30,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 job {
-                    id = 'jobId'
+                    id = 'jobId' 
                     name = 'Updated from gradle'
                     description = 'updated description'
                 }
