@@ -16,10 +16,7 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
 
     def "projectsUpgradeJob should update the specified job with only job config"() {
         given:
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"editJob":{"id":"jobId"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
+        enqueueRequest('{"data":{"editJob":{"id":"jobId"}}}');
         enqueueRequest('{"data":{"job":{"versions":[{"number":3,"isCurrent":true},{"number":2,"isCurrent":false},{"number":1,"isCurrent":false}]}}}')
 
 

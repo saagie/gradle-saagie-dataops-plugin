@@ -5,13 +5,13 @@ import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
+import io.saagie.plugin.dataops.models.JobMapper
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
-import io.saagie.plugin.dataops.tasks.projects.importtask.ImportJobService
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -26,7 +26,6 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import groovy.json.JsonOutput
 
-@TypeChecked
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
     static final MediaType JSON = MediaType.parse('application/json; charset=utf-8')
@@ -265,7 +264,7 @@ class SaagieUtils {
     Request getProjectCreateJobRequest() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
-        Map mapedJobAndJobVersion = ImportJobService.mapJobWithoutMail(job, jobVersion, configuration.project.id)
+        Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -294,7 +293,7 @@ class SaagieUtils {
     Request getProjectCreateJobRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
-        Map mapedJobAndJobVersion = ImportJobService.mapJobWithoutMail(job, jobVersion, configuration.project.id)
+        Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
         File file = new File(jobVersion.packageInfo.name)
@@ -335,19 +334,21 @@ class SaagieUtils {
 
     Request getProjectUpdateJobRequest() {
         Job job = configuration.job
-        logger.debug('Generating getProjectUpdateJobRequest [job={}]', job)
+        Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
+        logger.debug('Generating getProjectUpdateJobRequest [job={}]', mappedJob)
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
+            job: mappedJob,
         ])
         getProjectUpdateJobRequestFormat(gqVariables)
     }
 
     Request getProjectUpdateJobFromDataRequest() {
         Job job = configuration.job
-        getProjectUpdateJobFromDataRequestFromParams(job)
+        Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
+        getProjectUpdateJobFromDataRequestFromParams(mappedJob.job as Job)
     }
 
     Request getProjectUpdateJobFromDataRequestFromParams(Job job) {
@@ -1242,4 +1243,6 @@ class SaagieUtils {
         logger.debug("${response.protocol().toString()} ${response.code} ${response.message}")
         response.headers().names().each { logger.debug("${it}: ${response.headers().get(it)}") }
     }
+
+
 }
