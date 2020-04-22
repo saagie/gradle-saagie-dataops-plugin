@@ -23,8 +23,6 @@ The following tasks are available:
 
 Saagie tasks
 ------------
-Saagie tasks
-------------
 groupList - List all groups for the user
 platformList - List available platforms
 projectsCreate - Create a brand new project
