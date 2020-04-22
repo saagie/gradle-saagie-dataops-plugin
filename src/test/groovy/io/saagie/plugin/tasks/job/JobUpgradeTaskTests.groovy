@@ -33,6 +33,10 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                     id = 'jobId'
                     name = 'Updated from gradle'
                     description = 'updated description'
+                    alerting {
+                        emails = ['email@email.com']
+                        statusList = ['REQUESTED']
+                    }
                 }
             }
         '''
