@@ -348,14 +348,14 @@ class SaagieUtils {
     Request getProjectUpdateJobFromDataRequest() {
         Job job = configuration.job
         Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
-        getProjectUpdateJobFromDataRequestFromParams(mappedJob.job as Job)
+        getProjectUpdateJobFromDataRequestFromParams(mappedJob.job)
     }
 
-    Request getProjectUpdateJobFromDataRequestFromParams(Job job) {
+    Request getProjectUpdateJobFromDataRequestFromParams(job) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
-        Map formattedJob = getFormatForUpdateJob(job.toMap())
+        Map formattedJob = getFormatForUpdateJob(job)
         def gqVariables = jsonGenerator.toJson([
             job: formattedJob,
         ])
