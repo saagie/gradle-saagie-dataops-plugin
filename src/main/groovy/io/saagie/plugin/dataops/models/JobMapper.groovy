@@ -97,6 +97,10 @@ class JobMapper {
             newJobConfig.job.put("projectId", projectId)
         }
 
+        if(mappedJob.id) {
+            newJobConfig.job.put('id', mappedJob.id)
+        }
+
         if(mappedJob.alerting?.emails) {
             newJobConfig.job.put('alerting',[
                 emails : mappedJob.alerting?.emails,

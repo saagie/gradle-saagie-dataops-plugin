@@ -1096,7 +1096,7 @@ class SaagieClient {
         if (overwrite && zipFolder.exists()) {
             zipFolder.delete()
         } else if (!overwrite && zipFolder.exists()) {
-            return JsonOutput.toJson([status: "success", exportfile: exportConfigPath])
+            throw new GradleException("Zip file already exists")
         }
 
         logger.debug("exportConfigPath : {}, ", exportConfigPath)
