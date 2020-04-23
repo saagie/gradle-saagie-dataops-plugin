@@ -971,7 +971,7 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration.server?.jwt ||
-                !configuration.server?.realm
+                !configuration.server?.realm || !configuration.server?.environment
         )
 
         Request groupListRequest = saagieUtils.getGroupListRequest()
@@ -985,7 +985,7 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    List groupListResult = parsedResult.groups
+                    List groupListResult = parsedResult.name
                     return JsonOutput.toJson(groupListResult)
                 }
             }

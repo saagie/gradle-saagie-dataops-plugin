@@ -862,7 +862,7 @@ class SaagieUtils {
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
         Request newRequest = new Request.Builder()
-            .url("${configuration.server.url}/security/api/rights")
+            .url("${configuration.server.url}/security/api/groups/authorizations/${configuration.server.environment}/permissions/projects")
             .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=${jwtToken}")
             .addHeader('Saagie-Realm', realm.toLowerCase())
             .get()
