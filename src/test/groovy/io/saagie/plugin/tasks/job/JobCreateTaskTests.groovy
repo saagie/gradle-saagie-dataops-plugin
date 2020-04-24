@@ -16,43 +16,52 @@ class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
     def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:
         buildFile << """
-            saagie {
+        task projectCreateJob1(type: ProjectCreateJobTask) {
+            configuration = saagie {
                 server {
-                    url = 'http://localhost:9000'
-                    login = 'user'
-                    password = 'password'
-                    environment = 2
+                    url = "https://saagie-workspace.prod.saagie.io/"
+                    login =usename
+                    password = password
+                    environment = 4
+                    jwt = true
+                    acceptSelfSigned = true
                 }
-
                 project {
-                    id = 'projectId'
+                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
                 }
-
                 job {
-                    name = "My custom job"
-                    category = "Extraction"
-                    technology = "technologyId"
+                    name = "Creating Job2 for demo from script"
+                    description ="Description"
+                    category ="Extraction"
+                    technology ="13522063-c18b-4ecd-b61f-3bae1e0ad93c"
+                    isScheduled =false
+                    cronScheduling =null
                 }
-
                 jobVersion {
-                    runtimeVersion = "3.6"
-                    commandLine = "python {file} arg1 arg2"
-                    releaseNote = "First job version"
+                    commandLine= "python {file} arg1 arg2"
+                    releaseNote ="Release"
+                    runtimeVersion = "3.5"
                     packageInfo {
-                        name = "bad/path/to-file.sh"
+                        name= "demo.py"
                     }
                 }
             }
+            description= 'create job for saagie'
+            taskName = 'projectCreateJob1'
+        }
+        
+        task task3(dependsOn: 'projectCreateJob1') << {
+            println projectCreateJob1.resultData
+        }
+   
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle("task3")
 
         then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Check that there is a file to upload in 'bad/path/to-file.sh'. Be sure that 'bad/path/to-file.sh' is a correct file path.")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
+        notThrown(Exception)
+        result.output.contains()
     }
 
     def "projectsCreateJob should fail if the job name is already taken"() {
