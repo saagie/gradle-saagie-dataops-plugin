@@ -17,8 +17,6 @@ class ProjectCreateJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
 
-    String resultData
-
     @TaskAction
     def createProjectJob() {
         Server server = configuration.server
@@ -33,6 +31,6 @@ class ProjectCreateJobTask extends DefaultTask {
         }
 
         logger.quiet(result)
-        resultData = result
+        project.setProperty('createProjectJob', result)
     }
 }
