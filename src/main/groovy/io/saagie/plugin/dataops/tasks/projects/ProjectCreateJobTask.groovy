@@ -32,6 +32,6 @@ class ProjectCreateJobTask extends DefaultTask {
 
         logger.quiet(result)
 
-        project.setProperty('createProjectJob', result)
+        project.extensions.add('createProjectJob', result)
     }
 }
