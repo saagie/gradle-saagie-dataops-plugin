@@ -3,6 +3,8 @@ package io.saagie.plugin.dataops.tasks.projects
 import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.clients.SaagieClient
+import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
@@ -35,6 +37,8 @@ class ProjectCreateJobTask extends DefaultTask {
         logger.quiet(response)
 
         result = response
-        configuration = new DataOpsExtension()
+        configuration.job = new Job()
+        configuration.jobVersion = new JobVersion()
+        configuration.server = new Server()
     }
 }
