@@ -57,7 +57,6 @@ class DataOpsModule {
 
     static void load(Project project) {
         project.extensions.create('saagie', DataOpsExtension);
-        project.ext.SaagieDataOpsExtension = DataOpsExtension;
 
         project.task(PROJECTS_LIST_TASK, type: ProjectListTask) {
             group = TASK_GROUP
