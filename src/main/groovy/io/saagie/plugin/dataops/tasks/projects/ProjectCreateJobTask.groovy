@@ -35,10 +35,6 @@ class ProjectCreateJobTask extends DefaultTask {
         logger.quiet(response)
 
         result = response
-
-        configuration.server = null
-        configuration.job = null
-        configuration.jobVersion = null
-        configuration.project = null
+        configuration = new DataOpsExtension()
     }
 }
