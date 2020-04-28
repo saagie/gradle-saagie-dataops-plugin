@@ -37,8 +37,5 @@ class ProjectCreateJobTask extends DefaultTask {
         logger.quiet(response)
 
         result = response
-        configuration.job = new Job()
-        configuration.jobVersion = new JobVersion()
-        configuration.server = new Server()
     }
 }
