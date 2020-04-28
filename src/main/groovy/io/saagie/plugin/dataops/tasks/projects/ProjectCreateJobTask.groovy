@@ -36,6 +36,9 @@ class ProjectCreateJobTask extends DefaultTask {
 
         result = response
 
-        configuration = null
+        configuration.server = null
+        configuration.job = null
+        configuration.jobVersion = null
+        configuration.project = null
     }
 }
