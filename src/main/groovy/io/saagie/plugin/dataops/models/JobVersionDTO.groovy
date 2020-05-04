@@ -35,4 +35,10 @@ class JobVersionDTO implements IExists{
         }
 
     }
+
+    void setJobVersionFromV1ApiResult(version) {
+
+    }
+
+
 }

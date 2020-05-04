@@ -8,8 +8,9 @@ import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
-import io.saagie.plugin.dataops.tasks.projects.importtask.ImportJobService
-import io.saagie.plugin.dataops.tasks.projects.importtask.ImportPipelineService
+import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
+import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
+import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
@@ -47,6 +48,8 @@ class SaagieClient {
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory()
 
     Validator validator = factory.getValidator()
+
+    String sl = File.separator
 
     SaagieClient(DataOpsExtension configuration, String taskName) {
         this.configuration = configuration
@@ -1075,83 +1078,97 @@ class SaagieClient {
         }
     }
 
-    String exportJob() {
-        logger.debug('Starting Export Job task')
-        def sl = File.separator
+    String exportArtifactsV1() {
+        logger.debug('Starting Export artifacts v1 task')
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.exportArtifacts?.export_file
         )
 
-        def overwrite = configuration.exportArtifacts.overwrite
-        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.exportArtifacts.export_file)
-        def pathWithoutFile = FolderGenerator.extractUrlWithoutFileName(configuration.exportArtifacts.export_file)
-        def fileName = FolderGenerator.extractNameFileFromUrlWithoutExtension(FolderGenerator.extractNameFileFromUrl(configuration.exportArtifacts.export_file))
-        File exportPath = new File(pathWithoutFile)
-        logger.debug("path before: {}, ", exportConfigPath)
-        File zipFolder = new File(exportConfigPath)
-        if (!exportPath.exists()) {
-            throw new GradleException("configuration export path does not exist")
+        ExportPipeline[] exportPipelines = []
+        if (configuration.pipeline.ids) {
+            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
         }
 
-        if (overwrite && zipFolder.exists()) {
-            zipFolder.delete()
-        } else if (!overwrite && zipFolder.exists()) {
-            throw new GradleException("Zip file already exists")
+        ExportJob[] exportJobs = []
+        if (configuration.job.ids) {
+            exportJobs = getListJobAndJobVersionsFromConfig()
         }
 
-        logger.debug("exportConfigPath : {}, ", exportConfigPath)
+        return export(exportPipelines, exportJobs)
+    }
 
+    String exportArtifacts() {
+        logger.debug('Starting artifacts Job task')
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        ExportPipeline[] exportPipelines = []
+        if (configuration.pipeline.ids) {
+            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+        }
+
+        ExportJob[] exportJobs = []
+        if (configuration.job.ids) {
+            exportJobs = getListJobAndJobVersionsFromConfig()
+        }
+
+        return export(exportPipelines, exportJobs)
+
+    }
+
+
+    String export(ExportPipeline[] exportPipelines,ExportJob[] exportJobs) {
+
+        ExportContainer exportContainer = [configuration]
         boolean bool = false
         def tempJobDirectory = null
 
-         (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
+        (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
 
         FolderGenerator folder = [
             tempJobDirectory.getAbsolutePath(),
             saagieUtils,
             client,
             configuration,
-            fileName,
-            overwrite
+            exportContainer.fileName,
+            exportContainer.overwrite
         ]
 
         try {
-
-            ExportPipeline[] exportPipelines = []
-            if (configuration.pipeline.ids) {
-                exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
-            }
-
-            ExportJob[] exportJobs = []
-            if (configuration.job.ids) {
-                exportJobs = getListJobAndJobVersionsFromConfig()
-            }
-
             def listJobs = null;
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
-                handleErrors(responseJobList)
-                String responseBodyForJobList = responseJobList.body().string()
-                def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
 
-                if (parsedResultForJobList.data?.jobs) {
-                    listJobs = parsedResultForJobList.data.jobs
+                try {
+                    handleErrors(responseJobList)
+                    String responseBodyForJobList = responseJobList.body().string()
+                    def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+
+                    if (parsedResultForJobList.data?.jobs) {
+                        listJobs = parsedResultForJobList.data.jobs
+                    }
+                } catch (Exception exception) {
+                    logger.error('Unknown error in getProjectJobsRequestGetNameAndId')
+                    throw exception
                 }
 
-                def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + fileName
-                folder.exportJobList = exportJobs
-                folder.exportPipelineList = exportPipelines
-                folder.jobList = listJobs
-                folder.generateFolderFromParams()
-                ZippingFolder zippingFolder = [exportConfigPath, inputDirectoryToZip, bool]
-                zippingFolder.generateZip(tempJobDirectory)
-
-                logger.debug("path after: {}, ", exportConfigPath)
-                return JsonOutput.toJson([
-                    status    : "success",
-                    exportfile: exportConfigPath
-                ])
             }
+
+            def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + fileName
+            folder.exportJobList = exportJobs
+            folder.exportPipelineList = exportPipelines
+            folder.jobList = listJobs
+            folder.generateFolderFromParams()
+            ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, bool]
+            zippingFolder.generateZip(tempJobDirectory)
+
+            logger.debug("path after: {}, ", exportContainer.exportConfigPath)
+
+            return JsonOutput.toJson([
+                status    : "success",
+                exportfile: exportContainer.exportConfigPath
+            ])
 
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -1208,7 +1225,6 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     def jobDetailResult = parsedResult.data.job
-
                     exportJob.setJobFromApiResult(jobDetailResult)
                     if (jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
                         jobDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
@@ -1239,8 +1255,9 @@ class SaagieClient {
             logger.error('Unknown error in getJobAndJobVersionDetailToExport')
             throw exception
         }
-
     }
+
+
 
     ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {
 
@@ -1285,7 +1302,6 @@ class SaagieClient {
 
                 }
             }
-
             return exportPipeline
 
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1305,7 +1321,7 @@ class SaagieClient {
         )
         def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
         def arrayPipelines = [];
-        def resultArray = listPipelineIds.each { pipelineId ->
+        listPipelineIds.each { pipelineId ->
             def sPipeLineInd = pipelineId as String
             arrayPipelines.add(getPipelineAndPipelineVersionDetailToExport(sPipeLineInd))
         }
@@ -1313,6 +1329,19 @@ class SaagieClient {
     }
 
     ExportJob[] getListJobAndJobVersionsFromConfig() {
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.job?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+        def listJobIds = configuration.job.ids.unique { a, b -> a <=> b }
+        def arrayJobs = [];
+        listJobIds.each { jobId ->
+            arrayJobs.add(getJobAndJobVersionDetailToExport(jobId as String))
+        }
+        return arrayJobs as ExportJob[]
+    }
+
+    ExportJob[] getListJobAndJobVersionsFromConfigV1() {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.ids ||
             !configuration?.exportArtifacts?.export_file
@@ -1606,5 +1635,9 @@ class SaagieClient {
         def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
         logger.error(message)
         throw new GradleException(message)
+    }
+
+    def isArray(array) {
+        return array != null && array.getClass().isArray()
     }
 }

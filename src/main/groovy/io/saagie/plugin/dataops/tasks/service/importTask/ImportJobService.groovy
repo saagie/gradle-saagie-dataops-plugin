@@ -1,4 +1,4 @@
-package io.saagie.plugin.dataops.tasks.projects.importtask
+package io.saagie.plugin.dataops.tasks.service.importTask
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.JobMapper

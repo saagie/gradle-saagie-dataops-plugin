@@ -19,6 +19,7 @@ import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradeJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
+import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobV1Task
 import io.saagie.plugin.dataops.tasks.projects.ProjectsImportJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobTask
 import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
@@ -51,6 +52,7 @@ class DataOpsModule {
     final static String PROJECTS_CREATE_TASK = 'projectsCreate'
     final static String PROJECTS_UPDATE = 'projectsUpdate'
     final static String PROJECTS_EXPORT_JOB = 'projectsExport'
+    final static String PROJECTS_EXPORT_JOB_V1 = 'projectsExportV1'
     final static String PROJECTS_IMPORT_JOB = 'projectsImport'
 
     final static String TASK_GROUP = 'Saagie'
@@ -77,6 +79,13 @@ class DataOpsModule {
             description = 'List all technologies of a project'
             configuration = project.saagie
             taskName = PROJECTS_LIST_TECHNOLOGIES_TASK
+        }
+
+        project.task(PROJECTS_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
+            group = TASK_GROUP
+            description = 'Create a brand new job in a project'
+            configuration = project.saagie
+            taskName = PROJECTS_CREATE_JOB_TASK
         }
 
         project.task(PROJECTS_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
@@ -126,6 +135,13 @@ class DataOpsModule {
             description = 'Export a list of jobs or pipelines for a project to a zip extension'
             configuration = project.saagie
             taskName = PROJECTS_EXPORT_JOB
+        }
+
+        project.task(PROJECTS_EXPORT_JOB_V1, type: ProjectsExportJobV1Task) {
+            group = TASK_GROUP
+            description = 'Export a list of jobs or pipelines from REST for a project to a zip extension'
+            configuration = project.saagie
+            taskName = PROJECTS_EXPORT_JOB_V1
         }
 
         project.task(PROJECTS_GET_PIPELINE_INSTANCE_STATUS, type: ProjectGetPipelineInstanceStatusTask) {

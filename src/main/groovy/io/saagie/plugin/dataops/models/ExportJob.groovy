@@ -21,4 +21,12 @@ class ExportJob implements IExists{
     void setJobVersionFromApiResult(version){
         jobVersionDTO.setJobVersionFromApiResult(version)
     }
+
+    void setJobFromV1ApiResult(jobDetailResult) {
+        jobDTO.setJobFromV1ApiResult(jobDetailResult)
+    }
+
+    void setJobVersionFromV1ApiResult(version){
+        jobVersionDTO.setJobVersionFromV1ApiResult(version)
+    }
 }

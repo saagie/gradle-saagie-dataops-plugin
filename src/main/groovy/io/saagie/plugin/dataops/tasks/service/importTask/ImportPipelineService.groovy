@@ -1,10 +1,6 @@
-package io.saagie.plugin.dataops.tasks.projects.importtask
+package io.saagie.plugin.dataops.tasks.service.importTask
 
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.AlertingDTO
-import io.saagie.plugin.dataops.models.Pipeline
-import io.saagie.plugin.dataops.models.PipelineOverride
-import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.PipelineMapper
 import io.saagie.plugin.dataops.utils.SaagieUtils
