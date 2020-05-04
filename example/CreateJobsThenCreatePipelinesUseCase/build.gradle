@@ -118,7 +118,7 @@ task projectPipeline1(dependsOn : ['projectCreateJob1', 'projectCreateJob2'], //
             }
             pipelineVersion {
                 releaseNote = "Release"
-                jobs = [jobid_1, jobid_2] // <==== Here we use the create response property for the project id
+                jobs = [jobid_1, jobid_2] // <==== Here we add the created jobs id to the jobs property of pipelineVersion
             }
         }
     }
