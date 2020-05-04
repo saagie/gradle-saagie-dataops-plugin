@@ -1,0 +1,127 @@
+
+// This script create 2 news jobs then create a new pipelines
+
+// to be able to add and use the task Types you need to add the dependencies to the build
+// Then you need to install those dependencies with the commands "gradle dependencies"
+
+// import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask;
+// import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask;
+import groovy.json.JsonSlurper;
+plugins {
+    id 'groovy'
+    id 'io.saagie.gradle-saagie-dataops-plugin' version '2.0.7'
+}
+repositories {
+    mavenCentral()
+}
+dependencies {
+    implementation group: 'gradle.plugin.io.saagie', name: 'gradle-saagie-dataops-plugin', version: '2.0.7' // <==== dependencies added with version 2.0.7
+}
+def jsonSlurper = new JsonSlurper()
+def jobid_1, jobid_2 // <==== var will be used to store the new jobs ids
+task projectCreateJob1(type: ProjectCreateJobTask) { // <====== Create the first job
+    configuration = saagie {
+        server {
+            url = "https://saagie-workspace.prod.saagie.io/"
+            login = usename
+            password = password
+            environment = 4
+            jwt = true
+            acceptSelfSigned = true
+        }
+        project {
+            id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+        }
+        job {
+            name = "Creating Job1  2.0.7 version 12"
+            description ="Description"
+            category ="Extraction"
+            technology ="13522063-c18b-4ecd-b61f-3bae1e0ad93c"
+            isScheduled =false
+            cronScheduling =null
+        }
+        jobVersion {
+            commandLine= "python {file} arg1 arg2"
+            releaseNote ="Release"
+            runtimeVersion = "3.5"
+            packageInfo {
+                name= "demo.py"
+            }
+        }
+    }
+    taskName = 'projectCreateJob1'
+    group = 'Saagie'
+    description= 'create job for saagie'
+    doLast {
+        def responsesDataCreatedJob = jsonSlurper.parseText(projectCreateJob1.result) // <===== projectCreateJob type store its result inside the result property
+        jobid_1 = responsesDataCreatedJob.id // <===== We store the id for later use
+    }
+}
+task projectCreateJob2(type: ProjectCreateJobTask) { // <====== Create the second job
+    configuration = saagie {
+        server {
+            url = "https://saagie-workspace.prod.saagie.io/"
+            login =usename
+            password = password
+            environment = 4
+            jwt = true
+            acceptSelfSigned = true
+        }
+        project {
+            id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+        }
+        job {
+            name = "Creating Job2 2.0.7 version 13"
+            description ="Description"
+            category ="Extraction"
+            technology ="13522063-c18b-4ecd-b61f-3bae1e0ad93c"
+            isScheduled =false
+            cronScheduling =null
+        }
+        jobVersion {
+            commandLine= "python {file} arg1 arg2"
+            releaseNote ="Release"
+            runtimeVersion = "3.5"
+            packageInfo {
+                name= "demo.py"
+            }
+        }
+    }
+    taskName = 'projectCreateJob2'
+    group = 'Saagie'
+    description= 'create job for saagie'
+    doLast {
+        def responsesDataCreatedJob = jsonSlurper.parseText(projectCreateJob2.result) // <==== same a projectCreateJob 1
+        jobid_2 = responsesDataCreatedJob.id
+    }
+}
+task projectPipeline1(dependsOn : ['projectCreateJob1', 'projectCreateJob2'], // <======== Create pipeline, see that we use the gradle dependOn
+    type: ProjectCreatePipelineTask) {
+    configuration = saagie {
+        server {
+            url = "https://saagie-workspace.prod.saagie.io/"
+            login = usename
+            password = password
+            environment = 4
+            jwt = true
+            acceptSelfSigned = true
+        }
+    }
+    doFirst {
+        projectPipeline1.configuration = saagie {
+            project {
+                id = '2438b9b6-a9ee-4816-bfa8-xxxxxxxxxxx'
+            }
+            pipeline {
+                name = "Pipeline 1"
+                description = "Description"
+            }
+            pipelineVersion {
+                releaseNote = "Release"
+                jobs = [jobid_1, jobid_2] // <==== Here we use the create response property for the project id
+            }
+        }
+    }
+    description= 'create pipeline for saagie'
+    taskName = 'projectPipeline1'
+}
