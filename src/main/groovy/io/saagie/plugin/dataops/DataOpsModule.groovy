@@ -1,30 +1,30 @@
 package io.saagie.plugin.dataops
 
 import io.saagie.plugin.dataops.tasks.group.GroupListTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectDeleteJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectCreateJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectCreatePipelineTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectDeletePipelineTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectDeleteTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectGetJobInstanceStatusTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectGetPipelineInstanceStatusTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectListJobsTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectListTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectListTechnologiesTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectRunJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectRunPipelineTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectStopJobInstanceTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectStopPipelineInstanceTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradeJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectUpgradePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.job.ProjectDeleteJobTask
+import io.saagie.plugin.dataops.tasks.projects.job.ProjectCreateJobTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectCreatePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectDeletePipelineTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectDeleteTask
+import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectGetJobInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectGetPipelineInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.job.ProjectListJobsTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectListTask
+import io.saagie.plugin.dataops.tasks.projects.technology.ProjectListTechnologiesTask
+import io.saagie.plugin.dataops.tasks.projects.job.ProjectRunJobTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectRunPipelineTask
+import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectStopJobInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectStopPipelineInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.job.ProjectUpgradeJobTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectUpgradePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsCreateTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobV1Task
-import io.saagie.plugin.dataops.tasks.projects.ProjectsImportJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsExportJobTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsListPipelinesTask
-import io.saagie.plugin.dataops.tasks.projects.ProjectsUpdateTask
-import io.saagie.plugin.dataops.tasks.projects.TechnologyListTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectsCreateTask
+import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsExportJobV1Task
+import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsImportJobTask
+import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsExportJobTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectsListPipelinesTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectsUpdateTask
+import io.saagie.plugin.dataops.tasks.projects.technology.TechnologyListTask
 import org.gradle.api.Project
 
 class DataOpsModule {
@@ -79,13 +79,6 @@ class DataOpsModule {
             description = 'List all technologies of a project'
             configuration = project.saagie
             taskName = PROJECTS_LIST_TECHNOLOGIES_TASK
-        }
-
-        project.task(PROJECTS_CREATE_JOB_TASK, type: ProjectCreateJobTask) {
-            group = TASK_GROUP
-            description = 'Create a brand new job in a project'
-            configuration = project.saagie
-            taskName = PROJECTS_CREATE_JOB_TASK
         }
 
         project.task(PROJECTS_CREATE_JOB_TASK, type: ProjectCreateJobTask) {

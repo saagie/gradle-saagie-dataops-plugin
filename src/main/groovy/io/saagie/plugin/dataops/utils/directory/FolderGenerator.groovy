@@ -1,7 +1,7 @@
 package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.ExportJobs
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -10,7 +10,7 @@ import org.gradle.api.GradleException
 
 class FolderGenerator {
 
-    ExportJob[] exportJobList = []
+    ExportJobs[] exportJobList = []
     ExportPipeline[] exportPipelineList = []
     def inputDire
     SaagieUtils saagieUtils
@@ -37,7 +37,7 @@ class FolderGenerator {
 
 
 
-    void generateFolderForJob(ExportJob exportJob) {
+    void generateFolderForJob(ExportJobs exportJob) {
         def jobId = exportJob.jobDTO.id
         def urlJobIdFolder = "${inputDire}${sl}${name}${sl}Job${sl}${jobId}"
         def folder = new File(urlJobIdFolder);
@@ -79,20 +79,28 @@ class FolderGenerator {
                     try {
                         File localPackage = new File("${urlJobIdFolder}${sl}package")
                         localPackage.mkdirs()
-                        def urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
-                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
-                            projectId +
-                            "${sl}job${sl}"+
-                            jobId +
-                            "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
-                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                        def urlToDownload = ""
                         def packageUrl = "${urlJobIdFolder}${sl}package";
+
+                        // TODO Check if the downloads request works for the v1 else check if the v2 do
+                        if(exportJob.isV1) {
+                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/platform/${environment}/job/${jobId}/version/${exportJob.downloadUrlVersion}/binary"
+                        } else {
+                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+                                "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
+                                projectId +
+                                "${sl}job${sl}"+
+                                jobId +
+                                "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
+                                SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                        }
                         saagieUtils.downloadFromHTTPSServer(
                             urlToDownload,
                             packageUrl,
-                            client
+                            client,
+                            saagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
                         )
-                    } catch (IOException e) {
+                     } catch (IOException e) {
                         throw new GradleException(e.message)
                     }
                 }

@@ -13,4 +13,8 @@ class PipelineVersionDTO  implements IExists{
         releaseNote = pipelineVersionDetailResult.releaseNote
         jobs = pipelineVersionDetailResult.jobs
     }
+
+    void setPipelineVersionFromV1ApiResult(pipelineVersionDetailResult) {
+        // TODO add pipeline mapping in here
+    }
 }

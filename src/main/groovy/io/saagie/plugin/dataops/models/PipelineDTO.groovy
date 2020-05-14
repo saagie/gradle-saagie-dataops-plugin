@@ -31,4 +31,9 @@ class PipelineDTO  implements IExists{
         alerting = pipelineDetailResult.alerting
 
     }
+
+    void setPipelineFromV1ApiResult(pipelineDetailResult) {
+        // TODO add pipeline version mapping in here
+
+    }
 }

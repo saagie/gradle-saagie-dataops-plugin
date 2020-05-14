@@ -37,7 +37,7 @@ class JobVersionDTO implements IExists{
     }
 
     void setJobVersionFromV1ApiResult(version) {
-
+        // TODO MAPP JOB VERSION FROM V1 TO V2
     }
 
 

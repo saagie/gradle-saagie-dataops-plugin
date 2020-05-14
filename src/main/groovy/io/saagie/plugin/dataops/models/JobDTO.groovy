@@ -26,17 +26,24 @@ class JobDTO implements IExists{
     }
 
     void setJobFromApiResult(jobDetailResult) {
-            name = jobDetailResult.name
+            name = jobDetailResult.name //
             id = jobDetailResult.id
-            description = jobDetailResult.description
-            category = jobDetailResult.category
+            description = jobDetailResult.description //
+            category = jobDetailResult.category //
             technology = jobDetailResult.technology.id
             isScheduled = jobDetailResult.isScheduled
             cronScheduling = jobDetailResult.cronScheduling
             alerting = jobDetailResult.alerting
     }
 
-    void setJobFromV1ApiResult(jobDetailResult) {
+    void setJobFromV1ApiResult(jobDetailResultV1, technology, technologyVersion, cronScheduling) {
+        // TODO Set JOB FROM V1 TO V2
+        name = jobDetailResultV1.name
+        description = jobDetailResultV1.description
+        category = jobDetailResultV1.category
+
+        this.technology = technology
+
 
     }
 
