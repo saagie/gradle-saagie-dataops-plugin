@@ -52,39 +52,75 @@ class FolderGenerator {
         if(exportJob.exists()) {
             def createFolderForJob = folder.mkdirs()
             if(createFolderForJob) {
-                def builder = new JsonBuilder([
-                    job: [
-                        name: exportJob.jobDTO.name,
-                        description: exportJob.jobDTO.description,
-                        category: exportJob.jobDTO.category,
-                        technology: exportJob.jobDTO.technology,
-                        isScheduled: exportJob.jobDTO.isScheduled,
-                        cronScheduling: exportJob.jobDTO.cronScheduling,
-                        alerting: exportJob.jobDTO.alerting
-                    ],
-                    jobVersion: [
-                        commandLine: exportJob.jobVersionDTO.commandLine,
+                Map jobDetailObject = [
+                    name: exportJob.jobDTO.name,
+                    description: exportJob.jobDTO.description,
+                    category: exportJob.jobDTO.category,
+                    technology: exportJob.jobDTO.technology,
+                    isScheduled: exportJob.jobDTO.isScheduled,
+                    cronScheduling: exportJob.jobDTO.cronScheduling,
+                ]
+
+                Map jobVersionDetailJsonObject = [
+                    commandLine: exportJob.jobVersionDTO.commandLine,
+                ]
+
+                if (
+                    exportJob.jobVersionDTO.dockerInfo &&
+                    exportJob.jobVersionDTO.dockerInfo.dockerCredentialsId &&
+                    exportJob.jobVersionDTO.dockerInfo.image
+                ) {
+                    jobVersionDetailJsonObject << [*: [
                         dockerInfo: exportJob.jobVersionDTO.dockerInfo,
-                        runtimeVersion: exportJob.jobVersionDTO.runtimeVersion,
-                        releaseNote: exportJob.jobVersionDTO.releaseNote,
+                    ]]
+                }
+
+                if(exportJob.jobVersionDTO.runtimeVersion) {
+                    jobVersionDetailJsonObject << [*: [
+                        runtimeVersion:  exportJob.jobVersionDTO.runtimeVersion
+                    ]]
+                }
+
+                if (
+                    exportJob.jobDTO.alerting &&
+                    exportJob.jobDTO.alerting.emails &&
+                    exportJob.jobDTO.alerting.emails.size() > 0) {
+                    jobDetailObject << [*: [
+                        alerting: exportJob.jobDTO.alerting
+                    ]]
+                }
+
+                if(
+                    exportJob.jobVersionDTO.packageInfo &&
+                    exportJob.jobVersionDTO.packageInfo.name &&
+                    exportJob.downloadUrl
+                ) {
+                    jobVersionDetailJsonObject << [ * : [
                         packageInfo: [
                             downloadUrl: exportJob.downloadUrl,
                             name: exportJob.jobVersionDTO.packageInfo.name,
                         ]
-                    ]
-                ]).toPrettyString()
+                    ]]
+                }
+
+
+
+                Map jobJsonObject = [
+                    job: jobDetailObject,
+                    jobVersion: jobVersionDetailJsonObject
+                ]
+                def builder = new JsonBuilder(jobJsonObject).toPrettyString()
                 File jobFile = new File("${urlJobIdFolder}${sl}job.json")
                 jobFile.write(builder)
                 if(exportJob.downloadUrl && exportJob.downloadUrlVersion){
                     try {
                         File localPackage = new File("${urlJobIdFolder}${sl}package")
                         localPackage.mkdirs()
-                        def urlToDownload = ""
-                        def packageUrl = "${urlJobIdFolder}${sl}package";
+                        String urlToDownload = ""
+                        String packageUrl = "${urlJobIdFolder}${sl}package";
 
-                        // TODO Check if the downloads request works for the v1 else check if the v2 do
                         if(exportJob.isV1) {
-                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/platform/${environment}/job/${jobId}/version/${exportJob.downloadUrlVersion}/binary"
+                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/manager/api/v1/platform/${environment}/job/${jobId}/version/${exportJob.downloadUrlVersion}/binary"
                         } else {
                             urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
                                 "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
@@ -98,7 +134,7 @@ class FolderGenerator {
                             urlToDownload,
                             packageUrl,
                             client,
-                            saagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
                         )
                      } catch (IOException e) {
                         throw new GradleException(e.message)
@@ -143,19 +179,43 @@ class FolderGenerator {
                         }
                     }
                 }
+                Map pipelineDetailJson = [
+                    name : exportPipeline.pipelineDTO?.name,
+                    description : exportPipeline.pipelineDTO?.description,
+                    isScheduled : exportPipeline.pipelineDTO?.isScheduled,
+                    cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
+                ]
+                Map pipelineVersionDetailJson = [
+                    jobs: jobForPipeVersionArray
+                ]
 
+                if (
+                    exportPipeline.pipelineDTO?.alerting &&
+                    exportPipeline.pipelineDTO?.alerting?.emails &&
+                    exportPipeline.pipelineDTO?.alerting?.emails.size() > 0) {
+                    pipelineDetailJson << [*: [
+                        alerting: exportPipeline.pipelineDTO?.alerting
+                    ]]
+                }
+
+                if(
+                    exportPipeline.pipelineVersionDTO?.releaseNote
+                ) {
+                    pipelineVersionDetailJson << [ * : [
+                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
+                    ]]
+                }
+
+                if(
+                    exportPipeline.pipelineVersionDTO?.releaseNote
+                ) {
+                    pipelineVersionDetailJson << [ * : [
+                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
+                    ]]
+                }
                 def builder = new JsonBuilder([
-                    pipeline: [
-                        name : exportPipeline.pipelineDTO?.name,
-                        description : exportPipeline.pipelineDTO?.description,
-                        isScheduled : exportPipeline.pipelineDTO?.isScheduled,
-                        cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
-                        alerting : exportPipeline.pipelineDTO?.alerting
-                    ],
-                    pipelineVersion: [
-                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote,
-                        jobs: jobForPipeVersionArray
-                    ]
+                    pipeline: pipelineDetailJson,
+                    pipelineVersion: pipelineVersionDetailJson
                 ]).toPrettyString()
                 File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")
                 jobFile.write(builder)

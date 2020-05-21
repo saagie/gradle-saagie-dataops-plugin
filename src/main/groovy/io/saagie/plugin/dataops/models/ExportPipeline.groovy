@@ -21,8 +21,8 @@ class ExportPipeline implements IExists{
         pipelineDTO.setPipelineFromV1ApiResult(pipelineDetailResult)
     }
 
-    void setPipelineVersionFromV1ApiResult(version) {
-        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(version)
+    void setPipelineVersionFromV1ApiResult(jobs, releaseNote) {
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote)
     }
 
     void setPipelineVersionFromApiResult(version){

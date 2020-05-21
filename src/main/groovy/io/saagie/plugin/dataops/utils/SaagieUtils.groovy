@@ -36,6 +36,7 @@ import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.time.Period
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 
 class SaagieUtils {
@@ -1207,7 +1208,7 @@ class SaagieUtils {
         return newRequest
     }
 
-    static void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, name) {
+    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, name) {
         InputStream inputStream = null
         OutputStream outputStream = null
 
@@ -1215,7 +1216,7 @@ class SaagieUtils {
             Request request = this.buildRequestForFile(urlFrom)
             def response = client.newCall(request).execute()
             inputStream = response.body().byteStream();
-            outputStream = new FileOutputStream(new File(to + "/" + getFileNameFromUrl(urlFrom)))
+            outputStream = new FileOutputStream(new File(to + "/" + name))
             byte[] buffer = new byte[2048]
             int length;
             int downloaded = 0;
@@ -1325,6 +1326,9 @@ class SaagieUtils {
     }
 
     static String convertScheduleV1ToCron(String cronString){
+        if(!cronString) {
+            return null
+        }
         int startPeriod = cronString.indexOf('/', cronString.indexOf("/") + 1);
         if(!startPeriod) {
             throwAndLogError("Can't parse cronString, couldn t find '/'")
@@ -1336,41 +1340,42 @@ class SaagieUtils {
         PeriodDuration period = PeriodDuration.parse(cronPeriod)
         def minutes ,hours, dayOfMonths, months = null
         def time = UnitTime.SECOND.value
-        if(period.getPeriod().years) {
-            time = UnitTime.YEAR.value
-        }
 
         if(period.getPeriod().months) {
             time = UnitTime.MONTH.value
+            months = "*/" + period.getPeriod().months
         } else if(time > UnitTime.MONTH.value) {
-            months = cronDate.month
+            months = cronDate.month.toString()
         }
 
         if(period.getPeriod().days) {
             time = UnitTime.DAYOFMONTH.value
+            dayOfMonths = "*/" + period.getPeriod().days
         } else if(time > UnitTime.DAYOFMONTH.value) {
-            dayOfMonths = cronDate.day
+            dayOfMonths = cronDate.day.toString()
         }
         def hoursTest = period.getDuration().toHours()
         if(period.getDuration().toHours()) {
             time = UnitTime.HOUR.value
+            hours = "*/" + hoursTest
         } else if(time > UnitTime.HOUR.value) {
-            hours = cronDate.hours
+            hours = cronDate.hours.toString()
         }
 
         def minutesTest = period.getDuration().toHours()
         if(period.getDuration().toMinutes() && !period.getDuration().toHours()) {
             time = UnitTime.MINUTE.value
+            minutes = "* / " + minutesTest
         } else if(time > UnitTime.MINUTE.value) {
-            minutes = cronDate.minutes
+            minutes = cronDate.minutes.toString()
         }
 
         return generateCronExpression(minutes ,hours, dayOfMonths, months)
     }
 
-    static String generateCronExpression(final Long minutes, final Long hours,
-                                                 final Long dayOfMonth,
-                                                 final Long month)
+    static String generateCronExpression(final String minutes, final String hours,
+                                                 final String dayOfMonth,
+                                                 final String month)
     {
 
         return String.format('%1$s %2$s %3$s %4$s %5$s',
@@ -1381,7 +1386,7 @@ class SaagieUtils {
             "*");
     }
 
-    private static getValueOrStar(Long value) {
+    private static getValueOrStar(String value) {
          return value? value : '*'
     }
 

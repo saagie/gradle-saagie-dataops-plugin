@@ -1,5 +1,8 @@
 package io.saagie.plugin.dataops.models
 
+import io.saagie.plugin.dataops.tasks.service.CategoryService
+import org.gradle.api.GradleException
+
 class JobDTO implements IExists{
     String name
     String id
@@ -36,15 +39,23 @@ class JobDTO implements IExists{
             alerting = jobDetailResult.alerting
     }
 
-    void setJobFromV1ApiResult(jobDetailResultV1, technology, technologyVersion, cronScheduling) {
-        // TODO Set JOB FROM V1 TO V2
-        name = jobDetailResultV1.name
-        description = jobDetailResultV1.description
-        category = jobDetailResultV1.category
+    void setJobFromV1ApiResult(jobV1DetailResult, technology, cronScheduling) {
 
-        this.technology = technology
+        if(!technology.id){
+            throw GradleException("Technology can t be null when mapped from v1")
+        }
 
+        id = jobV1DetailResult.id
+        name = jobV1DetailResult.name
+        description = jobV1DetailResult.description
+        category = CategoryService.instance.getCategoryByV1CategoryAndTechnology(jobV1DetailResult.category, technology.label)
+        isScheduled = !jobV1DetailResult.manual
 
+        if(isScheduled) {
+            this.cronScheduling = cronScheduling
+        }
+
+        this.technology = technology.id
     }
 
 }

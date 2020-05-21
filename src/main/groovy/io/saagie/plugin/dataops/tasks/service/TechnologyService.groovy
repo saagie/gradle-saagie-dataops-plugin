@@ -12,10 +12,10 @@ import org.gradle.api.logging.Logging
 @Singleton
 class TechnologyService {
     def technologies
-    Map technologiesVersions
+    Map technologiesVersions = [:]
     OkHttpClient client
-    Request technologiesRequest
-    Request technologiesVersionsRequest
+    def technologiesRequest
+    def technologiesVersionsRequest
     JsonSlurper slurper
     static final Logger logger = Logging.getLogger(TechnologyService.class)
 
@@ -33,8 +33,9 @@ class TechnologyService {
 
     def getTechnologies() {
         checkReady()
-        if(!technologiesData) {
-            client.newCall(technologiesRequest).execute().withCloseable { response ->
+        Request technologiesCall = technologiesRequest()
+        if(!technologies) {
+            client.newCall(technologiesCall).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedTechnologiesData = slurper.parseText(responseBody)
@@ -49,17 +50,16 @@ class TechnologyService {
 
     def getTechnologyVersions(String technologyId) {
         checkReady()
-        if(!technologiesDataVersions[technologyId]) {
-            client.newCall(technologiesVersionsRequest(technologyId)).execute().withCloseable { response ->
+        if(!technologiesVersions || !technologiesVersions[technologyId]) {
+            Request technologiesVersionRequestCall = technologiesVersionsRequest(technologyId)
+            client.newCall(technologiesVersionRequestCall).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedTechnologyVersionsData = slurper.parseText(responseBody)
                 if(!parsedTechnologyVersionsData.data || !parsedTechnologyVersionsData.data.technologiesVersions) {
-                    throwAndLogError("Something went wrong when getting technologies versions")
+                    return null
                 }
                 technologiesVersions[technologyId] = parsedTechnologyVersionsData.data.technologiesVersions
-
-
             }
         }
         return technologiesVersions[technologyId]
@@ -92,10 +92,6 @@ class TechnologyService {
         SaagieUtils.handleErrorClosure(logger, response)
     }
 
-    // TODO Add find by name method
-    // TODO Add find latest version of technology
-    // TODO add Capitelize string way
-
     def getV2TechnologyByV1Name(String name) {
         checkReady()
         if(name.equals('java-scala')){
@@ -119,27 +115,48 @@ class TechnologyService {
         }
         checkTechnologyVersionsReady()
         if(!versionV1) {
-            def convertedIntegerList =  technologies[technologyId].collect { version ->
-                return convertToNumber(version.technologyLabel)
+            def convertedIntegerList =  technologiesVersions[technologyId].collect { version ->
+                return convertToNumber(version.versionLabel)
             }
-            def index = convertedIntegerList.findIndexOf {it.value == convertedIntegerList.max()}
-            if(!index) {
-                throwAndLogError("Couldn t find index for the lastest technology version")
+            def index = convertedIntegerList.findIndexOf {
+                it == convertedIntegerList.max()
             }
-            return technologies[technologyId][index].technologyLabel
+            if(!index && index != 0) {
+               return null
+            }
+            return technologiesVersions[technologyId][index]
         }
         def upperCaseVersion2 = versionV1.toUpperCase()
-        def versionV2 = technologies[technologyId].find { it.technologyLabel.toUpperCase().equals(upperCaseVersion2) }
+        return getVersionUntilFind(technologyId, upperCaseVersion2)
+        if(!versionV2){
+            return null
+        }
+
+    }
+
+    def getVersionUntilFind(technologyId, upperCaseVersion2){
+        def stringVersion2 = upperCaseVersion2.toString()
+        def versionV2 = technologiesVersions[technologyId].find { it.versionLabel.toUpperCase().equals(stringVersion2) }
         if(!versionV2) {
-            versionV2 =  technologies[technologyId].find { it.technologyLabel.toUpperCase().startsWith(upperCaseVersion2)}
+            versionV2 =  technologiesVersions[technologyId].find {
+                it.versionLabel.toUpperCase().startsWith(stringVersion2)
+            }
         }
-        if(versionV2){
-            return versionV2
+        if(!versionV2){
+            if(stringVersion2.toString().lastIndexOf(".") > 0) {
+                def reducedUpperCaseVersion2 = stringVersion2.substring(0, stringVersion2.lastIndexOf("."))
+                if(reducedUpperCaseVersion2  != stringVersion2) {
+                    return getVersionUntilFind(technologyId, reducedUpperCaseVersion2)
+                } else if (technologiesVersions[technologyId].size()  > 0) {
+                    return technologiesVersions[technologyId][0]
+                }
+            }
+            return null
         }
-        throwAndLogError('Couldn t get the version V2 from version V1')
+        return versionV2
     }
 
     def convertToNumber(String technologyLabel) {
-        return technologyLabel.findAll { Character.isDigit(it) }
+        return technologyLabel.findAll( /\d+/ )*.toInteger().join().toInteger()
     }
 }

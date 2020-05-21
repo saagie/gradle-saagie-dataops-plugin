@@ -17,20 +17,20 @@ class CronConvertionTests extends Specification  {
                 "R/2019-04-05T09:37:46.273Z/P1M"
             ]
             def listExpectedValues = [
-                "",
-                "",
-                "",
-                "",
-                "",
-                "",
+                "59 9 */1 * *",
+                "47 */2 * * *",
+                "17 18 */1 * *",
+                "14 17 */1 * *",
+                "45 15 */1 * *",
+                "37 10 5 */1 *"
             ]
         def results = []
         when:
             results = listDateFromV1.collect {element ->
                 return SaagieUtils.convertScheduleV1ToCron(element)
             }
-            def commons = listDateFromV1.intersect(results)
-            def difference = listDateFromV1.plus(results)
+            def commons = results.intersect(listExpectedValues)
+            def difference = results.plus(listExpectedValues)
             difference.removeAll(commons)
         then:
         assert difference.isEmpty()

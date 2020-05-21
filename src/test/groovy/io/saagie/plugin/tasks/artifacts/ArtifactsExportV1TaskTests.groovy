@@ -26,16 +26,13 @@ class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
                     acceptSelfSigned = true
                 }
 
-                project {
-                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
-                }
-
                 job {
-                   ids = ['9999']
+                   ids = ['4786']
                 }
 
                 pipeline {
                    ids = ['486']
+                   include_job = false
                 }
 
                 exportArtifacts {
@@ -47,11 +44,11 @@ class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle(taskName, "-d")
 
         then:
         notThrown(Exception)
-        assert true == true
+        assert true == false
     }
 
     def "the task should fail if the export_file does not exists"() {

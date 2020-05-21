@@ -10,11 +10,16 @@ class PipelineVersionDTO  implements IExists{
     }
 
     void setPipelineVersionFromApiResult(pipelineVersionDetailResult) {
-        releaseNote = pipelineVersionDetailResult.releaseNote
-        jobs = pipelineVersionDetailResult.jobs
+        initPipelineVersionWithCommunFields(pipelineVersionDetailResult)
     }
 
-    void setPipelineVersionFromV1ApiResult(pipelineVersionDetailResult) {
-        // TODO add pipeline mapping in here
+    void setPipelineVersionFromV1ApiResult(jobs, releaseNote) {
+        this.releaseNote = releaseNote
+        this.jobs = jobs
+    }
+
+    def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {
+        releaseNote = pipelineVersionDetailResult.releaseNote
+        jobs = pipelineVersionDetailResult.jobs.id
     }
 }

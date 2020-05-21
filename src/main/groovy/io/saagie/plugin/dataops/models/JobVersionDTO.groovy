@@ -1,5 +1,7 @@
 package io.saagie.plugin.dataops.models
 
+import org.gradle.api.GradleException
+
 class JobVersionDTO implements IExists{
     String commandLine
     DockerInfos dockerInfo = new DockerInfos()
@@ -36,8 +38,27 @@ class JobVersionDTO implements IExists{
 
     }
 
-    void setJobVersionFromV1ApiResult(version) {
-        // TODO MAPP JOB VERSION FROM V1 TO V2
+    void setJobVersionFromV1ApiResult(versionV1, technologyVersion, current) {
+
+        if(!current) {
+            throw GradleException("Current can't be null from version V1")
+        }
+
+        if(current.template) {
+            commandLine = current.template
+        }
+
+        if(current.file) {
+            packageInfo.name = current.file
+        }
+
+        if(technologyVersion) {
+            runtimeVersion = technologyVersion
+        }
+
+        if(current.releaseNote){
+            releaseNote = current.releaseNote
+        }
     }
 
 
