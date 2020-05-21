@@ -27,16 +27,11 @@ class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
                 }
 
                 job {
-                   ids = ['4786']
-                }
-
-                pipeline {
-                   ids = ['486']
-                   include_job = false
+                   ids = ['6512']
                 }
 
                 exportArtifacts {
-                  export_file = "/home/amine/Desktop/test_gradle/export.zip"
+                  export_file = "/home/amine/Desktop/test_gradle/testdocker1.zip"
                   overwrite=true
                   temporary_directory='/tmp'
                 }

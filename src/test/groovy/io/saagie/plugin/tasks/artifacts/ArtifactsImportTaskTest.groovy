@@ -48,7 +48,10 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         buildFile << """
             saagie {
                 server {
-                    ...
+                    url = "https://saagie-workspace.prod.saagie.io/"
+                    login ="mohamed.amin.ziraoui"
+                    password = "1!@#qweASD"
+                    environment = 4
                     jwt = true
                     acceptSelfSigned = true
                 }
@@ -58,7 +61,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
 
                 importArtifacts {
-                    import_file = "/home/amine/Desktop/test_gradle/export.zip"
+                    import_file = "/home/amine/Desktop/test_gradle/testdocker1.zip"
                 }
 
                 jobOverride{
@@ -73,7 +76,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle(taskName, "-d")
 
         then:
         notThrown(Exception)

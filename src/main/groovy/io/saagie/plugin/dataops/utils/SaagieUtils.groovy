@@ -315,7 +315,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .excludeFieldsByName('usePreviousArtifact')
             .build()
 
@@ -347,7 +346,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -429,7 +427,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -467,7 +464,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -499,7 +495,6 @@ class SaagieUtils {
 
         def jsonGeneratorParams = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .excludeFieldsByName('packageInfo')
         if (!configuration.jobVersion.packageInfo?.downloadUrl) {
             jsonGeneratorParams =  jsonGeneratorParams.excludeFieldsByName('usePreviousArtifact')

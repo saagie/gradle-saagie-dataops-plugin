@@ -224,7 +224,6 @@ class SaagieClient {
                 !configuration?.job?.name ||
                 !configuration?.job?.technology ||
                 !configuration?.job?.category ||
-                !configuration?.jobVersion?.runtimeVersion ||
                 !configuration?.jobVersion?.resources
         )
 
@@ -1168,11 +1167,12 @@ class SaagieClient {
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
 
+            throw new GradleException("gradleException") // TODO REMOVE THIS ONLY HELP TO DEBUG
+
             return JsonOutput.toJson([
                 status    : "success",
                 exportfile: exportContainer.exportConfigPath
             ])
-
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -1741,7 +1741,7 @@ class SaagieClient {
         }else{
             SaagieUtils.cleanDirectory(tempFolder, logger)
         }
-
+        throw new GradleException("Gradle exception formation")
         return response
     }
 

@@ -1,7 +1,7 @@
 package io.saagie.plugin.dataops.tasks.projects.enums
 
 enum JobV2Category {
-    SMART_APP(0, "Smart app"), PROCESSING(1, "Processing"), EXTRACTION(2, "Extraction")
+    SMART_APP(0, "Smart App"), PROCESSING(1, "Processing"), EXTRACTION(2, "Extraction")
 
     JobV2Category(Integer value, String name) {
         this.value = value
