@@ -54,20 +54,22 @@ class FolderGenerator {
             if(createFolderForJob) {
                 Map jobDetailObject = [
                     name: exportJob.jobDTO.name,
-                    description: exportJob.jobDTO.description,
                     category: exportJob.jobDTO.category,
                     technology: exportJob.jobDTO.technology,
                     isScheduled: exportJob.jobDTO.isScheduled,
                     cronScheduling: exportJob.jobDTO.cronScheduling,
                 ]
 
-                Map jobVersionDetailJsonObject = [
-                    commandLine: exportJob.jobVersionDTO.commandLine,
-                ]
+                Map jobVersionDetailJsonObject = [:]
+
+                if(exportJob.jobVersionDTO.commandLine) {
+                    jobVersionDetailJsonObject << [*: [
+                        commandLine: exportJob.jobVersionDTO.commandLine,
+                    ]]
+                }
 
                 if (
                     exportJob.jobVersionDTO.dockerInfo &&
-                    exportJob.jobVersionDTO.dockerInfo.dockerCredentialsId &&
                     exportJob.jobVersionDTO.dockerInfo.image
                 ) {
                     jobVersionDetailJsonObject << [*: [
@@ -87,6 +89,12 @@ class FolderGenerator {
                     exportJob.jobDTO.alerting.emails.size() > 0) {
                     jobDetailObject << [*: [
                         alerting: exportJob.jobDTO.alerting
+                    ]]
+                }
+
+                if ( exportJob.jobDTO?.description ) {
+                    jobDetailObject << [*: [
+                        description: exportJob.jobDTO?.description
                     ]]
                 }
 
@@ -185,9 +193,16 @@ class FolderGenerator {
                     isScheduled : exportPipeline.pipelineDTO?.isScheduled,
                     cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
                 ]
+
                 Map pipelineVersionDetailJson = [
                     jobs: jobForPipeVersionArray
                 ]
+
+                if ( exportPipeline.pipelineDTO?.description ) {
+                    pipelineDetailJson << [*: [
+                        description: exportPipeline.pipelineDTO?.description
+                    ]]
+                }
 
                 if (
                     exportPipeline.pipelineDTO?.alerting &&

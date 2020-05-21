@@ -48,6 +48,10 @@ class JobVersionDTO implements IExists{
             commandLine = current.template
         }
 
+        if(current.packageUrl) {
+            dockerInfo.image = current.packageUrl
+        }
+
         if(current.file) {
             packageInfo.name = current.file
         }

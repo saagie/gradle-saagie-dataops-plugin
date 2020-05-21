@@ -48,10 +48,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         buildFile << """
             saagie {
                 server {
-                    url = "https://saagie-workspace.prod.saagie.io/"
-                    login ="mohamed.amin.ziraoui"
-                    password = "1!@#qweASD"
-                    environment = 4
+                    ...
                     jwt = true
                     acceptSelfSigned = true
                 }
