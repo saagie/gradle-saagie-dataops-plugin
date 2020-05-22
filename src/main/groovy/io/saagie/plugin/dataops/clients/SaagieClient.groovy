@@ -1507,7 +1507,7 @@ class SaagieClient {
         return getPipelineAndPipelineVersions(this.&getPipelineAndPipelineVersionDetailToExportV1, listJobsByNameAndIdFromV1)
     }
 
-    ExportPipeline[] getPipelineAndPipelineVersions(Closure operation, listJobsByNameAndIdFromV1) {
+    ExportPipeline[] getPipelineAndPipelineVersions(Closure operation, listJobsByNameAndIdFromV1 = null) {
         checkRequiredConfig(
             !configuration?.pipeline?.ids ||
             !configuration?.exportArtifacts?.export_file
@@ -1516,7 +1516,7 @@ class SaagieClient {
         def arrayPipelines = []
         listPipelineIds.each { pipelineId ->
             def sPipeLineInd = pipelineId as String
-            arrayPipelines.add(operation(sPipeLineInd, listJobsByNameAndIdFromV1))
+            arrayPipelines.add(listJobsByNameAndIdFromV1 != null ? operation(sPipeLineInd, listJobsByNameAndIdFromV1) : operation(sPipeLineInd))
         }
         return arrayPipelines as ExportPipeline[]
     }
@@ -1529,7 +1529,7 @@ class SaagieClient {
         return getListJobAndJobVersions(this.&getJobAndJobVersionDetailToExportV1, listJobsByNameAndIdFromV1)
     }
 
-    ExportJobs[] getListJobAndJobVersions(Closure operation, listJobsByNameAndIdFromV1) {
+    ExportJobs[] getListJobAndJobVersions(Closure operation, listJobsByNameAndIdFromV1 = null) {
         checkRequiredConfig(
             !configuration?.job?.ids ||
             !configuration?.exportArtifacts?.export_file
@@ -1539,7 +1539,7 @@ class SaagieClient {
         def arrayJobs = []
 
         listJobIds.each { jobId ->
-            arrayJobs.add(operation(jobId as String, listJobsByNameAndIdFromV1))
+            arrayJobs.add(listJobsByNameAndIdFromV1 != null ? operation(jobId as String, listJobsByNameAndIdFromV1) : operation(jobId as String))
         }
         return arrayJobs as ExportJobs[]
     }

@@ -20,6 +20,6 @@ class PipelineVersionDTO  implements IExists{
 
     def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
-        jobs = pipelineVersionDetailResult.jobs.id
+        jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id]}
     }
 }

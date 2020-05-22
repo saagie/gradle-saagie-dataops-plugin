@@ -63,7 +63,7 @@ class ProjectListTaskTests extends DataOpsGradleTaskSpecification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.getMessage().contains('Error 400 when requesting on http://localhost:9000')
+        e.getMessage().contains('Error 400 when requesting')
         e.getBuildResult().task(':projectsList').outcome == FAILED
     }
 

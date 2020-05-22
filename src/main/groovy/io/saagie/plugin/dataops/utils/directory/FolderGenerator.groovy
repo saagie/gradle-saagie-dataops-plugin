@@ -178,7 +178,7 @@ class FolderGenerator {
                         exportPipeline.pipelineVersionDTO?.jobs?.each { jobId ->
                             def element = null
 
-                            if(jobId.id == job.id){
+                            if(jobId && job &&  jobId.id == job.id){
                                 jobForPipeVersionArray.add([
                                     id : job.id,
                                     name: job.name

@@ -108,7 +108,7 @@ class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle(taskName, "-d")
 
         def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
 

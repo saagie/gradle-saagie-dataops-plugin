@@ -1312,7 +1312,7 @@ class SaagieUtils {
         debugResponse(response)
 
         String status = "${response.code()}"
-        def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
+        def message = "Error $status when requesting \n$body"
         l.error(message)
         throw new GradleException(message)
     }
