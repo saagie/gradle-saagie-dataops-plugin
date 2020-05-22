@@ -1,7 +1,7 @@
 package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.ExportJobs
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.utils.SaagieUtils
@@ -10,7 +10,7 @@ import org.gradle.api.GradleException
 
 class FolderGenerator {
 
-    ExportJob[] exportJobList = []
+    ExportJobs[] exportJobList = []
     ExportPipeline[] exportPipelineList = []
     def inputDire
     SaagieUtils saagieUtils
@@ -37,7 +37,7 @@ class FolderGenerator {
 
 
 
-    void generateFolderForJob(ExportJob exportJob) {
+    void generateFolderForJob(ExportJobs exportJob) {
         def jobId = exportJob.jobDTO.id
         def urlJobIdFolder = "${inputDire}${sl}${name}${sl}Job${sl}${jobId}"
         def folder = new File(urlJobIdFolder);
@@ -52,47 +52,99 @@ class FolderGenerator {
         if(exportJob.exists()) {
             def createFolderForJob = folder.mkdirs()
             if(createFolderForJob) {
-                def builder = new JsonBuilder([
-                    job: [
-                        name: exportJob.jobDTO.name,
-                        description: exportJob.jobDTO.description,
-                        category: exportJob.jobDTO.category,
-                        technology: exportJob.jobDTO.technology,
-                        isScheduled: exportJob.jobDTO.isScheduled,
-                        cronScheduling: exportJob.jobDTO.cronScheduling,
-                        alerting: exportJob.jobDTO.alerting
-                    ],
-                    jobVersion: [
+                Map jobDetailObject = [
+                    name: exportJob.jobDTO.name,
+                    category: exportJob.jobDTO.category,
+                    technology: exportJob.jobDTO.technology,
+                    isScheduled: exportJob.jobDTO.isScheduled,
+                    cronScheduling: exportJob.jobDTO.cronScheduling,
+                ]
+
+                Map jobVersionDetailJsonObject = [:]
+
+                if(exportJob.jobVersionDTO.commandLine) {
+                    jobVersionDetailJsonObject << [*: [
                         commandLine: exportJob.jobVersionDTO.commandLine,
+                    ]]
+                }
+
+                if (
+                    exportJob.jobVersionDTO.dockerInfo &&
+                    exportJob.jobVersionDTO.dockerInfo.image
+                ) {
+                    jobVersionDetailJsonObject << [*: [
                         dockerInfo: exportJob.jobVersionDTO.dockerInfo,
-                        runtimeVersion: exportJob.jobVersionDTO.runtimeVersion,
-                        releaseNote: exportJob.jobVersionDTO.releaseNote,
+                    ]]
+                }
+
+                if(exportJob.jobVersionDTO.runtimeVersion) {
+                    jobVersionDetailJsonObject << [*: [
+                        runtimeVersion:  exportJob.jobVersionDTO.runtimeVersion
+                    ]]
+                }
+
+                if (
+                    exportJob.jobDTO.alerting &&
+                    exportJob.jobDTO.alerting.emails &&
+                    exportJob.jobDTO.alerting.emails.size() > 0) {
+                    jobDetailObject << [*: [
+                        alerting: exportJob.jobDTO.alerting
+                    ]]
+                }
+
+                if ( exportJob.jobDTO?.description ) {
+                    jobDetailObject << [*: [
+                        description: exportJob.jobDTO?.description
+                    ]]
+                }
+
+                if(
+                    exportJob.jobVersionDTO.packageInfo &&
+                    exportJob.jobVersionDTO.packageInfo.name &&
+                    exportJob.downloadUrl
+                ) {
+                    jobVersionDetailJsonObject << [ * : [
                         packageInfo: [
                             downloadUrl: exportJob.downloadUrl,
                             name: exportJob.jobVersionDTO.packageInfo.name,
                         ]
-                    ]
-                ]).toPrettyString()
+                    ]]
+                }
+
+
+
+                Map jobJsonObject = [
+                    job: jobDetailObject,
+                    jobVersion: jobVersionDetailJsonObject
+                ]
+                def builder = new JsonBuilder(jobJsonObject).toPrettyString()
                 File jobFile = new File("${urlJobIdFolder}${sl}job.json")
                 jobFile.write(builder)
                 if(exportJob.downloadUrl && exportJob.downloadUrlVersion){
                     try {
                         File localPackage = new File("${urlJobIdFolder}${sl}package")
                         localPackage.mkdirs()
-                        def urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
-                            "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
-                            projectId +
-                            "${sl}job${sl}"+
-                            jobId +
-                            "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
-                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
-                        def packageUrl = "${urlJobIdFolder}${sl}package";
+                        String urlToDownload = ""
+                        String packageUrl = "${urlJobIdFolder}${sl}package";
+
+                        if(exportJob.isV1) {
+                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/manager/api/v1/platform/${environment}/job/${jobId}/version/${exportJob.downloadUrlVersion}/binary"
+                        } else {
+                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+                                "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
+                                projectId +
+                                "${sl}job${sl}"+
+                                jobId +
+                                "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
+                                SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                        }
                         saagieUtils.downloadFromHTTPSServer(
                             urlToDownload,
                             packageUrl,
-                            client
+                            client,
+                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
                         )
-                    } catch (IOException e) {
+                     } catch (IOException e) {
                         throw new GradleException(e.message)
                     }
                 }
@@ -126,7 +178,7 @@ class FolderGenerator {
                         exportPipeline.pipelineVersionDTO?.jobs?.each { jobId ->
                             def element = null
 
-                            if(jobId.id == job.id){
+                            if(jobId && job &&  jobId.id == job.id){
                                 jobForPipeVersionArray.add([
                                     id : job.id,
                                     name: job.name
@@ -135,19 +187,50 @@ class FolderGenerator {
                         }
                     }
                 }
+                Map pipelineDetailJson = [
+                    name : exportPipeline.pipelineDTO?.name,
+                    description : exportPipeline.pipelineDTO?.description,
+                    isScheduled : exportPipeline.pipelineDTO?.isScheduled,
+                    cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
+                ]
 
+                Map pipelineVersionDetailJson = [
+                    jobs: jobForPipeVersionArray
+                ]
+
+                if ( exportPipeline.pipelineDTO?.description ) {
+                    pipelineDetailJson << [*: [
+                        description: exportPipeline.pipelineDTO?.description
+                    ]]
+                }
+
+                if (
+                    exportPipeline.pipelineDTO?.alerting &&
+                    exportPipeline.pipelineDTO?.alerting?.emails &&
+                    exportPipeline.pipelineDTO?.alerting?.emails.size() > 0) {
+                    pipelineDetailJson << [*: [
+                        alerting: exportPipeline.pipelineDTO?.alerting
+                    ]]
+                }
+
+                if(
+                    exportPipeline.pipelineVersionDTO?.releaseNote
+                ) {
+                    pipelineVersionDetailJson << [ * : [
+                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
+                    ]]
+                }
+
+                if(
+                    exportPipeline.pipelineVersionDTO?.releaseNote
+                ) {
+                    pipelineVersionDetailJson << [ * : [
+                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
+                    ]]
+                }
                 def builder = new JsonBuilder([
-                    pipeline: [
-                        name : exportPipeline.pipelineDTO?.name,
-                        description : exportPipeline.pipelineDTO?.description,
-                        isScheduled : exportPipeline.pipelineDTO?.isScheduled,
-                        cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
-                        alerting : exportPipeline.pipelineDTO?.alerting
-                    ],
-                    pipelineVersion: [
-                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote,
-                        jobs: jobForPipeVersionArray
-                    ]
+                    pipeline: pipelineDetailJson,
+                    pipelineVersion: pipelineVersionDetailJson
                 ]).toPrettyString()
                 File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")
                 jobFile.write(builder)

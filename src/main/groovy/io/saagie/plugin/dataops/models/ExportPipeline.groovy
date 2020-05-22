@@ -13,8 +13,16 @@ class ExportPipeline implements IExists{
         return pipelineDTO.exists() || pipelineVersionDTO.exists()
     }
 
-    void setPipelineFromApiResult(jobDetailResult) {
-        pipelineDTO.setPipelineFromApiResult(jobDetailResult)
+    void setPipelineFromApiResult(pipelineDetailResult) {
+        pipelineDTO.setPipelineFromApiResult(pipelineDetailResult)
+    }
+
+    void setPipelineFromV1ApiResult(pipelineDetailResult) {
+        pipelineDTO.setPipelineFromV1ApiResult(pipelineDetailResult)
+    }
+
+    void setPipelineVersionFromV1ApiResult(jobs, releaseNote) {
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote)
     }
 
     void setPipelineVersionFromApiResult(version){

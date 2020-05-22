@@ -18,3 +18,4 @@ keys.tar
 .vscode
 
 .settings
+!/hs_err_pid25907.log

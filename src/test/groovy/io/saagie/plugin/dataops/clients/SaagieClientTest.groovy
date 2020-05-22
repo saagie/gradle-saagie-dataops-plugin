@@ -148,7 +148,7 @@ class SaagieClientTest extends Specification {
 
         then:
         GradleException e = thrown()
-        e.message.contains('Error 401 when requesting on http://localhost:9000:\nBad credentials')
+        e.message.contains('Error 401 when requesting \nBad credentials')
     }
 
     def "class instance with a config with a trailing slash in the url must succeed"() {
@@ -262,30 +262,6 @@ class SaagieClientTest extends Specification {
         then:
         createdJobConfig instanceof String
         createdJobConfig.startsWith('{"id"')
-    }
-
-    def "createProjectJob should fail if the package file is missing"() {
-        given:
-        enqueueToken()
-
-        def mockedJobCreationResponse = new MockResponse()
-        mockedJobCreationResponse.responseCode = 200
-        mockedJobCreationResponse.body = '''{"data":{"createJob":{"id":"kdiojezidz-ce2a-486e-b524-d40ff353eea7"}}}'''
-        mockWebServer.enqueue(mockedJobCreationResponse)
-
-        def mockedFileUploadResponse = new MockResponse()
-        mockedFileUploadResponse.responseCode = 500
-        mockedFileUploadResponse.body = '''true'''
-        mockWebServer.enqueue(mockedFileUploadResponse)
-        client = new SaagieClient(configuration, 'projectsList')
-
-        when:
-        def createdJobConfig = client.createProjectJob()
-
-        then:
-        GradleException exception = thrown()
-        createdJobConfig == null
-        exception.message.contains('Error 500 when requesting on http://localhost:9000:\ntrue')
     }
 
     def "runProjectJob should fail there is no job id config"() {

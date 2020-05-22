@@ -32,12 +32,15 @@ class JobMapper {
             newJobConfig.put('jobVersion', [
                 commandLine : mappedJobVersion.commandLine,
                 releaseNote : mappedJobVersion.releaseNote,
-                runtimeVersion : mappedJobVersion.runtimeVersion,
-                dockerInfo : [
+                runtimeVersion : mappedJobVersion.runtimeVersion
+            ])
+
+            if(mappedJobVersion.dockerInfo?.image){
+                newJobConfig.jobVersion.put('dockerInfo', [
                     image : mappedJobVersion.dockerInfo?.image,
                     dockerCredentialsId : mappedJobVersion.dockerInfo?.dockerCredentialsId
-                ]
-            ])
+                ])
+            }
 
             if(jobVersion.packageInfo?.name || jobVersion.packageInfo?.downloadUrl){
                 newJobConfig.jobVersion.put('packageInfo', [

@@ -245,7 +245,6 @@ class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
 
                 job {
                     name = "jobname"
-                    category = "Extraction"
                     technology = "technology-id"
                 }
             }
