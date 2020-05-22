@@ -41,49 +41,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
-    def "TEST : the task should add jobVersion based on the build configuration if name exist with overwrite"() {
-
-        given:
-
-        buildFile << """
-            saagie {
-                server {
-                    url = "https://saagie-workspace.prod.saagie.io/"
-                    login ="mohamed.amin.ziraoui"
-                    password = "1!@#qweASD"
-                    environment = 4
-                    jwt = true
-                    acceptSelfSigned = true
-                }
-
-                project {
-                    id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
-                }
-
-                importArtifacts {
-                    import_file = "/home/amine/Desktop/test_gradle/testdocker1.zip"
-                }
-
-                jobOverride{
-                  isScheduled = false
-                  cronScheduling = null
-                  alerting {
-                    emails= ["user@gmail.com","user2@gmail.com"]
-                    statusList= []
-                  }
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName, "-d")
-
-        then:
-        notThrown(Exception)
-        assert true == true
-    }
-
-
     def "the task should add jobVersion based on the build configuration if name exist with overwrite"() {
 
         given:

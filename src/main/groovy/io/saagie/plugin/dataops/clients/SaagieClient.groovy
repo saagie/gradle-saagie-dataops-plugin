@@ -1107,8 +1107,6 @@ class SaagieClient {
             exportJobs = getListJobAndJobVersionsFromConfigV1(listJobsByNameAndIdFromV1)
         }
 
-
-
         return export(exportPipelines, exportJobs, listJobsByNameAndIdFromV1, true)
     }
 
@@ -1166,9 +1164,6 @@ class SaagieClient {
             zippingFolder.generateZip(tempJobDirectory)
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
-
-            throw new GradleException("gradleException") // TODO REMOVE THIS ONLY HELP TO DEBUG
-
             return JsonOutput.toJson([
                 status    : "success",
                 exportfile: exportContainer.exportConfigPath
@@ -1294,7 +1289,7 @@ class SaagieClient {
                 handleErrors response
                 String responseBody = response.body().string()
                 def parsedV1job = slurper.parseText responseBody
-
+                logger.debug("getJobDetailV1 response $responseBody")
                 testIfJobV1isValid(parsedV1job)
 
                 def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
@@ -1371,7 +1366,7 @@ class SaagieClient {
 
     boolean testIfJobV1isValid(parsedV1job) {
         if (!parsedV1job.capsule_code) {
-            throwAndLogError("Something went wrong when getting job detail from v1: $responseBody for job id $jobId")
+            throwAndLogError("Something went wrong when getting job detail from v1 job")
         }
 
         if([JobV1Type.jupiter].contains(parsedV1job.capsule_code)) {
@@ -1401,6 +1396,7 @@ class SaagieClient {
             getV1Client().newCall(getPipelineDetailV1).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
+                logger.debug("getPipelineDetailV1 response $responseBody")
                 def parsedV1PipelineResult = slurper.parseText(responseBody)
                 def pipelineName= parsedV1PipelineResult.name
                     if (pipelineName) {
@@ -1538,7 +1534,7 @@ class SaagieClient {
             !configuration?.job?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
-        def listJobIdsInt = configuration.job.ids.collect { it as int }
+        def listJobIdsInt = configuration.job.ids.collect { it as String }
         def listJobIds = listJobIdsInt.unique { a, b -> a <=> b }
         def arrayJobs = []
 
@@ -1741,7 +1737,6 @@ class SaagieClient {
         }else{
             SaagieUtils.cleanDirectory(tempFolder, logger)
         }
-        throw new GradleException("Gradle exception formation")
         return response
     }
 

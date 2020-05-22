@@ -1208,6 +1208,7 @@ class SaagieUtils {
         OutputStream outputStream = null
 
         try {
+            logger.debug("Downloading artifiacts ....")
             Request request = this.buildRequestForFile(urlFrom)
             def response = client.newCall(request).execute()
             inputStream = response.body().byteStream();
@@ -1224,6 +1225,7 @@ class SaagieUtils {
         } catch (Exception ex) {
             throw new GradleException(ex.message)
         }
+        logger.debug("Artifacts downloaded.")
         outputStream.close()
         inputStream.close()
     }
