@@ -37,6 +37,9 @@ class JobDTO implements IExists{
             isScheduled = jobDetailResult.isScheduled
             cronScheduling = jobDetailResult.cronScheduling
             alerting = jobDetailResult.alerting
+            if(jobDetailResult?.extraTechnology) {
+                extraTechnology = jobDetailResult.extraTechnology
+            }
     }
 
     void setJobFromV1ApiResult(jobV1DetailResult, technology, cronScheduling) {

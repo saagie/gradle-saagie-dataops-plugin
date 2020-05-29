@@ -66,6 +66,13 @@ class ImportJobService {
                     dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
                 }
             }
+            if(jobConfigOverride.jobVersion?.extraTechnology?.language ) {
+                newMappedJobData.jobVersion?.extraTechnology {
+                    language = jobConfigOverride.jobVersion?.extraTechnology?.language
+                    version = jobConfigOverride.jobVersion?.extraTechnology?.version
+                }
+            }
+
 
             if(newJobConfigWithOverride.jobVersion?.packageInfo) {
                 newMappedJobData.jobVersion?.packageInfo {

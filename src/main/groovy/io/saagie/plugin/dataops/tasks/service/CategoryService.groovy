@@ -13,23 +13,31 @@ class CategoryService {
         ],
         [
             label: "Python",
-            value: new ArrayList([1,2]),
+            value: new ArrayList([0, 1, 2]),
         ],
         [
             label: "SQOOP",
-            value: new ArrayList([1,2]),
+            value: new ArrayList([0, 1, 2]),
         ],
         [
             label: "Java/Scala",
-            value: new ArrayList([1]),
+            value: new ArrayList([0, 1, 2]),
         ],
         [
             label: "Spark",
-            value: new ArrayList([1]),
+            value: new ArrayList([0, 1, 2]),
         ],
         [
             label: "Docker",
-            value: new ArrayList([2]),
+            value: new ArrayList([0, 1, 2]),
+        ],
+        [
+            label: "R",
+            value: new ArrayList([0, 1, 2]),
+        ],
+        [
+            label: "Talend",
+            value: new ArrayList([0, 1, 2]),
         ]]
 
     public String getCategoryByV1CategoryAndTechnology(String categoryV1Name, String technologyV2Name) {
@@ -41,14 +49,17 @@ class CategoryService {
             throw new GradleException("Couldn't find category v1 from enum")
         }
 
+        def indexCategoryValuesPerTechnologyFound = null
+
         if(!categoryValuesPerTechnologyFound) {
-            throw new GradleException("Couldn't find category per technology")
-        }
-        def indexCategoryValuesPerTechnologyFound = categoryValuesPerTechnologyFound.value.contains(indexCategoryV1PerTechnologyV1)
-        if(!indexCategoryValuesPerTechnologyFound && indexCategoryValuesPerTechnologyFound != 0 ) {
-            indexCategoryValuesPerTechnologyFound = categoryValuesPerTechnologyFound.value.contains(1)
-            if(!indexCategoryValuesPerTechnologyFound && indexCategoryValuesPerTechnologyFound != 0) {
-                indexCategoryValuesPerTechnologyFound = 0
+            indexCategoryValuesPerTechnologyFound = 0
+        } else {
+            indexCategoryValuesPerTechnologyFound = categoryValuesPerTechnologyFound.value.contains(indexCategoryV1PerTechnologyV1)
+            if(!indexCategoryValuesPerTechnologyFound && indexCategoryValuesPerTechnologyFound != 0 ) {
+                indexCategoryValuesPerTechnologyFound = categoryValuesPerTechnologyFound.value.contains(1)
+                if(!indexCategoryValuesPerTechnologyFound && indexCategoryValuesPerTechnologyFound != 0) {
+                    indexCategoryValuesPerTechnologyFound = 0
+                }
             }
         }
 

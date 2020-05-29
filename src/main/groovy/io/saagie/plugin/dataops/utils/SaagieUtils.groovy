@@ -161,6 +161,10 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectJobs)
     }
 
+    static boolean isCollectionOrArray(object) {
+        [Collection, Object[]].any { it.isAssignableFrom(object.getClass()) }
+    }
+
     Request getListTechnologyVersionsRequest(String technologyId) {
         logger.debug('Generating getListTechnologyVersionsRequest [technology={}]', technologyId)
 
@@ -175,6 +179,9 @@ class SaagieUtils {
             technologiesVersions(technologyId: $technologyId) {
               versionLabel
               technologyLabel
+              secondaryTechnologies {
+                   label     isAvailable      versions
+              }
             }
           }
         ''', gqVariables)

@@ -111,6 +111,15 @@ class FolderGenerator {
                     ]]
                 }
 
+                if(
+                exportJob.jobVersionDTO.extraTechnology &&
+                    exportJob.jobVersionDTO.extraTechnology.language
+                ) {
+                    jobVersionDetailJsonObject << [ * : [
+                        extraTechnology: exportJob.jobVersionDTO.extraTechnology
+                    ]]
+                }
+
 
 
                 Map jobJsonObject = [
