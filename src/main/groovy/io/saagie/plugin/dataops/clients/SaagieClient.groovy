@@ -296,7 +296,6 @@ class SaagieClient {
                 !configuration?.job?.name ||
                 !configuration?.job?.technology ||
                 !configuration?.job?.category ||
-                !configuration?.jobVersion?.runtimeVersion ||
                 !configuration?.jobVersion?.resources
         )
 
@@ -1164,10 +1163,12 @@ class SaagieClient {
             zippingFolder.generateZip(tempJobDirectory)
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
+
             return JsonOutput.toJson([
                 status    : "success",
                 exportfile: exportContainer.exportConfigPath
             ])
+
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -1306,15 +1307,24 @@ class SaagieClient {
                     throwAndLogError("No technology found from the v1 version to the v2 version")
                 }
                 def versionV1 = null
+                def extraTechV1 = [:]
                 if(parsedV1job?.current?.options?.language_version) {
                     versionV1 = parsedV1job.current.options.language_version
+                }
+
+                if(parsedV1job?.current?.options?.extra_language) {
+                    extraTechV1.language = parsedV1job?.current?.options?.extra_language
+                }
+                if(parsedV1job?.current?.options?.extra_version) {
+                    extraTechV1.version = parsedV1job?.current?.options?.extra_version
                 }
 
                 def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2.id)
                 def technologyV2Version = null
                 if(resultTechnologiesVersions) {
-                    technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2.id, versionV1)
+                    technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2.id, versionV1, extraTechV1)
                 }
+                //TODO Exc
                 def formatedCronFromSchedule = SaagieUtils.convertScheduleV1ToCron(parsedV1job.schedule)
 
                 def current = null
@@ -1329,7 +1339,7 @@ class SaagieClient {
                 }
 
                 if(!current) {
-                    throwAndLogError("Current can't be null")
+                    throwAndLogError("Current inside the getJob and jobVersionDetail toExport V1 can't be null")
                 }
 
                 exportJob.setJobFromV1ApiResult(
@@ -1338,12 +1348,12 @@ class SaagieClient {
                     formatedCronFromSchedule
                 )
 
-                def technologieLabel = technologyV2Version && technologyV2Version.versionLabel ?
+                def technologieLabel = technologyV2Version && technologyV2Version.size() > 0 && technologyV2Version.versionLabel ?
                     technologyV2Version.versionLabel : null
 
                 exportJob.setJobVersionFromV1ApiResult(
                     parsedV1job,
-                    technologieLabel,
+                    technologyV2Version ? technologyV2Version : [version2: technologyV2, technologyV2Version: null],
                     current
                 )
 

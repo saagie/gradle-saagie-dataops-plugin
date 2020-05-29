@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops.models
 
+import io.saagie.plugin.dataops.utils.SaagieUtils
 import org.gradle.api.GradleException
 
 class JobVersionDTO implements IExists{
@@ -7,6 +8,7 @@ class JobVersionDTO implements IExists{
     DockerInfos dockerInfo = new DockerInfos()
     String runtimeVersion
     String releaseNote
+    ExtraTechnology extraTechnology
     PackageInfo packageInfo = new PackageInfo()
 
     @Override
@@ -38,10 +40,19 @@ class JobVersionDTO implements IExists{
 
     }
 
-    void setJobVersionFromV1ApiResult(versionV1, technologyVersion, current) {
-
+    void setJobVersionFromV1ApiResult(versionV1, technologyV2container, current) {
+        if(!technologyV2container.version2){
+            throw new GradleException("technologyV2container doesn't contain critical data information")
+        }
+        def version2 = technologyV2container.version2
+        def extraTechnologyData = technologyV2container.extraTechnology
+        if(extraTechnologyData) {
+            extraTechnology = extraTechnologyData
+        }
+        def runtimeTechnologyVersion =  version2 && version2.versionLabel ?
+            version2.versionLabel : null
         if(!current) {
-            throw GradleException("Current can't be null from version V1")
+            throw new GradleException("Current can't be null from version V1")
         }
 
         if(current.template) {
@@ -56,8 +67,8 @@ class JobVersionDTO implements IExists{
             packageInfo.name = current.file
         }
 
-        if(technologyVersion) {
-            runtimeVersion = technologyVersion
+        if(runtimeTechnologyVersion) {
+            runtimeVersion = runtimeTechnologyVersion
         }
 
         if(current.releaseNote){
