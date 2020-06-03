@@ -35,7 +35,9 @@ import javax.net.ssl.X509TrustManager
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.time.Period
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 
@@ -1340,7 +1342,7 @@ class SaagieUtils {
         String startDate = cronString.substring(cronString.indexOf('/') + 1, startPeriod)
         String cronPeriod = cronString.substring(startPeriod +1, cronString.length());
 
-        Date cronDate = Date.from(ZonedDateTime.parse(startDate).toInstant());
+        Date cronDate = Date.from(ZonedDateTime.parse(startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME.withZone(ZoneOffset.UTC)).toInstant());
         PeriodDuration period = PeriodDuration.parse(cronPeriod)
         def minutes ,hours, dayOfMonths, months = null
         def time = UnitTime.SECOND.value

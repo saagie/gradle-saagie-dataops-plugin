@@ -27,10 +27,17 @@ class ImportJobService {
             ]
 
             if(globalConfig.jobOverride) {
-                newJobConfigWithOverride << [ *: [
-                    isScheduled : globalConfig.jobOverride?.isScheduled,
-                    cronScheduling : globalConfig.jobOverride?.cronScheduling,
-                ]]
+                if(globalConfig.jobOverride?.isScheduled) {
+                    newJobConfigWithOverride << [ *: [
+                        isScheduled : globalConfig.jobOverride?.isScheduled
+                    ]];
+                }
+
+                if(globalConfig.jobOverride?.cronScheduling) {
+                    newJobConfigWithOverride << [ *: [
+                        cronScheduling : globalConfig.jobOverride?.cronScheduling
+                    ]];
+                }
 
                 if(globalConfig.jobOverride.alerting?.emails){
                     newJobConfigWithOverride << [*:[alerting : globalConfig.jobOverride?.alerting]]
