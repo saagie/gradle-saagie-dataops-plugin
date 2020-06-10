@@ -13,7 +13,6 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB_V1
 
-
     def "the task should export jobs and piplines with artifacts"() {
         given:
 

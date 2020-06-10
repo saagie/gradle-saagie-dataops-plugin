@@ -128,7 +128,6 @@ class DataOpsModule {
             description = 'Export a list of jobs or pipelines for a project to a zip extension'
             configuration = project.saagie
             taskName = PROJECTS_EXPORT_JOB
-            outputs.upToDateWhen { false }
         }
 
         project.task(PROJECTS_EXPORT_JOB_V1, type: ProjectsExportJobV1Task) {
@@ -136,7 +135,6 @@ class DataOpsModule {
             description = 'Export a list of jobs or pipelines from Manager to a zip format to be imported into V2( projects)'
             configuration = project.saagie
             taskName = PROJECTS_EXPORT_JOB_V1
-            outputs.upToDateWhen { false }
         }
 
         project.task(PROJECTS_GET_PIPELINE_INSTANCE_STATUS, type: ProjectGetPipelineInstanceStatusTask) {

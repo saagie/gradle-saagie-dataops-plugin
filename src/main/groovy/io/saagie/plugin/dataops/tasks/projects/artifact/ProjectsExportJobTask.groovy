@@ -6,10 +6,11 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.TaskOutputs
 
 class ProjectsExportJobTask extends DefaultTask{
 
-    @Input DataOpsExtension configuration
+    DataOpsExtension configuration
 
     @Input String taskName
 
@@ -23,4 +24,5 @@ class ProjectsExportJobTask extends DefaultTask{
         logger.quiet(result)
         return result
     }
+
 }
