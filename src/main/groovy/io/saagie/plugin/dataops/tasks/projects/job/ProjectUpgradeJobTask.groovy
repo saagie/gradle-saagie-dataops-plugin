@@ -13,7 +13,7 @@ import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 
 class ProjectUpgradeJobTask extends DefaultTask {
-    @Input DataOpsExtension configuration
+    DataOpsExtension configuration
 
     @Input String taskName
 

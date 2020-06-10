@@ -12,7 +12,6 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.tasks.projects.enums.UnitTime
-import kotlin.Unit
 import okhttp3.Credentials
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -26,19 +25,11 @@ import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import groovy.json.JsonOutput
-import org.gradle.internal.impldep.org.apache.http.conn.ssl.TrustSelfSignedStrategy
-import org.threeten.extra.Interval
 import org.threeten.extra.PeriodDuration
 
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-import java.time.Period
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 
 class SaagieUtils {

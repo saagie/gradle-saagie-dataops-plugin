@@ -8,7 +8,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.Input
 
 class PlatformListTask extends DefaultTask {
-    @Input DataOpsExtension configuration
+    DataOpsExtension configuration
 
     @Input String taskName
 
