@@ -13,7 +13,7 @@ import org.gradle.api.tasks.TaskAction
 
 @TypeChecked
 class ProjectCreateJobTask extends DefaultTask {
-    @Internal DataOpsExtension configuration
+    @Input DataOpsExtension configuration
 
     @Input String taskName
 
