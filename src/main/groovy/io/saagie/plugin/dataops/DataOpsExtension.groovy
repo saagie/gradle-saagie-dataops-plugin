@@ -13,6 +13,7 @@ import io.saagie.plugin.dataops.models.PipelineOverride
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
+import okio.Pipe
 
 import javax.validation.constraints.NotNull
 
@@ -46,50 +47,62 @@ class DataOpsExtension {
 
     // ====== Closures to create a proper DSL
     Object server(Closure closure) {
+        server = new Server()
         server.with(closure)
     }
 
     Object project(Closure closure) {
+        project = new Project()
         project.with(closure)
     }
 
     Object job(Closure closure) {
+        job = new Job()
         job.with(closure)
     }
 
     Object jobVersion(Closure closure) {
+        jobVersion = new JobVersion()
         jobVersion.with(closure)
     }
 
     Object jobinstance(Closure closure) {
+        jobinstance = new JobInstance()
         jobinstance.with(closure)
     }
 
     Object pipeline(Closure closure) {
+        pipeline = new Pipeline()
         pipeline.with(closure)
     }
 
     Object pipelineVersion(Closure closure) {
+        pipelineVersion = new PipelineVersion()
         pipelineVersion.with(closure)
     }
 
     Object pipelineinstance(Closure closure) {
+        pipelineinstance = new PipelineInstance()
         pipelineinstance.with(closure)
     }
 
     Object importArtifacts(Closure closure) {
+        importArtifacts = new ImportJob()
         importArtifacts.with(closure)
     }
 
     Object jobOverride(Closure closure) {
+        jobOverride = new JobOverride()
         jobOverride.with(closure)
     }
 
     Object pipelineOverride(Closure closure) {
+        pipelineOverride = new PipelineOverride()
         pipelineOverride.with(closure)
     }
 
     Object exportArtifacts(Closure closure) {
+        exportArtifacts = new Export()
         exportArtifacts.with(closure)
     }
 }
