@@ -8,7 +8,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectRunJobTask extends DefaultTask {
-    @Internal DataOpsExtension configuration
+    @Input DataOpsExtension configuration
 
     @Input String taskName
 

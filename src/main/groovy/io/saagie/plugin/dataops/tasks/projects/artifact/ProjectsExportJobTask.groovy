@@ -10,7 +10,7 @@ import org.gradle.api.tasks.TaskOutputs
 
 class ProjectsExportJobTask extends DefaultTask{
 
-    @Internal DataOpsExtension configuration
+    @Input DataOpsExtension configuration
 
     @Input String taskName
 
