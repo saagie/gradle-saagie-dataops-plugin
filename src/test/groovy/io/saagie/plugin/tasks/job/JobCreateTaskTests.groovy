@@ -55,6 +55,46 @@ class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
 
+    def "should create job Creating Job1  2.0.11 version 1 in saagie servers "() {
+        given:
+        buildFile << """
+        saagie {
+            server {
+            url = "https://saagie-workspace.prod.saagie.io/"
+            login ="mohamed.amin.ziraoui"
+            password = "1!@#qweASD"
+            environment = 4
+            jwt = true
+        }
+        project {
+            id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+        }
+        job {
+            name = "Creating Job1  2.0.11 version 1"
+            description ="Description"
+            category ="Extraction"
+            technology ="13522063-c18b-4ecd-b61f-3bae1e0ad93c"
+            isScheduled =false
+            cronScheduling =null
+        }
+        jobVersion {
+            commandLine= "python {file} arg1 arg2"
+            releaseNote ="Release"
+            runtimeVersion = "3.5"
+            packageInfo {
+                name= "demo.py"
+            }
+        }
+        }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        assert true == true
+    }
+
     def "projectsCreateJob should fail if the job name is already taken"() {
         given:
         def mockedJobCreationResponse = new MockResponse()
