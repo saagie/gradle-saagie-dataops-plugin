@@ -31,7 +31,8 @@ class ProjectCreateJobTask extends DefaultTask {
         } else {
             response = saagieClient.createProjectJobWithGraphQL()
         }
-
+        configuration.job = null
+        configuration.jobVersion = null
         logger.quiet(response)
 
         result = response
