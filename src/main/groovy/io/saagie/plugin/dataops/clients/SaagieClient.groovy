@@ -1302,12 +1302,15 @@ class SaagieClient {
                     allTechnologyVersions,
                     slurper
                 )
+
                 def technologyV2 = TechnologyService.instance.getV2TechnologyByV1Name(parsedV1job.capsule_code)
                 if(!technologyV2) {
                     throwAndLogError("No technology found from the v1 version to the v2 version")
                 }
+
                 def versionV1 = null
                 def extraTechV1 = [:]
+
                 if(parsedV1job?.current?.options?.language_version) {
                     versionV1 = parsedV1job.current.options.language_version
                 }
@@ -1315,6 +1318,7 @@ class SaagieClient {
                 if(parsedV1job?.current?.options?.extra_language) {
                     extraTechV1.language = parsedV1job?.current?.options?.extra_language
                 }
+
                 if(parsedV1job?.current?.options?.extra_version) {
                     extraTechV1.version = parsedV1job?.current?.options?.extra_version
                 }
