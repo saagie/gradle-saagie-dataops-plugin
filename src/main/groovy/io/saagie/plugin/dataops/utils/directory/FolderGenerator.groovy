@@ -93,13 +93,15 @@ class FolderGenerator {
                 jobFile.write(builder)
                 if(exportJob.versions && exportJob.versions.size() > 0) {
                     exportJob.versions.each {
-                        downloadArtifact(
-                            urlJobIdFolder,
-                            it.number,
-                            jobId,
-                            it.packageInfo?.name,
-                            it.number as String
-                        )
+                        if(it.packageInfo.name) {
+                            downloadArtifact(
+                                urlJobIdFolder,
+                                it.number,
+                                jobId,
+                                it.packageInfo?.name,
+                                it.number as String
+                            )
+                        }
                     }
                 }
 
