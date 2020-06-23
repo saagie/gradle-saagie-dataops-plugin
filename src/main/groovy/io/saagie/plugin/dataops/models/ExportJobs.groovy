@@ -6,6 +6,7 @@ import groovy.transform.TypeChecked
 class ExportJobs implements IExists{
     JobDTO jobDTO = new JobDTO()
     JobVersionDTO jobVersionDTO  = new JobVersionDTO()
+    ArrayList<JobVersionDTO> versions = new ArrayList<JobVersionDTO>()
     String downloadUrl
     int downloadUrlVersion
     boolean isV1 = false
@@ -27,7 +28,13 @@ class ExportJobs implements IExists{
         jobDTO.setJobFromV1ApiResult(jobV1DetailResult, technology, cronScheduling)
     }
 
-    void setJobVersionFromV1ApiResult(version, runTimeVersion, currentVersion){
-        jobVersionDTO.setJobVersionFromV1ApiResult(version, runTimeVersion, currentVersion)
+    void setJobVersionFromV1ApiResult(runTimeVersion, currentVersion){
+        jobVersionDTO.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion)
+    }
+
+    void addJobVersionFromV1ApiResult(runTimeVersion, currentVersion) {
+        JobVersionDTO jobVersionDTOElement = new JobVersionDTO()
+        jobVersionDTOElement.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion)
+        versions.add(jobVersionDTOElement)
     }
 }

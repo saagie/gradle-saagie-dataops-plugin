@@ -1302,28 +1302,13 @@ class SaagieClient {
                     allTechnologyVersions,
                     slurper
                 )
+
                 def technologyV2 = TechnologyService.instance.getV2TechnologyByV1Name(parsedV1job.capsule_code)
                 if(!technologyV2) {
                     throwAndLogError("No technology found from the v1 version to the v2 version")
                 }
-                def versionV1 = null
-                def extraTechV1 = [:]
-                if(parsedV1job?.current?.options?.language_version) {
-                    versionV1 = parsedV1job.current.options.language_version
-                }
 
-                if(parsedV1job?.current?.options?.extra_language) {
-                    extraTechV1.language = parsedV1job?.current?.options?.extra_language
-                }
-                if(parsedV1job?.current?.options?.extra_version) {
-                    extraTechV1.version = parsedV1job?.current?.options?.extra_version
-                }
 
-                def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2.id)
-                def technologyV2Version = null
-                if(resultTechnologiesVersions) {
-                    technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2.id, versionV1, extraTechV1)
-                }
                 //TODO Exc
                 def formatedCronFromSchedule = SaagieUtils.convertScheduleV1ToCron(parsedV1job.schedule)
 
@@ -1342,20 +1327,37 @@ class SaagieClient {
                     throwAndLogError("Current inside the getJob and jobVersionDetail toExport V1 can't be null")
                 }
 
+
                 exportJob.setJobFromV1ApiResult(
                     parsedV1job,
                     technologyV2,
                     formatedCronFromSchedule
                 )
-
-                def technologieLabel = technologyV2Version && technologyV2Version.size() > 0 && technologyV2Version.versionLabel ?
-                    technologyV2Version.versionLabel : null
+                def technologyV2Version = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
 
                 exportJob.setJobVersionFromV1ApiResult(
-                    parsedV1job,
-                    technologyV2Version ? technologyV2Version : [version2: technologyV2, technologyV2Version: null],
+                    getRunTimeVersionMapper(technologyV2Version, technologyV2) ,
                     current
                 )
+
+                if(configuration.job.include_all_versions && parsedV1job.versions) {
+                    def versions = parsedV1job.versions.findAll { version ->
+                        version.number != parsedV1job.current.number
+                    }
+
+                    versions.sort{ x, y ->
+                        x.number <=> y.number
+                    }
+
+                    versions.each{ version ->
+                        def technologyV2VersionForVersions = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
+                        exportJob.addJobVersionFromV1ApiResult(
+                            getRunTimeVersionMapper(technologyV2VersionForVersions, technologyV2),
+                            version)
+                    }
+
+                    exportJob.versions.unique()
+                }
 
                 if(current.file) {
                     exportJob.downloadUrl = current.file
@@ -1372,6 +1374,35 @@ class SaagieClient {
             logger.error('Unknown error in getJobAndJobVersionDetailToExport')
             throw exception
         }
+    }
+
+    static Map getRunTimeVersionMapper(technologyV2Version, technologyV2) {
+        return technologyV2Version ? technologyV2Version : [version2: technologyV2, technologyV2Version: null] as Map
+    }
+
+    static Map getTechnologyV2MappedInformation(String technologyV2Id, version) {
+        def versionV1 = null
+        def extraTechV1 = [:]
+        if(version?.options?.language_version) {
+            versionV1 = version.options.language_version
+        }
+
+        if(version?.options?.extra_language) {
+            extraTechV1.language = version.options.extra_language
+        }
+
+        if(version?.options?.extra_version) {
+            extraTechV1.version = version.options.extra_version
+        }
+
+
+        def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2Id)
+        def technologyV2Version = null
+        if(resultTechnologiesVersions) {
+            technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1)
+        }
+
+        return technologyV2Version
     }
 
     boolean testIfJobV1isValid(parsedV1job) {
@@ -1434,16 +1465,40 @@ class SaagieClient {
 
                         }
                         exportPipeline.setPipelineFromV1ApiResult(parsedV1PipelineResult)
+
+                        if(configuration.pipeline.include_all_versions) {
+                            def listInstancesPipelines = getAllInstancePipelineInformation(pipelineId)
+                           def mappedListInstancesPipelines = listInstancesPipelines.collect{ workflow ->
+                                getInstancePipelineDetail(workflow.workflowId as String, workflow.id as String)
+                            }
+                           mappedListInstancesPipelines.collect { workflow ->
+                                workflow.jobs = workflow.jobs.id
+                                return workflow
+                           }
+                            mappedListInstancesPipelines.forEach{
+                                exportPipeline.addPipelineVersionDTOtoVersions(it.jobs, null)
+                            }
+                           if(exportPipeline.versions.size() > 1) {
+                               exportPipeline.versions.unique()
+                               exportPipeline.versions.collect { workflow ->
+                                   workflow.jobs = workflow.jobs.collect{ job->
+                                       [id: job]
+                                   }
+                               }
+                           }
+
+                        }
                         exportPipeline.setPipelineVersionFromV1ApiResult(
                             parsedV1PipelineResult.jobs.collect{ job ->
                                 [id: job.id]
                             },
                             parsedV1PipelineResult.hasProperty("releaseNote") ? parsedV1PipelineResult.releaseNote : null
                         )
-
                    }
+
+                return exportPipeline
             }
-            return exportPipeline
+
 
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -1453,6 +1508,46 @@ class SaagieClient {
             logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
             throw exception
         }
+    }
+
+    ArrayList<?> getAllInstancePipelineInformation(String pipelineId) {
+        Request getPipelineInstancesV1Detail = saagieUtils.getPipelineInstancesRequestFromParamV1(pipelineId)
+        try {
+            getV1Client().newCall(getPipelineInstancesV1Detail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getPipelineInstancesV1Detail response $responseBody")
+                def parsedV1PipelineResult = slurper.parseText(responseBody)
+                def parsedV1PipelineResultContent = parsedV1PipelineResult.content
+                if(parsedV1PipelineResultContent && parsedV1PipelineResultContent.size() > 0) {
+                    logger.debug("getPipelineInstancesV1Detail body response $parsedV1PipelineResultContent")
+                    return parsedV1PipelineResultContent;
+                }else {
+                    return null
+                }
+            }
+        } catch (Exception exception) {
+            logger.error('Unknown error in getAllInstancePipelineInformation')
+            throw exception
+        }
+
+    }
+
+    def getInstancePipelineDetail(String pipelineId, String instanceId) {
+        Request getPipelineInstanceV1Detail = saagieUtils.getPipelineInstanceDetailRequestFromParamV1(pipelineId, instanceId)
+        try {
+            getV1Client().newCall(getPipelineInstanceV1Detail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getPipelineInstanceV1Detail response $responseBody")
+                def parsedV1PipelineResult = slurper.parseText(responseBody)
+                return parsedV1PipelineResult
+            }
+        } catch (Exception exception) {
+            logger.error('Unknown error in getAllInstancePipelineInformation')
+            throw exception
+        }
+
     }
 
     ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {

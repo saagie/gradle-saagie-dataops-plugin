@@ -8,6 +8,7 @@ class Job implements IMapable {
     String description
     String category
     String technology
+    Boolean include_all_versions
     Boolean isScheduled = false
     Boolean isStreaming = false
     String cronScheduling

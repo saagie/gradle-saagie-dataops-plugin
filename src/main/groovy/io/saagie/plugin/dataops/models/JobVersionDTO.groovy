@@ -1,15 +1,15 @@
 package io.saagie.plugin.dataops.models
-
-import io.saagie.plugin.dataops.utils.SaagieUtils
 import org.gradle.api.GradleException
+import org.jetbrains.annotations.NotNull
 
-class JobVersionDTO implements IExists{
+class JobVersionDTO implements IExists, Comparable{
     String commandLine
     DockerInfos dockerInfo = new DockerInfos()
     String runtimeVersion
     String releaseNote
     ExtraTechnology extraTechnology
     PackageInfo packageInfo = new PackageInfo()
+    String number
 
     @Override
     boolean exists() {
@@ -40,7 +40,7 @@ class JobVersionDTO implements IExists{
 
     }
 
-    void setJobVersionFromV1ApiResult(versionV1, technologyV2container, current) {
+    void setJobVersionFromV1ApiResult(technologyV2container, current) {
         if(!technologyV2container.version2){
             throw new GradleException("technologyV2container doesn't contain critical data information")
         }
@@ -67,6 +67,10 @@ class JobVersionDTO implements IExists{
             packageInfo.name = current.file
         }
 
+        if(current.number) {
+            number = current.number
+        }
+
         if(runtimeTechnologyVersion) {
             runtimeVersion = runtimeTechnologyVersion
         }
@@ -76,5 +80,13 @@ class JobVersionDTO implements IExists{
         }
     }
 
+    @Override
+    int compareTo(@NotNull Object o) {
 
+        commandLine <=> o.commandLine?:
+            releaseNote <=> o.releaseNote?:
+                !o.dockerInfo.equals(dockerInfo) ? 1:
+                    !o.extraTechnology.equals(extraTechnology) ? 1:
+                        !o.packageInfo.equals(packageInfo) ? 1 : 0
+    }
 }

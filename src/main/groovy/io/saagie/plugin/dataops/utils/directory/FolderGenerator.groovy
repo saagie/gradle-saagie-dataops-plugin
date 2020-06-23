@@ -4,6 +4,8 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJobs
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
+import io.saagie.plugin.dataops.models.JobVersionDTO
+import io.saagie.plugin.dataops.models.PipelineVersionDTO
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import org.gradle.api.GradleException
@@ -60,31 +62,8 @@ class FolderGenerator {
                     cronScheduling: exportJob.jobDTO.cronScheduling,
                 ]
 
-                Map jobVersionDetailJsonObject = [:]
-
-                if(exportJob.jobVersionDTO.commandLine) {
-                    jobVersionDetailJsonObject << [*: [
-                        commandLine: exportJob.jobVersionDTO.commandLine,
-                    ]]
-                }
-
                 if (
-                    exportJob.jobVersionDTO.dockerInfo &&
-                    exportJob.jobVersionDTO.dockerInfo.image
-                ) {
-                    jobVersionDetailJsonObject << [*: [
-                        dockerInfo: exportJob.jobVersionDTO.dockerInfo,
-                    ]]
-                }
-
-                if(exportJob.jobVersionDTO.runtimeVersion) {
-                    jobVersionDetailJsonObject << [*: [
-                        runtimeVersion:  exportJob.jobVersionDTO.runtimeVersion
-                    ]]
-                }
-
-                if (
-                    exportJob.jobDTO.alerting &&
+                exportJob.jobDTO.alerting &&
                     exportJob.jobDTO.alerting.emails &&
                     exportJob.jobDTO.alerting.emails.size() > 0) {
                     jobDetailObject << [*: [
@@ -98,70 +77,139 @@ class FolderGenerator {
                     ]]
                 }
 
-                if(
-                    exportJob.jobVersionDTO.packageInfo &&
-                    exportJob.jobVersionDTO.packageInfo.name &&
-                    exportJob.downloadUrl
-                ) {
-                    jobVersionDetailJsonObject << [ * : [
-                        packageInfo: [
-                            downloadUrl: exportJob.downloadUrl,
-                            name: exportJob.jobVersionDTO.packageInfo.name,
-                        ]
-                    ]]
-                }
-
-                if(
-                exportJob.jobVersionDTO.extraTechnology &&
-                    exportJob.jobVersionDTO.extraTechnology.language
-                ) {
-                    jobVersionDetailJsonObject << [ * : [
-                        extraTechnology: exportJob.jobVersionDTO.extraTechnology
-                    ]]
-                }
-
-
-
+                def jobVersionDetailJsonObject = generateJobVersion(exportJob.jobVersionDTO, exportJob.downloadUrl)
                 Map jobJsonObject = [
                     job: jobDetailObject,
                     jobVersion: jobVersionDetailJsonObject
                 ]
+
+                if (exportJob.versions) {
+                    jobJsonObject << [*: [
+                        versions: generateFromVersions(exportJob.versions)
+                    ]]
+                }
                 def builder = new JsonBuilder(jobJsonObject).toPrettyString()
                 File jobFile = new File("${urlJobIdFolder}${sl}job.json")
                 jobFile.write(builder)
-                if(exportJob.downloadUrl && exportJob.downloadUrlVersion){
-                    try {
-                        File localPackage = new File("${urlJobIdFolder}${sl}package")
-                        localPackage.mkdirs()
-                        String urlToDownload = ""
-                        String packageUrl = "${urlJobIdFolder}${sl}package";
-
-                        if(exportJob.isV1) {
-                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/manager/api/v1/platform/${environment}/job/${jobId}/version/${exportJob.downloadUrlVersion}/binary"
-                        } else {
-                            urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
-                                "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
-                                projectId +
-                                "${sl}job${sl}"+
-                                jobId +
-                                "${sl}version${sl}${exportJob.downloadUrlVersion}${sl}artifact${sl}"+
-                                SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
-                        }
-                        saagieUtils.downloadFromHTTPSServer(
-                            urlToDownload,
-                            packageUrl,
-                            client,
-                            SaagieUtils.getFileNameFromUrl(exportJob.downloadUrl)
+                if(exportJob.versions && exportJob.versions.size() > 0) {
+                    exportJob.versions.each {
+                        downloadArtifact(
+                            urlJobIdFolder,
+                            it.number,
+                            jobId,
+                            it.packageInfo?.name,
+                            it.number as String
                         )
-                     } catch (IOException e) {
-                        throw new GradleException(e.message)
                     }
+                }
+
+                if(exportJob.downloadUrl && exportJob.downloadUrlVersion){
+                    downloadArtifact(
+                        urlJobIdFolder,
+                        exportJob.downloadUrlVersion,
+                        jobId,
+                        exportJob.downloadUrl
+                    )
                 }
 
             } else {
                 throw new GradleException("Cannot create directories for the job")
             }
         }
+    }
+
+    ArrayList generateFromVersions(ArrayList<JobVersionDTO> versions) {
+        versions.collect {
+            generateJobVersion(it, null)
+        }
+        return versions
+    }
+
+    void downloadArtifact(
+        urlJobIdFolder,
+        downloadUrlVersion,
+        jobId,
+        downloadUrl,
+        String extraFolder = '',
+        isV1 = false){
+        try {
+            def urlFileOflocalPackage = "${urlJobIdFolder}${sl}package"
+            if(extraFolder && extraFolder.length() > 0) {
+                urlFileOflocalPackage+="${sl}${extraFolder}"
+            }
+            File localPackage = new File(urlFileOflocalPackage)
+            localPackage.mkdirs()
+            String urlToDownload = ""
+
+            if(isV1) {
+                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +"/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
+            } else {
+                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+                    "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}"+
+                    projectId +
+                    "${sl}job${sl}"+
+                    jobId +
+                    "${sl}version${sl}${downloadUrlVersion}${sl}artifact${sl}"+
+                    SaagieUtils.getFileNameFromUrl(downloadUrl)
+            }
+            saagieUtils.downloadFromHTTPSServer(
+                urlToDownload,
+                urlFileOflocalPackage,
+                client,
+                SaagieUtils.getFileNameFromUrl(downloadUrl)
+            )
+        } catch (IOException e) {
+            throw new GradleException(e.message)
+        }
+    }
+
+    static Map generateJobVersion(JobVersionDTO jobVersionDTO, String downloadUrl) {
+        Map jobVersionDetailJsonObject = [:]
+
+        if(jobVersionDTO.commandLine) {
+            jobVersionDetailJsonObject << [*: [
+                commandLine: jobVersionDTO.commandLine,
+            ]]
+        }
+
+        if (
+        jobVersionDTO.dockerInfo &&
+            jobVersionDTO.dockerInfo.image
+        ) {
+            jobVersionDetailJsonObject << [*: [
+                dockerInfo: jobVersionDTO.dockerInfo,
+            ]]
+        }
+
+        if(jobVersionDTO.runtimeVersion) {
+            jobVersionDetailJsonObject << [*: [
+                runtimeVersion:  jobVersionDTO.runtimeVersion
+            ]]
+        }
+
+        if(
+        jobVersionDTO.packageInfo &&
+            jobVersionDTO.packageInfo.name && jobVersionDTO.number || downloadUrl
+        ) {
+            jobVersionDetailJsonObject << [ * : [
+                packageInfo: [
+                    downloadUrl: downloadUrl,
+                    name: jobVersionDTO.packageInfo.name,
+                ]
+            ]]
+        }
+
+        if(
+        jobVersionDTO.extraTechnology &&
+            jobVersionDTO.extraTechnology.language
+        ) {
+            jobVersionDetailJsonObject << [ * : [
+                extraTechnology: jobVersionDTO.extraTechnology
+            ]]
+        }
+
+        return jobVersionDetailJsonObject
+
     }
 
     void generateFolderForPipeline(ExportPipeline exportPipeline) {
@@ -181,30 +229,12 @@ class FolderGenerator {
         if(exportPipeline.exists()) {
             def createFolderForPipeLine = folder.mkdirs()
             if(createFolderForPipeLine && jobList) {
-                def jobForPipeVersionArray = []
-                if(exportPipeline && exportPipeline.pipelineVersionDTO && exportPipeline.pipelineVersionDTO.jobs) {
-                    jobList.each { job ->
-                        exportPipeline.pipelineVersionDTO?.jobs?.each { jobId ->
-                            def element = null
 
-                            if(jobId && job &&  jobId.id == job.id){
-                                jobForPipeVersionArray.add([
-                                    id : job.id,
-                                    name: job.name
-                                ])
-                            }
-                        }
-                    }
-                }
                 Map pipelineDetailJson = [
                     name : exportPipeline.pipelineDTO?.name,
                     description : exportPipeline.pipelineDTO?.description,
                     isScheduled : exportPipeline.pipelineDTO?.isScheduled,
                     cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
-                ]
-
-                Map pipelineVersionDetailJson = [
-                    jobs: jobForPipeVersionArray
                 ]
 
                 if ( exportPipeline.pipelineDTO?.description ) {
@@ -222,31 +252,60 @@ class FolderGenerator {
                     ]]
                 }
 
-                if(
-                    exportPipeline.pipelineVersionDTO?.releaseNote
-                ) {
-                    pipelineVersionDetailJson << [ * : [
-                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
-                    ]]
-                }
+                def pipelineVersionDetailJson = generatePipelineVersion(exportPipeline.pipelineVersionDTO)
 
-                if(
-                    exportPipeline.pipelineVersionDTO?.releaseNote
-                ) {
-                    pipelineVersionDetailJson << [ * : [
-                        releaseNote: exportPipeline.pipelineVersionDTO?.releaseNote
-                    ]]
-                }
-                def builder = new JsonBuilder([
+                def pipelineBody = [
                     pipeline: pipelineDetailJson,
                     pipelineVersion: pipelineVersionDetailJson
-                ]).toPrettyString()
+                ]
+                if (exportPipeline.versions) {
+                    pipelineBody << [*: [
+                        versions: generateFromPipelineVersions(exportPipeline.versions)
+                    ]]
+                }
+                def builder = new JsonBuilder(pipelineBody).toPrettyString()
                 File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")
                 jobFile.write(builder)
             } else {
                 throw new GradleException("Cannot create directories for the pipeline")
             }
         }
+    }
+
+    ArrayList generateFromPipelineVersions(versions) {
+        versions.collect {
+            generatePipelineVersion(it)
+        }
+        return versions
+    }
+
+    ArrayList generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
+        def jobForPipeVersionArray = []
+        if(pipelineVersionDTO && pipelineVersionDTO.jobs) {
+            jobList.each { job ->
+                pipelineVersionDTO?.jobs?.each { jobId ->
+                    if(jobId && job &&  jobId.id == job.id){
+                        jobForPipeVersionArray.add([
+                            id : job.id,
+                            name: job.name
+                        ])
+                    }
+                }
+            }
+        }
+
+        Map pipelineVersionDetailJson = [
+            jobs: jobForPipeVersionArray
+        ]
+
+        if(
+        pipelineVersionDTO?.releaseNote
+        ) {
+            pipelineVersionDetailJson << [ * : [
+                releaseNote: pipelineVersionDTO?.releaseNote
+            ]]
+        }
+        return jobForPipeVersionArray
     }
 
     void generateFolderFromParams() {
