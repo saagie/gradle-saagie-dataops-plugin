@@ -1280,7 +1280,7 @@ class SaagieUtils {
     }
 
     static String getFileNameFromUrl(String url) {
-        return url.substring( url.lastIndexOf('/')+1, url.length() );
+        return url ? url.substring( url.lastIndexOf('/')+1, url.length() ) : null;
     }
 
     static removeLastSlash(String url ){
