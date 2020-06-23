@@ -3,16 +3,13 @@ package io.saagie.plugin.tasks.artifacts
 import io.saagie.plugin.DataOpsGradleTaskSpecification
 import io.saagie.plugin.dataops.DataOpsModule
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 import spock.lang.Title
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-@Title('ArtifactsExportTaskTests task tests')
+@Title('ArtifactsExportTamaturskTests task tests')
 class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB_V1
-
 
     def "the task should export jobs and piplines with artifacts"() {
         given:

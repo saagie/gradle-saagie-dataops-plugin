@@ -1,6 +1,9 @@
 package io.saagie.plugin.dataops.models
 
-class PipelineVersionDTO  implements IExists{
+import io.saagie.plugin.dataops.utils.SaagieUtils
+import org.jetbrains.annotations.NotNull
+
+class PipelineVersionDTO  implements IExists, Comparable{
     String releaseNote
     def jobs =[]
 
@@ -21,5 +24,12 @@ class PipelineVersionDTO  implements IExists{
     def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
         jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id]}
+    }
+
+    @Override
+    int compareTo(@NotNull Object o) {
+        def diffJobs = SaagieUtils.getDifferenceOfTwoArrays(jobs, o.jobs)
+        return diffJobs.size() > 0 ? 1 : releaseNote <=> o.releaseNote
+
     }
 }

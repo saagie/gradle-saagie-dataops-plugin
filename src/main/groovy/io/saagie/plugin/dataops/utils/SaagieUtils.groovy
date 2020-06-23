@@ -13,6 +13,7 @@ import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.tasks.projects.enums.UnitTime
 import okhttp3.Credentials
+import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -251,6 +252,39 @@ class SaagieUtils {
 
         Request newRequest = new Request.Builder()
             .url("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}")
+            .get()
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    static ArrayList getDifferenceOfTwoArrays(ArrayList collection1, ArrayList collection2) {
+        return ((collection1 - collection2) + (collection2 - collection1))
+    }
+
+    Request getPipelineInstancesRequestFromParamV1(String pipelineId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get pipeline detail from V1')
+
+        HttpUrl.Builder httpBuilder = HttpUrl.parse("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}/instance").newBuilder();
+        httpBuilder.addQueryParameter("page", "1");
+        httpBuilder.addQueryParameter("size", "10");
+
+        Request newRequest = new Request.Builder()
+            .url(httpBuilder.build())
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    Request getPipelineInstanceDetailRequestFromParamV1(String pipelineId, String instanceId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get pipeline detail from V1')
+
+        Request newRequest = new Request.Builder()
+            .url("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}/instance/${instanceId}")
             .get()
             .build()
 

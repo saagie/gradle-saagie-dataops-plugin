@@ -7,7 +7,7 @@ class ExportPipeline implements IExists{
 
     PipelineDTO pipelineDTO = new PipelineDTO()
     PipelineVersionDTO pipelineVersionDTO  = new PipelineVersionDTO()
-
+    ArrayList<PipelineVersionDTO> versions = new ArrayList<PipelineVersionDTO>()
     @Override
     boolean exists() {
         return pipelineDTO.exists() || pipelineVersionDTO.exists()
@@ -27,5 +27,11 @@ class ExportPipeline implements IExists{
 
     void setPipelineVersionFromApiResult(version){
         pipelineVersionDTO.setPipelineVersionFromApiResult(version)
+    }
+
+    void addPipelineVersionDTOtoVersions(jobs, releaseNote) {
+        PipelineVersionDTO pipelineVersionDTO = new PipelineVersionDTO()
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote)
+        versions.add(pipelineVersionDTO)
     }
 }
