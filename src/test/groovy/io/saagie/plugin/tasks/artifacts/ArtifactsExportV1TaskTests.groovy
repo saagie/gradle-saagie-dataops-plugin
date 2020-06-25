@@ -13,45 +13,6 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
     @Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB_V1
 
-    def "the task should export jobs"() {
-        given:
-
-        buildFile << """
-           saagie {
-                server {
-                    url = 'https://saagie-workspace.prod.saagie.io'
-                    login = 'mohamed.amin.ziraoui'
-                    password = '1!@#qweASD'
-                    environment = 4
-                    jwt = true
-                    acceptSelfSigned = true
-                }
-
-                job {
-                   ids = ['6512']
-                   include_all_versions=true
-                }
-
-                pipeline {
-                   ids = ['486']
-                   include_job = true
-                   include_all_versions=true
-                }
-
-                exportArtifacts {
-                  export_file = "/home/amine/Desktop/test_gradle/export.zip"
-                  overwrite=true
-                }
-           }
-        """
-
-        when:
-        BuildResult result = gradle(taskName, "-d")
-        then:
-        notThrown(Exception)
-        assert true == true
-    }
-
     def "the task should export jobs and piplines with artifacts"() {
         given:
 
