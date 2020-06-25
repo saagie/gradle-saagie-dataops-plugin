@@ -19,28 +19,18 @@ import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
 import io.saagie.plugin.dataops.utils.directory.ZippingFolder
-import okhttp3.Authenticator
-import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.Route
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy
-import org.apache.http.ssl.SSLContexts
-
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
 import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
-import java.security.cert.CertificateException
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
+
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -123,7 +113,7 @@ class SaagieClient {
     String getProjects() {
         logger.info('Starting getProject task')
         Request projectsRequest = saagieUtils.getProjectsRequest();
-        try {
+        tryCatchClosure({
             client.newCall(projectsRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -137,14 +127,7 @@ class SaagieClient {
                     return JsonOutput.toJson(projects)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getProjects')
-            throw exception
-        }
+        }, 'Unknown error in getProjects')
     }
 
     String getProjectJobs() {
@@ -154,7 +137,7 @@ class SaagieClient {
         logger.debug('Using config [project={}]', configuration.project)
 
         Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectJobsRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -168,14 +151,7 @@ class SaagieClient {
                     return JsonOutput.toJson(jobs)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getProjectJobs')
-            throw exception
-        }
+        }, 'Unknown error in getProjectJobs')
     }
 
     String getProjectTechnologies() {
@@ -185,7 +161,7 @@ class SaagieClient {
         logger.debug('Using config [project={}]', configuration.project)
 
         Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectTechnologiesRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -206,14 +182,7 @@ class SaagieClient {
                     return JsonOutput.toJson(uniqueTechnologies)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getProjectTechnologies')
-            throw exception
-        }
+        }, 'Unknown error in getProjectTechnologies')
     }
 
     @Deprecated
@@ -238,7 +207,7 @@ class SaagieClient {
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -255,14 +224,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdJob)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in createProjectJob')
-            throw exception
-        }
+        }, 'Unknown error in createProjectJob')
     }
 
     void uploadIfJobHavePackage (jobId) {
@@ -310,7 +272,7 @@ class SaagieClient {
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
-        try {
+        tryCatchClosure({
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -325,14 +287,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdJob)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in createProjectJob')
-            throw exception
-        }
+        }, 'Unknown error in createProjectJob')
     }
 
     String runProjectJob() {
@@ -342,7 +297,7 @@ class SaagieClient {
         logger.debug('Using config [job={}]', configuration.job)
 
         Request runProjectJobRequest = saagieUtils.getRunProjectJobRequest()
-        try {
+        tryCatchClosure({
             client.newCall(runProjectJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -356,14 +311,7 @@ class SaagieClient {
                     return JsonOutput.toJson(runningJob)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in runProjectJob')
-            throw exception
-        }
+        }, 'Unknown error in runProjectJob')
     }
 
     @Deprecated
@@ -374,7 +322,7 @@ class SaagieClient {
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
 
         Request projectUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectUpdateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -408,14 +356,7 @@ class SaagieClient {
                     return JsonOutput.toJson(updatedJob)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in updateProjectJob')
-            throw exception
-        }
+        }, 'Unknown error in updateProjectJob')
     }
 
     String upgradeProjectJobWithGraphQL() {
@@ -475,7 +416,7 @@ class SaagieClient {
                 (configuration?.jobVersion?.exists() && !configuration?.jobVersion?.runtimeVersion)
         )
         String returnData = null
-        try {
+        tryCatchClosure({
             client.newCall(request).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -489,15 +430,9 @@ class SaagieClient {
                     returnData = JsonOutput.toJson(updatedJob)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in updateProjectJob')
-            throw exception
-        }
-        return returnData
+            return returnData
+        }, 'Unknown error in updateProjectJob')
+
     }
 
 
@@ -558,7 +493,7 @@ class SaagieClient {
         logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, configuration.pipeline, configuration.pipelineVersion)
 
         Request createPipelineRequest = saagieUtils.getCreatePipelineRequest()
-        try {
+        tryCatchClosure({
             client.newCall(createPipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -572,14 +507,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdPipeline)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in createPipeline')
-            throw exception
-        }
+        }, 'Unknown error in createPipeline')
     }
 
     String getJobInstanceStatus() {
@@ -589,7 +517,7 @@ class SaagieClient {
         logger.debug('Using config [project={}, jobInstance={}]', configuration.project, configuration.jobinstance)
 
         Request projectJobInstanceStatusRequest = saagieUtils.getProjectJobInstanceStatusRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectJobInstanceStatusRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -603,14 +531,7 @@ class SaagieClient {
                     return JsonOutput.toJson(jobInstanceStatus)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getJobInstanceStatus')
-            throw exception
-        }
+        }, 'Unknown error in getJobInstanceStatus')
     }
 
     String updateProjectPipeline() {
@@ -632,7 +553,7 @@ class SaagieClient {
     private updatePipelineInfos() {
         logger.debug('Using config [pipeline={}]', configuration.pipeline)
         Request projectUpdatePipelineRequest = saagieUtils.getProjectUpdatePipelineRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectUpdatePipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -647,20 +568,13 @@ class SaagieClient {
                     return JsonOutput.toJson(updatedPipeline)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in updateProjectPipeline')
-            throw exception
-        }
+        }, 'Unknown error in updateProjectPipeline')
     }
 
     private updatePipelineVersion() {
         logger.debug('Using config [pipelineVersion={}]', configuration.pipelineVersion)
         Request updatePipelineVersionRequest = saagieUtils.getAddPipelineVersionRequest()
-        try {
+        tryCatchClosure({
             client.newCall(updatePipelineVersionRequest).execute().withCloseable { updateResponse ->
                 handleErrors(updateResponse)
                 String updateResponseBody = updateResponse.body().string()
@@ -674,14 +588,7 @@ class SaagieClient {
                     logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in updateProjectPipeline')
-            throw exception
-        }
+        }, 'Unknown error in updateProjectPipeline')
     }
 
     String getPipelineInstanceStatus() {
@@ -690,7 +597,7 @@ class SaagieClient {
 
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
         Request projectPipelineInstanceStatusRequest = saagieUtils.getProjectPipelineInstanceStatusRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectPipelineInstanceStatusRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -704,14 +611,7 @@ class SaagieClient {
                     return JsonOutput.toJson(pipelineInstanceStatus)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getPipelineInstanceStatus')
-            throw exception
-        }
+        }, 'Unknown error in getPipelineInstanceStatus')
     }
 
     String runProjectPipeline() {
@@ -757,11 +657,6 @@ class SaagieClient {
                 logger.error(message)
                 throw new GradleException(message)
             }
-
-
-
-
-
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -779,7 +674,7 @@ class SaagieClient {
         logger.debug('Using config [job={}]', configuration.job)
 
         Request stopJobInstanceRequest = saagieUtils.getStopJobInstanceRequest()
-        try {
+        tryCatchClosure({
             client.newCall(stopJobInstanceRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -794,14 +689,7 @@ class SaagieClient {
                     return JsonOutput.toJson(stoppedJobInstance)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in stopJobInstance')
-            throw exception
-        }
+        }, 'Unknown error in stopJobInstance')
     }
 
     String deleteProjectPipeline() {
@@ -811,7 +699,7 @@ class SaagieClient {
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
         Request projectDeletePipelineRequest = saagieUtils.getProjectDeletePipelineRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectDeletePipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -826,14 +714,7 @@ class SaagieClient {
                     return JsonOutput.toJson(deletedPipeline)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in deleteProjectPipeline')
-            throw exception
-        }
+        }, 'Unknown error in deleteProjectPipeline')
     }
 
     String deleteProject() {
@@ -846,7 +727,7 @@ class SaagieClient {
         logger.debug('Using config [projectId={}]', configuration.project.id)
 
         Request projectDeleteRequest = saagieUtils.archiveProjectRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectDeleteRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -861,14 +742,7 @@ class SaagieClient {
                     return JsonOutput.toJson(deletedProject)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in deleteProject')
-            throw exception
-        }
+        }, 'Unknown error in deleteProject')
     }
 
     String deleteProjectJob() {
@@ -878,7 +752,7 @@ class SaagieClient {
         logger.debug('Using config [jobId={}]', configuration.job.id)
 
         Request projectArchiveJobRequest = saagieUtils.getProjectArchiveJobRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectArchiveJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -893,14 +767,7 @@ class SaagieClient {
                     return JsonOutput.toJson(archiveJobResult)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in deleteProjectJob')
-            throw exception
-        }
+        }, 'Unknown error in deleteProjectJob');
     }
 
     String stopPipelineInstance() {
@@ -910,7 +777,7 @@ class SaagieClient {
         logger.debug('Using config [pipelineInstanceId={}]', configuration.pipelineinstance.id)
 
         Request projectStopPipelineInstanceRequest = saagieUtils.getProjectStopPipelineInstanceRequest()
-        try {
+        tryCatchClosure({
             client.newCall(projectStopPipelineInstanceRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -925,14 +792,7 @@ class SaagieClient {
                     return JsonOutput.toJson(stoppedPipeline)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in stopPipelineInstance')
-            throw exception
-        }
+        }, 'Unknown error in stopPipelineInstance')
     }
 
     String listPlatforms() {
@@ -942,9 +802,8 @@ class SaagieClient {
             !configuration.server?.jwt ||
                 !configuration.server?.realm
         )
-
         Request platformListRequest = saagieUtils.getPlatformListRequest()
-        try {
+        tryCatchClosure({
             client.newCall(platformListRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -958,14 +817,7 @@ class SaagieClient {
                     return JsonOutput.toJson(platformListResult)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in listPlatforms')
-            throw exception
-        }
+        }, 'Unknown error in listPlatforms')
     }
 
     String listAllPipelines() {
@@ -973,7 +825,7 @@ class SaagieClient {
         checkRequiredConfig(!configuration?.project?.id)
 
         Request platformListRequest = saagieUtils.getListAllPipelinesRequest()
-        try {
+        tryCatchClosure({
             client.newCall(platformListRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -987,21 +839,14 @@ class SaagieClient {
                     return JsonOutput.toJson(pipelineList)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in listAllPipelines')
-            throw exception
-        }
+        }, 'Unknown error in listAllPipelines')
     }
 
     String listTechnologies() {
         logger.info('Starting technologyList task')
 
         Request technologyListRequest = saagieUtils.getListAllTechnologiesRequest()
-        try {
+        tryCatchClosure({
             client.newCall(technologyListRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1015,14 +860,7 @@ class SaagieClient {
                     return JsonOutput.toJson(technologyList)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in listTechnologies')
-            throw exception
-        }
+        }, 'Unknown error in listTechnologies')
     }
 
     String listGroups() {
@@ -1034,7 +872,7 @@ class SaagieClient {
         )
 
         Request groupListRequest = saagieUtils.getGroupListRequest()
-        try {
+        tryCatchClosure({
             client.newCall(groupListRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1048,23 +886,15 @@ class SaagieClient {
                     return JsonOutput.toJson(groupListResult)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in groupList')
-            throw exception
-        }
+        }, 'Unknown error in groupList')
     }
 
     String createProject() {
         logger.info('Starting projectsCreate task')
 
         checkRequiredConfig(!configuration?.project?.name)
-
-        Request projectsCreateRequest = saagieUtils.getProjectsCreateRequest()
-        try {
+        tryCatchClosure({
+            Request projectsCreateRequest = saagieUtils.getProjectsCreateRequest()
             client.newCall(projectsCreateRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1078,14 +908,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdProjectResult)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in projectsCreate')
-            throw exception
-        }
+        }, 'Unknown error in projectsCreate')
     }
 
     String exportArtifactsV1() {
@@ -1147,7 +970,7 @@ class SaagieClient {
             exportContainer.overwrite
         ]
 
-        try {
+        tryCatchClosure({
             def listJobs = null
             if(isV1) {
                 listJobs = listJobWithNameAndIdV1
@@ -1163,20 +986,11 @@ class SaagieClient {
             zippingFolder.generateZip(tempJobDirectory)
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
-
             return JsonOutput.toJson([
                 status    : "success",
                 exportfile: exportContainer.exportConfigPath
             ])
-
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
-            throw exception
-        }
+        }, 'Unknown error in export method')
     }
 
     def getProjectJobsByNameAndId() {
@@ -1229,10 +1043,9 @@ class SaagieClient {
             !configuration?.job?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
-
-        Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
-        ExportJobs exportJob = new ExportJobs()
-        try {
+        tryCatchClosure({
+            Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
+            ExportJobs exportJob = new ExportJobs()
             client.newCall(getJobDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1265,14 +1078,7 @@ class SaagieClient {
                 }
             }
             return exportJob
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
-            throw exception
-        }
+        },'Unknown error in getJobAndJobVersionDetailToExport') as ExportJobs
     }
 
     ExportJobs getJobAndJobVersionDetailToExportV1(String jobId, listJobsByNameAndIds) {
@@ -1285,7 +1091,7 @@ class SaagieClient {
         Request getJobDetailV1 = saagieUtils.getJobDetailRequestFromParamV1 jobId
         ExportJobs exportJob = new ExportJobs()
         exportJob.isV1 = true
-        try {
+        tryCatchClosure({
             getV1Client().newCall(getJobDetailV1).execute().withCloseable { response ->
                 handleErrors response
                 String responseBody = response.body().string()
@@ -1333,7 +1139,7 @@ class SaagieClient {
                     technologyV2,
                     formatedCronFromSchedule
                 )
-                def technologyV2Version = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
+                def technologyV2Version = getTechnologyV2MappedInformation(technologyV2.id as String, parsedV1job?.current)
 
                 exportJob.setJobVersionFromV1ApiResult(
                     getRunTimeVersionMapper(technologyV2Version, technologyV2) ,
@@ -1350,7 +1156,7 @@ class SaagieClient {
                     }
 
                     versions.each{ version ->
-                        def technologyV2VersionForVersions = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
+                        def technologyV2VersionForVersions = getTechnologyV2MappedInformation(technologyV2.id as String, parsedV1job?.current)
                         exportJob.addJobVersionFromV1ApiResult(
                             getRunTimeVersionMapper(technologyV2VersionForVersions, technologyV2),
                             version)
@@ -1366,14 +1172,7 @@ class SaagieClient {
             }
 
             return exportJob
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
-            throw exception
-        }
+        }, 'Unknown error in getJobAndJobVersionDetailToExport') as ExportJobs
     }
 
     static Map getRunTimeVersionMapper(technologyV2Version, technologyV2) {
@@ -1429,85 +1228,77 @@ class SaagieClient {
             !configuration?.pipeline?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
-
-        Request getPipelineDetailV1 = saagieUtils.getPipelineRequestFromParamV1(pipelineId)
-        def pipeline = configuration.pipeline
-        ExportPipeline exportPipeline = new ExportPipeline()
-        try {
+        tryCatchClosure({
+            Request getPipelineDetailV1 = saagieUtils.getPipelineRequestFromParamV1(pipelineId)
+            def pipeline = configuration.pipeline
+            ExportPipeline exportPipeline = new ExportPipeline()
             getV1Client().newCall(getPipelineDetailV1).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 logger.debug("getPipelineDetailV1 response $responseBody")
                 def parsedV1PipelineResult = slurper.parseText(responseBody)
                 def pipelineName= parsedV1PipelineResult.name
-                    if (pipelineName) {
-                        if(parsedV1PipelineResult.jobs  instanceof Collection && parsedV1PipelineResult.jobs.size() > 0) {
-                            parsedV1PipelineResult.jobs.each { element ->
-                                testIfJobV1isValid(element)
-                            }
-                        } else {
-                            throwAndLogError("Jobs list must be a not empty ArrayList")
+                if (pipelineName) {
+                    if(parsedV1PipelineResult.jobs  instanceof Collection && parsedV1PipelineResult.jobs.size() > 0) {
+                        parsedV1PipelineResult.jobs.each { element ->
+                            testIfJobV1isValid(element)
+                        }
+                    } else {
+                        throwAndLogError("Jobs list must be a not empty ArrayList")
+                    }
+
+                    listJobsWithNameAndIdFromV1.addAll(parsedV1PipelineResult.jobs.collect { job ->
+                        [
+                            id: job.id,
+                            name: job.name
+                        ]
+                    })
+
+                    if (pipeline.include_job) {
+                        if(!listJobsWithNameAndIdFromV1 instanceof ArrayList){
+                            throwAndLogError("listJobsByNameAndIdFromV1 must be a list of type ArrayList")
+                        }
+                        configuration.job.ids.addAll(listJobsWithNameAndIdFromV1.collect { job -> job.id })
+                    }
+
+                    exportPipeline.setPipelineFromV1ApiResult(parsedV1PipelineResult)
+
+                    if(configuration.pipeline.include_all_versions) {
+                        def listInstancesPipelines = getAllInstancePipelineInformation(pipelineId)
+                        def mappedListInstancesPipelines = listInstancesPipelines.collect { workflow ->
+                            getInstancePipelineDetail(workflow.workflowId as String, workflow.id as String)
                         }
 
-                        listJobsWithNameAndIdFromV1.addAll(parsedV1PipelineResult.jobs.collect { job ->
-                            [
-                                id: job.id,
-                                name: job.name
-                            ]
-                        })
-
-                        if (pipeline.include_job) {
-                            if(!listJobsWithNameAndIdFromV1 instanceof ArrayList){
-                                throwAndLogError("listJobsByNameAndIdFromV1 must be a list of type ArrayList")
-                            }
-
-                            configuration.job.ids.addAll(listJobsWithNameAndIdFromV1.collect { job -> job.id})
-
+                        mappedListInstancesPipelines.collect { workflow ->
+                            workflow.jobs = workflow.jobs.id
+                            return workflow
                         }
-                        exportPipeline.setPipelineFromV1ApiResult(parsedV1PipelineResult)
 
-                        if(configuration.pipeline.include_all_versions) {
-                            def listInstancesPipelines = getAllInstancePipelineInformation(pipelineId)
-                           def mappedListInstancesPipelines = listInstancesPipelines.collect{ workflow ->
-                                getInstancePipelineDetail(workflow.workflowId as String, workflow.id as String)
-                            }
-                           mappedListInstancesPipelines.collect { workflow ->
-                                workflow.jobs = workflow.jobs.id
-                                return workflow
-                           }
-                            mappedListInstancesPipelines.forEach{
-                                exportPipeline.addPipelineVersionDTOtoVersions(it.jobs, null)
-                            }
-                           if(exportPipeline.versions.size() > 1) {
-                               exportPipeline.versions.unique()
-                               exportPipeline.versions.collect { workflow ->
-                                   workflow.jobs = workflow.jobs.collect{ job->
-                                       [id: job]
-                                   }
-                               }
-                           }
-
+                        mappedListInstancesPipelines.forEach {
+                            exportPipeline.addPipelineVersionDTOtoVersions(it.jobs, null)
                         }
-                        exportPipeline.setPipelineVersionFromV1ApiResult(
-                            parsedV1PipelineResult.jobs.collect{ job ->
-                                [id: job.id]
-                            },
-                            parsedV1PipelineResult.hasProperty("releaseNote") ? parsedV1PipelineResult.releaseNote : null
-                        )
-                   }
+
+                        if(exportPipeline.versions.size() > 1) {
+                            exportPipeline.versions.unique()
+                            exportPipeline.versions.collect { workflow ->
+                                workflow.jobs = workflow.jobs.collect{ job ->
+                                    [id: job]
+                                }
+                            }
+                        }
+                    }
+
+                    exportPipeline.setPipelineVersionFromV1ApiResult(
+                        parsedV1PipelineResult.jobs.collect{ job ->
+                            [id: job.id]
+                        },
+                        parsedV1PipelineResult.hasProperty("releaseNote") ? parsedV1PipelineResult.releaseNote : null
+                    )
+                }
 
                 return exportPipeline
             }
-
-
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
-            throw exception
-        }
+        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport') as ExportPipeline
     }
 
     ArrayList<?> getAllInstancePipelineInformation(String pipelineId) {
@@ -1559,8 +1350,8 @@ class SaagieClient {
 
         Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
         def pipeline = configuration.pipeline
-        ExportPipeline exportPipeline = new ExportPipeline()
-        try {
+        tryCatchClosure({
+            ExportPipeline exportPipeline = new ExportPipeline()
             client.newCall(getPipelineDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1594,15 +1385,7 @@ class SaagieClient {
                 }
             }
             return exportPipeline
-
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
-            throw exception
-        }
+        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport') as ExportPipeline
     }
 
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
@@ -1654,9 +1437,8 @@ class SaagieClient {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.id
         )
-
-        Request getJobDetail = saagieUtils.getJobDetailRequest()
-        try {
+        tryCatchClosure({
+            Request getJobDetail = saagieUtils.getJobDetailRequest()
             client.newCall(getJobDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1670,23 +1452,16 @@ class SaagieClient {
                     return JsonOutput.toJson(jobDetailResult)
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in projectsCreate')
-            throw exception
-        }
+        }, 'Unknown error in projectsCreate');
+
     }
 
     String updateProject() {
         logger.info('Starting projectsUpdate task')
 
         checkRequiredConfig(!configuration?.project?.id)
-
-        Request projectsUpdateRequest = saagieUtils.getProjectsUpdateRequest()
-        try {
+        tryCatchClosure({
+            Request projectsUpdateRequest = saagieUtils.getProjectsUpdateRequest()
             client.newCall(projectsUpdateRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1702,14 +1477,7 @@ class SaagieClient {
                     ])
                 }
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in projectsUpdate')
-            throw exception
-        }
+        }, 'Unknown error in projectsUpdate' );
     }
 
     String importJob() {
@@ -1848,7 +1616,7 @@ class SaagieClient {
 
     private getJobListByNameAndId() {
         def listJobs = null
-        try {
+        tryCatchClosure({
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
@@ -1859,19 +1627,12 @@ class SaagieClient {
                 }
                 return listJobs
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in projectsImport')
-            throw exception
-        }
+        }, 'Unknown error in projectsImport');
     }
 
     private getPipelineListByNameAndId() {
         def listPipelines = null;
-        try {
+        tryCatchClosure({
             Request pipelineListRequest = saagieUtils.getProjectPipelinesRequestGetNameAndId()
             // the job do not exists, create it
             client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
@@ -1883,14 +1644,7 @@ class SaagieClient {
                 }
                 return listPipelines
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in projectsImport')
-            throw exception
-        }
+        }, 'Unknown error in projectsImport')
     }
 
     private String parseDataAndReturnJsonOutPut(String data) {
@@ -1929,5 +1683,18 @@ class SaagieClient {
 
     def isArray(array) {
         return array != null && array.getClass().isArray()
+    }
+
+    def tryCatchClosure(Closure closure,String message) {
+        try {
+            closure()
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error(message)
+            throw exception
+        }
     }
 }

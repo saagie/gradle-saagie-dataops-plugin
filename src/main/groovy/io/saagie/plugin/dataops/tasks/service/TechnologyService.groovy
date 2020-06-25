@@ -38,6 +38,7 @@ class TechnologyService {
             client.newCall(technologiesCall).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
+                logger.debug("getTechnologies response $responseBody")
                 def parsedTechnologiesData = slurper.parseText(responseBody)
                 if(!parsedTechnologiesData.data || !parsedTechnologiesData.data.technologies) {
                     throwAndLogError("Something went wrong when getting technologies")
@@ -55,6 +56,7 @@ class TechnologyService {
             client.newCall(technologiesVersionRequestCall).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
+                logger.debug("getTechnologyVersions response $responseBody")
                 def parsedTechnologyVersionsData = slurper.parseText(responseBody)
                 if(!parsedTechnologyVersionsData.data || !parsedTechnologyVersionsData.data.technologiesVersions) {
                     return null
