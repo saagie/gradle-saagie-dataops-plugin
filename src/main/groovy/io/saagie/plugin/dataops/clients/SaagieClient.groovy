@@ -127,7 +127,7 @@ class SaagieClient {
                     return JsonOutput.toJson(projects)
                 }
             }
-        }, 'Unknown error in getProjects')
+        }, 'Unknown error in Task: projectsList', 'Function: getProjects')
     }
 
     String getProjectJobs() {
@@ -151,7 +151,7 @@ class SaagieClient {
                     return JsonOutput.toJson(jobs)
                 }
             }
-        }, 'Unknown error in getProjectJobs')
+        }, 'Unknown error in Task: getProjectJobs', 'getProjectJobs')
     }
 
     String getProjectTechnologies() {
@@ -182,7 +182,7 @@ class SaagieClient {
                     return JsonOutput.toJson(uniqueTechnologies)
                 }
             }
-        }, 'Unknown error in getProjectTechnologies')
+        }, 'Unknown error in Task: getProjectTechnologies', 'getProjectTechnologies')
     }
 
     @Deprecated
@@ -224,7 +224,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdJob)
                 }
             }
-        }, 'Unknown error in createProjectJob')
+        }, 'Unknown error in deprecated Task: createProjectJob', 'Function: createProjectJob')
     }
 
     void uploadIfJobHavePackage (jobId) {
@@ -287,7 +287,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdJob)
                 }
             }
-        }, 'Unknown error in createProjectJob')
+        }, 'Unknown error in Task: createProjectJob', 'Function: createProjectJobWithGraphQL')
     }
 
     String runProjectJob() {
@@ -311,7 +311,7 @@ class SaagieClient {
                     return JsonOutput.toJson(runningJob)
                 }
             }
-        }, 'Unknown error in runProjectJob')
+        }, 'Unknown error in Task: runProjectJob', 'Function: runProjectJob')
     }
 
     @Deprecated
@@ -356,7 +356,7 @@ class SaagieClient {
                     return JsonOutput.toJson(updatedJob)
                 }
             }
-        }, 'Unknown error in updateProjectJob')
+        }, 'Unknown error in Task: updateProjectJob', 'Function: updateProjectJob')
     }
 
     String upgradeProjectJobWithGraphQL() {
@@ -431,7 +431,7 @@ class SaagieClient {
                 }
             }
             return returnData
-        }, 'Unknown error in updateProjectJob')
+        }, 'Unknown error in updateProjectJobWithGraphQLFromRequest')
 
     }
 
@@ -588,7 +588,7 @@ class SaagieClient {
                     logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
                 }
             }
-        }, 'Unknown error in updateProjectPipeline')
+        }, 'Unknown error in updatePipelineVersion')
     }
 
     String getPipelineInstanceStatus() {
@@ -611,7 +611,7 @@ class SaagieClient {
                     return JsonOutput.toJson(pipelineInstanceStatus)
                 }
             }
-        }, 'Unknown error in getPipelineInstanceStatus')
+        }, 'Unknown error in Task: getPipelineInstanceStatus', 'Function: getPipelineInstanceStatus')
     }
 
     String runProjectPipeline() {
@@ -622,7 +622,7 @@ class SaagieClient {
 
         Request projectRunPipelineRequest = saagieUtils.getProjectRunPipelineRequest()
         Map runPipelineData;
-        try {
+        tryCatchClosure({
             client.newCall(projectRunPipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -636,7 +636,7 @@ class SaagieClient {
                 }
             }
 
-            if(runPipelineData?.runPipeline?.id){
+            if (runPipelineData?.runPipeline?.id) {
                 Request projectGetPipelineInstanceStatus = saagieUtils.getProjectPipelineInstanceStatusRequestWithparam(runPipelineData.runPipeline.id);
                 client.newCall(projectGetPipelineInstanceStatus).execute().withCloseable { response ->
                     handleErrors(response)
@@ -648,7 +648,7 @@ class SaagieClient {
                         throw new GradleException(message)
                     } else {
                         Map instancePipelineData = parsedResult.data
-                        Map updatedPipeline = [runPipeline: [id: runPipelineData.runPipeline.id, status: instancePipelineData.pipelineInstance.status ]]
+                        Map updatedPipeline = [runPipeline: [id: runPipelineData.runPipeline.id, status: instancePipelineData.pipelineInstance.status]]
                         return JsonOutput.toJson(updatedPipeline)
                     }
                 }
@@ -657,14 +657,7 @@ class SaagieClient {
                 logger.error(message)
                 throw new GradleException(message)
             }
-        } catch (InvalidUserDataException invalidUserDataException) {
-            throw invalidUserDataException
-        } catch (GradleException stopActionException) {
-            throw stopActionException
-        } catch (Exception exception) {
-            logger.error('Unknown error in runProjectPipeline')
-            throw exception
-        }
+        }, 'Unknown error in Task: runProjectPipeline', 'Function: runProjectPipeline' )
     }
 
     String stopJobInstance() {
@@ -689,7 +682,7 @@ class SaagieClient {
                     return JsonOutput.toJson(stoppedJobInstance)
                 }
             }
-        }, 'Unknown error in stopJobInstance')
+        }, 'Unknown error in Task: stopJobInstance', 'Function: stopJobInstance')
     }
 
     String deleteProjectPipeline() {
@@ -714,7 +707,7 @@ class SaagieClient {
                     return JsonOutput.toJson(deletedPipeline)
                 }
             }
-        }, 'Unknown error in deleteProjectPipeline')
+        }, 'Unknown error in Task: deleteProjectPipeline', 'Function : deleteProjectPipeline')
     }
 
     String deleteProject() {
@@ -742,7 +735,7 @@ class SaagieClient {
                     return JsonOutput.toJson(deletedProject)
                 }
             }
-        }, 'Unknown error in deleteProject')
+        }, 'Unknown error in Task: deleteProject', 'Function: deleteProject')
     }
 
     String deleteProjectJob() {
@@ -767,7 +760,7 @@ class SaagieClient {
                     return JsonOutput.toJson(archiveJobResult)
                 }
             }
-        }, 'Unknown error in deleteProjectJob');
+        }, 'Unknown error in task : deleteProjectJob', 'Function: deleteProjectJob');
     }
 
     String stopPipelineInstance() {
@@ -792,7 +785,7 @@ class SaagieClient {
                     return JsonOutput.toJson(stoppedPipeline)
                 }
             }
-        }, 'Unknown error in stopPipelineInstance')
+        }, 'Unknown error in Task: stopPipelineInstance', 'Function: stopPipelineInstance')
     }
 
     String listPlatforms() {
@@ -817,7 +810,7 @@ class SaagieClient {
                     return JsonOutput.toJson(platformListResult)
                 }
             }
-        }, 'Unknown error in listPlatforms')
+        }, 'Unknown error in Task: platformList', 'Function: listPlatforms')
     }
 
     String listAllPipelines() {
@@ -839,7 +832,7 @@ class SaagieClient {
                     return JsonOutput.toJson(pipelineList)
                 }
             }
-        }, 'Unknown error in listAllPipelines')
+        }, 'Unknown error in Task: projectsListAllPipelines', 'Function: listAllPipelines')
     }
 
     String listTechnologies() {
@@ -860,7 +853,7 @@ class SaagieClient {
                     return JsonOutput.toJson(technologyList)
                 }
             }
-        }, 'Unknown error in listTechnologies')
+        }, 'Unknown error in Task: technologyList', 'Function: listTechnologies')
     }
 
     String listGroups() {
@@ -870,9 +863,8 @@ class SaagieClient {
             !configuration.server?.jwt ||
                 !configuration.server?.realm || !configuration.server?.environment
         )
-
-        Request groupListRequest = saagieUtils.getGroupListRequest()
         tryCatchClosure({
+            Request groupListRequest = saagieUtils.getGroupListRequest()
             client.newCall(groupListRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -886,7 +878,7 @@ class SaagieClient {
                     return JsonOutput.toJson(groupListResult)
                 }
             }
-        }, 'Unknown error in groupList')
+        }, 'Unknown error in Task: groupList', 'Function: listGroups')
     }
 
     String createProject() {
@@ -908,7 +900,7 @@ class SaagieClient {
                     return JsonOutput.toJson(createdProjectResult)
                 }
             }
-        }, 'Unknown error in projectsCreate')
+        }, 'Unknown error in Task : createProject', 'Function: createProject')
     }
 
     String exportArtifactsV1() {
@@ -994,9 +986,9 @@ class SaagieClient {
     }
 
     def getProjectJobsByNameAndId() {
-        Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
-        client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
-            try {
+        tryCatchClosure({
+            Request jobsListRequest = saagieUtils.getProjectJobsGetNameAndIdRequest()
+            client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
                 def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
@@ -1004,12 +996,9 @@ class SaagieClient {
                 if (parsedResultForJobList.data?.jobs) {
                     return parsedResultForJobList.data.jobs
                 }
-            } catch (Exception exception) {
-                logger.error('Unknown error in getProjectJobsRequestGetNameAndId')
-                throw exception
             }
+        }, 'getProjectJobsByNameAndId', 'getProjectJobsRequestGetNameAndId Request')
 
-        }
     }
 
     static getTemporaryFile(String url, boolean bool) {
@@ -1078,7 +1067,7 @@ class SaagieClient {
                 }
             }
             return exportJob
-        },'Unknown error in getJobAndJobVersionDetailToExport') as ExportJobs
+        },'Unknown error in getJobAndJobVersionDetailToExport method', 'getJobDetailRequestFromParam request') as ExportJobs
     }
 
     ExportJobs getJobAndJobVersionDetailToExportV1(String jobId, listJobsByNameAndIds) {
@@ -1172,7 +1161,7 @@ class SaagieClient {
             }
 
             return exportJob
-        }, 'Unknown error in getJobAndJobVersionDetailToExport') as ExportJobs
+        }, 'Unknown error in getJobAndJobVersionDetailToExportV1 method') as ExportJobs
     }
 
     static Map getRunTimeVersionMapper(technologyV2Version, technologyV2) {
@@ -1292,18 +1281,18 @@ class SaagieClient {
                         parsedV1PipelineResult.jobs.collect{ job ->
                             [id: job.id]
                         },
-                        parsedV1PipelineResult.hasProperty("releaseNote") ? parsedV1PipelineResult.releaseNote : null
+                        parsedV1PipelineResult?.releaseNote
                     )
                 }
 
                 return exportPipeline
             }
-        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport') as ExportPipeline
+        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport method') as ExportPipeline
     }
 
     ArrayList<?> getAllInstancePipelineInformation(String pipelineId) {
         Request getPipelineInstancesV1Detail = saagieUtils.getPipelineInstancesRequestFromParamV1(pipelineId)
-        try {
+        tryCatchClosure({
             getV1Client().newCall(getPipelineInstancesV1Detail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1317,16 +1306,12 @@ class SaagieClient {
                     return null
                 }
             }
-        } catch (Exception exception) {
-            logger.error('Unknown error in getAllInstancePipelineInformation')
-            throw exception
-        }
-
+        }, 'Unknown error in getAllInstancePipelineInformation method', 'getPipelineInstancesRequestFromParamV1 request') as ArrayList<?>
     }
 
     def getInstancePipelineDetail(String pipelineId, String instanceId) {
         Request getPipelineInstanceV1Detail = saagieUtils.getPipelineInstanceDetailRequestFromParamV1(pipelineId, instanceId)
-        try {
+        tryCatchClosure({
             getV1Client().newCall(getPipelineInstanceV1Detail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1334,10 +1319,7 @@ class SaagieClient {
                 def parsedV1PipelineResult = slurper.parseText(responseBody)
                 return parsedV1PipelineResult
             }
-        } catch (Exception exception) {
-            logger.error('Unknown error in getAllInstancePipelineInformation')
-            throw exception
-        }
+        }, 'Unknown error in getAllInstancePipelineInformation', 'getPipelineInstanceDetailRequestFromParamV1')
 
     }
 
@@ -1348,9 +1330,10 @@ class SaagieClient {
             !configuration?.exportArtifacts?.export_file
         )
 
-        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
-        def pipeline = configuration.pipeline
+
         tryCatchClosure({
+            Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
+            def pipeline = configuration.pipeline
             ExportPipeline exportPipeline = new ExportPipeline()
             client.newCall(getPipelineDetail).execute().withCloseable { response ->
                 handleErrors(response)
@@ -1385,7 +1368,7 @@ class SaagieClient {
                 }
             }
             return exportPipeline
-        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport') as ExportPipeline
+        }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport', 'getPipelineRequestFromParam') as ExportPipeline
     }
 
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
@@ -1452,7 +1435,7 @@ class SaagieClient {
                     return JsonOutput.toJson(jobDetailResult)
                 }
             }
-        }, 'Unknown error in projectsCreate');
+        }, 'Unknown error in callGetJobDetail', 'getJobDetailRequest');
 
     }
 
@@ -1477,11 +1460,11 @@ class SaagieClient {
                     ])
                 }
             }
-        }, 'Unknown error in projectsUpdate' );
+        }, 'Unknown error in the Task: projectsUpdate', 'Function: updateProject');
     }
 
     String importJob() {
-        logger.info('Starting projectsUpdate task')
+        logger.info('Starting importJob task')
 
         checkRequiredConfig(
             !configuration?.project?.id ||
@@ -1617,7 +1600,7 @@ class SaagieClient {
     private getJobListByNameAndId() {
         def listJobs = null
         tryCatchClosure({
-            Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
+            Request jobsListRequest = saagieUtils.getProjectJobsGetNameAndIdRequest()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
@@ -1627,7 +1610,7 @@ class SaagieClient {
                 }
                 return listJobs
             }
-        }, 'Unknown error in projectsImport');
+        }, 'Unknown error in getJobListByNameAndId', 'getProjectJobsGetNameAndIdRequest Request');
     }
 
     private getPipelineListByNameAndId() {
@@ -1644,7 +1627,7 @@ class SaagieClient {
                 }
                 return listPipelines
             }
-        }, 'Unknown error in projectsImport')
+        }, 'Unknown error in getPipelineListByNameAndId', 'getProjectPipelinesRequestGetNameAndId Request')
     }
 
     private String parseDataAndReturnJsonOutPut(String data) {
@@ -1685,7 +1668,7 @@ class SaagieClient {
         return array != null && array.getClass().isArray()
     }
 
-    def tryCatchClosure(Closure closure,String message) {
+    def tryCatchClosure(Closure closure,String message, String potentialFunctionName = null) {
         try {
             closure()
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1694,6 +1677,7 @@ class SaagieClient {
             throw stopActionException
         } catch (Exception exception) {
             logger.error(message)
+            logger.error("${exception.message} ${potentialFunctionName?:''}")
             throw exception
         }
     }
