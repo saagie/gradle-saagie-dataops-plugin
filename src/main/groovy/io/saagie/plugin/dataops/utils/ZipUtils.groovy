@@ -12,6 +12,7 @@ class ZipUtils {
      * @param zipFileName Name of the zipFile to create
      * @return {File} zipPath File object where the zip file is created
      */
+
     static File zip(String inputDir, String zipFileName) {
         ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(zipFileName))
         new File(inputDir).eachFile() { file ->
@@ -27,12 +28,6 @@ class ZipUtils {
         zipFile.close()
     }
 
-    /**
-     * Unzip provided zip file
-     * @param zipFileName Path to the zip file to unzip
-     * @param outputDir Directory where to store the unzipped files
-     * @return {File} zipFileOutput The File object representing the output dir
-     */
     static File unzip(String zipFileName, String outputDir) {
         def zip = new ZipFile(new File(zipFileName))
         zip.entries().each{

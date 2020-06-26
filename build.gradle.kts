@@ -6,6 +6,7 @@ val hibernateValidatorVersion = "6.0.2.Final"
 val javaxElVersion = "3.0.0"
 val glassfishElVersion = "2.2.6"
 val byteBuddyVersion = "1.10.3"
+val httpclient = "4.5.12"
 
 val nexusUsername: String by project
 val nexusPassword: String by project
@@ -15,7 +16,7 @@ val previousVersion: String by project
 plugins {
     id("net.researchgate.release") version "2.8.1"
     id("io.codearte.nexus-staging") version "0.21.1"
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
@@ -44,6 +45,8 @@ dependencies {
     compileOnly(gradleApi())
     implementation("com.squareup.okhttp3:okhttp:$okthttp")
     compile("org.apache.tika", "tika-core", apacheTika)
+    compile( "org.apache.httpcomponents", "httpclient", httpclient)
+    compile("org.threeten","threeten-extra","1.5.0")
     implementation("javax.validation:validation-api:$validationApiVersion")
     implementation("org.hibernate.validator:hibernate-validator:$hibernateValidatorVersion")
     implementation("org.hibernate.validator:hibernate-validator-annotation-processor:$hibernateValidatorVersion")

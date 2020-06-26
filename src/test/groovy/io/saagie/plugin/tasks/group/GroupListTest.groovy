@@ -15,15 +15,8 @@ class GroupListTest extends DataOpsGradleTaskSpecification {
 
     def "the task should return a list of all user groups"() {
         given:
-        def mockedJwtAuth = new MockResponse()
-        mockedJwtAuth.responseCode = 200
-        mockedJwtAuth.body = """token"""
-        mockWebServer.enqueue(mockedJwtAuth)
-
-        def mockedResponse = new MockResponse()
-        mockedResponse.responseCode = 200
-        mockedResponse.body = """{"login":"fake.user","groups":["group-p4"],"roles":["ROLE_USER"],"authorizations":[{"platformId":4,"platformName":"Demo","permissions":[{"artifact":{"type":"DATAGOV"},"role":"ROLE_MANAGER"},{"artifact":{"type":"DATAFABRIC"},"role":"ROLE_ACCESS"},{"artifact":{"type":"PROJECTS_CREATOR"},"role":"ROLE_PROJECT_CREATOR"},{"artifact":{"type":"PROJECTS"},"role":"ROLE_PROJECT_MANAGER"},{"artifact":{"type":"PROJECTS_ENVVAR_EDITOR"},"role":"ROLE_PROJECT_ENVVAR_EDITOR"},{"artifact":{"type":"DATASET_ACCESSES"},"role":"ROLE_READ_WRITE"},{"artifact":{"type":"DATASET_ACCESS_MANAGER"},"role":"ROLE_MANAGER"},{"artifact":{"type":"DATA_API"},"role":"ROLE_ACCESS"}]}]}"""
-        mockWebServer.enqueue(mockedResponse)
+        enqueueRequest("token")
+        enqueueRequest("[{\"name\":\"group-0\",\"role\":\"ROLE_USER\",\"authorizations\":[{\"platformId\":4,\"platformName\":\"Demo\",\"permissions\":[]}],\"protected\":false}]")
 
         buildFile << '''
             saagie {
@@ -31,18 +24,18 @@ class GroupListTest extends DataOpsGradleTaskSpecification {
                     url = 'http://localhost:9000'
                     login = 'fake.user'
                     password = 'ThisPasswordIsWrong'
-                    realm = 'saagie'
+                    environment = 3
                     jwt = true
                 }
             }
         '''
 
         when:
-        BuildResult result = gradle(taskName)
+        BuildResult result = gradle(taskName, "d")
 
         then:
         notThrown(Exception)
-        result.output.contains('["group-p4"]')
+        result.output.contains('["group-0"]')
     }
 
     def "the task should fail if there is no jwt"() {

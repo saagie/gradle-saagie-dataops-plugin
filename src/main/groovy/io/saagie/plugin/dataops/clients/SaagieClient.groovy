@@ -3,27 +3,44 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.ExportJob
+import io.saagie.plugin.dataops.models.ExportJobs
+import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
+import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
+import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
+import io.saagie.plugin.dataops.tasks.service.TechnologyService
+import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
+import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
+import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
 import io.saagie.plugin.dataops.utils.directory.FolderGenerator
 import io.saagie.plugin.dataops.utils.directory.ZippingFolder
+import okhttp3.Authenticator
+import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.Route
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy
+import org.apache.http.ssl.SSLContexts
 
+import javax.net.ssl.SSLContext
+import javax.net.ssl.X509TrustManager
 import javax.validation.ConstraintViolation
 import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
-import java.nio.file.Files
+import java.security.cert.CertificateException
+import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
@@ -43,6 +60,8 @@ class SaagieClient {
     ValidatorFactory factory = Validation.buildDefaultValidatorFactory()
 
     Validator validator = factory.getValidator()
+
+    String sl = File.separator
 
     SaagieClient(DataOpsExtension configuration, String taskName) {
         this.configuration = configuration
@@ -202,11 +221,10 @@ class SaagieClient {
         logger.info('Starting deprecated createProjectJob task')
         checkRequiredConfig(
             !configuration?.project?.id ||
-            !configuration?.job?.name ||
-            !configuration?.job?.technology ||
-            !configuration?.job?.category ||
-            !configuration?.jobVersion?.runtimeVersion ||
-            !configuration?.jobVersion?.resources
+                !configuration?.job?.name ||
+                !configuration?.job?.technology ||
+                !configuration?.job?.category ||
+                !configuration?.jobVersion?.resources
         )
 
         if (configuration.jobVersion.packageInfo?.name != null) {
@@ -233,19 +251,8 @@ class SaagieClient {
                 } else {
                     Map createdJob = parsedResult.data.createJob
                     String jobId = createdJob.id
-                    Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
-                    client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
-                        handleErrors(uploadResponse)
-                        String uploadResponseBody = uploadResponse.body().string()
-                        def uploadFileParsedResult = slurper.parseText(uploadResponseBody)
-                        if (!uploadFileParsedResult) {
-                            def message = "Something went wrong when uploading project file job: $uploadResponseBody"
-                            logger.error(message)
-                            throw new GradleException(message)
-                        } else {
-                            return JsonOutput.toJson(createdJob)
-                        }
-                    }
+                    uploadIfJobHavePackage(jobId)
+                    return JsonOutput.toJson(createdJob)
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -258,15 +265,38 @@ class SaagieClient {
         }
     }
 
+    void uploadIfJobHavePackage (jobId) {
+        if(configuration?.jobVersion?.packageInfo?.name) {
+            Request uploadRequest = saagieUtils.getUploadFileToJobRequest(jobId)
+            client.newCall(uploadRequest).execute().withCloseable { uploadResponse ->
+                handleErrors(uploadResponse)
+                String uploadResponseBody = uploadResponse.body().string()
+                def uploadFileParsedResult = slurper.parseText(uploadResponseBody)
+                if (!uploadFileParsedResult) {
+                    def message = "Something went wrong when uploading project file job: $uploadResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                }
+            }
+        }
+    }
+
+    String createProjectJobWithOrWithFile(){
+        if (configuration.jobVersion?.packageInfo?.name != null) {
+            createProjectJobWithGraphQL()
+        }else{
+            createProjectJob()
+        }
+    }
+
     String createProjectJobWithGraphQL() {
         logger.info('Starting createProjectJob task')
         checkRequiredConfig(
             !configuration?.project?.id ||
-            !configuration?.job?.name ||
-            !configuration?.job?.technology ||
-            !configuration?.job?.category ||
-            !configuration?.jobVersion?.runtimeVersion ||
-            !configuration?.jobVersion?.resources
+                !configuration?.job?.name ||
+                !configuration?.job?.technology ||
+                !configuration?.job?.category ||
+                !configuration?.jobVersion?.resources
         )
 
         if (configuration.jobVersion.packageInfo?.name != null) {
@@ -388,7 +418,31 @@ class SaagieClient {
         }
     }
 
-    String updateProjectJobWithGraphQL() {
+    String upgradeProjectJobWithGraphQL() {
+        logger.info('Starting upgradeProjectJob task')
+        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
+        String returnData = null
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
+        updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+        def updatedJobVersion = addJobVersionFromConfiguration()
+         Map upgradeStatus = [status: 'success', version: updatedJobVersion]
+        return JsonOutput.toJson(upgradeStatus)
+    }
+
+
+    String updateProjectJobWithGraphQLFromParams(Job job, JobVersion jobVersion) {
+        logger.info('Starting updateProjectJob task')
+        logger.debug('Using config [job={}, jobVersion={}]', job, jobVersion)
+        String returnData = null
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequestFromParams(job)
+        returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
+
+        addJobVersionFromConfiguration()
+
+        return returnData
+    }
+
+    String updateProjectJobFromParams(job, jobVersion) {
         logger.info('Starting updateProjectJob task')
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
         String returnData = null
@@ -399,8 +453,9 @@ class SaagieClient {
 
         return returnData
     }
+
     //getProjectUpdateJobFromDataRequest
-    String updateProjectJobWithGraphQLFormatted(){
+    String updateProjectJobWithGraphQLFormatted() {
         logger.info('Starting updateProjectJobFromData task')
 
         logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
@@ -413,7 +468,7 @@ class SaagieClient {
         return returnData
     }
 
-    String updateProjectJobWithGraphQLFromRequest(Request request){
+    String updateProjectJobWithGraphQLFromRequest(Request request) {
         checkRequiredConfig(
             !configuration?.job?.id ||
                 (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling) ||
@@ -445,6 +500,7 @@ class SaagieClient {
         return returnData
     }
 
+
     String addJobVersionFromConfiguration() {
         // 2. add jobVersion id there is a jobVersion config
         if (configuration?.jobVersion?.exists()) {
@@ -452,7 +508,9 @@ class SaagieClient {
             if (configuration.jobVersion.packageInfo?.name) {
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL()
             } else {
-                configuration.jobVersion.usePreviousArtifact = true
+                if(configuration.jobVersion.packageInfo?.downloadUrl){
+                    configuration.jobVersion.usePreviousArtifact = true
+                }
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
             }
             client.newCall(addJobVersionRequest).execute().withCloseable { updateResponse ->
@@ -466,11 +524,30 @@ class SaagieClient {
                 } else {
                     String newJobVersion = updatedJobVersion.data.addJobVersion.number
                     logger.info('Added new version: {}', newJobVersion)
+                    return newJobVersion
                 }
-                return updatedJobVersion
             }
-        } else {
-            return '{"data":"no versions data found in the configuration"}'
+        } else if (configuration?.job?.id) {
+            Request lisJobVersion  = saagieUtils.getListVersionForJobRequest(configuration?.job?.id)
+            client.newCall(lisJobVersion).execute().withCloseable { listJobVersionsResponse ->
+                handleErrors(listJobVersionsResponse)
+                String listJobVersionResponseBody = listJobVersionsResponse.body().string()
+                def listJobVersionsData = slurper.parseText(listJobVersionResponseBody)
+                if (listJobVersionsData.data == null) {
+                    def message = "Something went wrong when getting list job versions: $listJobVersionResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    logger.info('getting list job versions: {}', listJobVersionsData.data.job.versions)
+                    String currentNumber
+                    listJobVersionsData.data.job.versions.each {
+                        if (it.isCurrent) {
+                            currentNumber =  it.number
+                        }
+                    }
+                    return currentNumber
+                }
+            }
         }
     }
 
@@ -537,7 +614,7 @@ class SaagieClient {
     }
 
     String updateProjectPipeline() {
-        logger.info('Starting updateProjectPipeline task')
+        logger.info('Starting upgradeProjectPipeline task')
 
         // 1. try to update pipeline infos
         checkRequiredConfig(!configuration?.pipeline?.id)
@@ -565,7 +642,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map updatedPipeline = parsedResult.data.editPipeline
+                    String updatedPipelineStatus = parsedResult.data.editPipeline ? 'success' : 'failure'
+                    Map updatedPipeline = [status: updatedPipelineStatus]
                     return JsonOutput.toJson(updatedPipeline)
                 }
             }
@@ -595,7 +673,6 @@ class SaagieClient {
                     String newPipelineVersion = updatedPipelineVersion.data.addPipelineVersion.number
                     logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
                 }
-
             }
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -644,6 +721,7 @@ class SaagieClient {
         logger.debug('Using config [pipelineId={}]', configuration.pipeline.id)
 
         Request projectRunPipelineRequest = saagieUtils.getProjectRunPipelineRequest()
+        Map runPipelineData;
         try {
             client.newCall(projectRunPipelineRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -654,10 +732,36 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map runPipeline = parsedResult.data.runPipeline
-                    return JsonOutput.toJson(runPipeline)
+                    runPipelineData = parsedResult.data
                 }
             }
+
+            if(runPipelineData?.runPipeline?.id){
+                Request projectGetPipelineInstanceStatus = saagieUtils.getProjectPipelineInstanceStatusRequestWithparam(runPipelineData.runPipeline.id);
+                client.newCall(projectGetPipelineInstanceStatus).execute().withCloseable { response ->
+                    handleErrors(response)
+                    String responseBody = response.body().string()
+                    def parsedResult = slurper.parseText(responseBody)
+                    if (parsedResult.data == null) {
+                        def message = "Something went wrong when intance pipeline: $responseBody"
+                        logger.error(message)
+                        throw new GradleException(message)
+                    } else {
+                        Map instancePipelineData = parsedResult.data
+                        Map updatedPipeline = [runPipeline: [id: runPipelineData.runPipeline.id, status: instancePipelineData.pipelineInstance.status ]]
+                        return JsonOutput.toJson(updatedPipeline)
+                    }
+                }
+            } else {
+                def message = "Something went wrong when intance pipeline"
+                logger.error(message)
+                throw new GradleException(message)
+            }
+
+
+
+
+
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
@@ -685,7 +789,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map stoppedJobInstance = parsedResult.data.stopJobInstance
+                    String stoppedJobInstanceStatus = parsedResult.data.stopJobInstance ? 'success' : 'failure'
+                    Map stoppedJobInstance = [status: stoppedJobInstanceStatus]
                     return JsonOutput.toJson(stoppedJobInstance)
                 }
             }
@@ -766,8 +871,8 @@ class SaagieClient {
         }
     }
 
-    String archiveProjectJob() {
-        logger.info('Starting archiveProjectJob task')
+    String deleteProjectJob() {
+        logger.info('Starting deleteProjectJob task')
         checkRequiredConfig(!configuration?.job?.id)
 
         logger.debug('Using config [jobId={}]', configuration.job.id)
@@ -779,7 +884,7 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.errors) {
-                    def message = "Something went wrong when archiving job: $responseBody"
+                    def message = "Something went wrong when deleting job: $responseBody"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
@@ -793,7 +898,7 @@ class SaagieClient {
         } catch (GradleException stopActionException) {
             throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknown error in archiveProjectJob')
+            logger.error('Unknown error in deleteProjectJob')
             throw exception
         }
     }
@@ -815,7 +920,8 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    Map stoppedPipeline = parsedResult.data.stopPipelineInstance
+                    String stoppedPipelineInstanceStatus = parsedResult.data.stopPipelineInstance ? 'success' : 'failure'
+                    Map stoppedPipeline = [status: stoppedPipelineInstanceStatus]
                     return JsonOutput.toJson(stoppedPipeline)
                 }
             }
@@ -834,7 +940,7 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration.server?.jwt ||
-            !configuration.server?.realm
+                !configuration.server?.realm
         )
 
         Request platformListRequest = saagieUtils.getPlatformListRequest()
@@ -924,7 +1030,7 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration.server?.jwt ||
-            !configuration.server?.realm
+                !configuration.server?.realm || !configuration.server?.environment
         )
 
         Request groupListRequest = saagieUtils.getGroupListRequest()
@@ -938,7 +1044,7 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    List groupListResult = parsedResult.groups
+                    List groupListResult = parsedResult.name
                     return JsonOutput.toJson(groupListResult)
                 }
             }
@@ -982,87 +1088,161 @@ class SaagieClient {
         }
     }
 
-    String exportJob() {
-        logger.debug('Starting Export Job task')
-        def sl = File.separator
-        checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.job?.id ||
-            !configuration?.export?.export_file_path
+    String exportArtifactsV1() {
+        logger.debug('Starting Export artifacts v1 task')
+        checkRequiredConfig(
+            !configuration?.exportArtifacts?.export_file
         )
 
-        def overwrite = configuration.export.overwrite
-        def generatedJobName = 'project-export-' + configuration.project.id
-        def exportConfigPath = SaagieUtils.removeLastSlash(configuration.export.export_file_path).concat(sl)
+        ExportPipeline[] exportPipelines = []
+        ArrayList listJobsByNameAndIdFromV1 = []
 
-        File exportPath = new File(exportConfigPath)
-
-        def generatedZipPath = exportConfigPath + generatedJobName + '.zip'
-
-        logger.debug("generatedZipPath before: {}, ", generatedZipPath)
-        File zipFolder = new File(generatedZipPath)
-        if (!exportPath.exists()) {
-            throw new GradleException("configuration export path does not exist")
+        if (configuration.pipeline.ids) {
+            exportPipelines = getListPipelineAndpipelineVersionsFromConfigV1(listJobsByNameAndIdFromV1)
         }
 
-        if (overwrite && zipFolder.exists()) {
-            zipFolder.delete()
-        } else if (!overwrite && zipFolder.exists()) {
-            return JsonOutput.toJson([ status: "success", exportfile: generatedZipPath ])
+        ExportJobs[] exportJobs = []
+        if (configuration.job.ids) {
+            exportJobs = getListJobAndJobVersionsFromConfigV1(listJobsByNameAndIdFromV1)
         }
 
-        ExportJob exportJob = getJobAndJobVersionDetailToExport()
-        logger.debug("exportConfigPath : {}, ", exportConfigPath)
+        return export(exportPipelines, exportJobs, listJobsByNameAndIdFromV1, true)
+    }
 
-        File tempJobDirectory = File.createTempDir("job", ".tmp")
+    String exportArtifacts() {
+        logger.debug('Starting artifacts Job task')
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        ExportPipeline[] exportPipelines = []
+        if (configuration.pipeline.ids) {
+            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+        }
+
+        ExportJobs[] exportJobs = []
+        if (configuration.job.ids) {
+            exportJobs = getListJobAndJobVersionsFromConfig()
+        }
+
+        return export(exportPipelines, exportJobs)
+
+    }
+
+
+    String export(ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, listJobWithNameAndIdV1 = null, isV1 = false) {
+
+        ExportContainer exportContainer = [configuration]
+        boolean bool = false
+        def tempJobDirectory = null
+
+        (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
+
+        FolderGenerator folder = [
+            tempJobDirectory.getAbsolutePath(),
+            saagieUtils,
+            client,
+            configuration,
+            exportContainer.fileName,
+            exportContainer.overwrite
+        ]
+
+        try {
+            def listJobs = null
+            if(isV1) {
+                listJobs = listJobWithNameAndIdV1
+            } else {
+                listJobs =  getProjectJobsByNameAndId()
+            }
+            def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + exportContainer.fileName
+            folder.exportJobList = exportJobs
+            folder.exportPipelineList = exportPipelines
+            folder.jobList = listJobs
+            folder.generateFolderFromParams()
+            ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, bool]
+            zippingFolder.generateZip(tempJobDirectory)
+
+            logger.debug("path after: {}, ", exportContainer.exportConfigPath)
+
+            return JsonOutput.toJson([
+                status    : "success",
+                exportfile: exportContainer.exportConfigPath
+            ])
+
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    def getProjectJobsByNameAndId() {
+        Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
+        client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
+            try {
+                handleErrors(responseJobList)
+                String responseBodyForJobList = responseJobList.body().string()
+                def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+
+                if (parsedResultForJobList.data?.jobs) {
+                    return parsedResultForJobList.data.jobs
+                }
+            } catch (Exception exception) {
+                logger.error('Unknown error in getProjectJobsRequestGetNameAndId')
+                throw exception
+            }
+
+        }
+    }
+
+    static getTemporaryFile(String url, boolean bool) {
+        def tempJobDirectory = null
+
+        if(url){
+            tempJobDirectory = new File(url)
+            bool = tempJobDirectory.exists()
+            if(!bool){
+                throw new GradleException("Could not find temporary directory, verify again please")
+            }
+        }
+
+        if(!bool){
+            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
+            System.out.println("Directory created successfully");
+        }
+
         if (tempJobDirectory.canWrite()) {
             logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
         } else {
             throw new GradleException("Cannot Write inside temporary directory")
         }
-        FolderGenerator folder = [exportJob, tempJobDirectory.getAbsolutePath(), saagieUtils, client]
-        def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + generatedJobName
-        folder.generateFolder(
-            generatedJobName,
-            overwrite,
-            configuration.server.url,
-            configuration.job.id,
-            configuration.project.id,
-            configuration.server.environment
-        )
-        ZippingFolder zippingFolder = [generatedZipPath, inputDirectoryToZip]
-        zippingFolder.generateZip(tempJobDirectory)
 
-        logger.debug("generatedZipPath after: {}, ", generatedZipPath)
-        return JsonOutput.toJson([
-            status    : "success",
-            exportfile: generatedZipPath
-        ])
-
+        return [ bool, tempJobDirectory]
     }
 
-    ExportJob getJobAndJobVersionDetailToExport() {
+    ExportJobs getJobAndJobVersionDetailToExport(String jobId) {
 
         checkRequiredConfig(!configuration?.project?.id ||
-            !configuration?.job?.id ||
-            !configuration?.export?.export_file_path ||
-            !configuration?.export?.overwrite
+            !configuration?.job?.ids ||
+            !configuration?.exportArtifacts?.export_file
         )
 
-        Request getJobDetail = saagieUtils.getJobDetailRequest()
-        def job = configuration.job
-        ExportJob exportJob = new ExportJob()
+        Request getJobDetail = saagieUtils.getJobDetailRequestFromParam(jobId)
+        ExportJobs exportJob = new ExportJobs()
         try {
             client.newCall(getJobDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting job detail: $responseBody for job id $job.id"
+                if (parsedResult.data == null || parsedResult.data.job == null) {
+                    def message = "Something went wrong when getting job detail: $responseBody for job id $jobId"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
                     def jobDetailResult = parsedResult.data.job
-
                     exportJob.setJobFromApiResult(jobDetailResult)
                     if (jobDetailResult.versions && !jobDetailResult.versions.isEmpty()) {
                         jobDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
@@ -1070,24 +1250,17 @@ class SaagieClient {
                             if (it.isCurrent) {
                                 exportJob.setJobVersionFromApiResult(it)
                             }
-                            if(it.packageInfo && it.packageInfo.downloadUrl) {
+                            if (it.packageInfo && it.packageInfo.downloadUrl) {
                                 exportJob.downloadUrl = it.packageInfo.downloadUrl
                                 exportJob.downloadUrlVersion = it.number
-                            }else{
+                            } else {
                                 logger.debug("the is no package info here")
                             }
                         }
                     } else {
-                        def messageEmptyVersions = "No versions for the job $job.id"
+                        def messageEmptyVersions = "No versions for the job $jobId"
                         logger.error(messageEmptyVersions)
                         throw new GradleException(messageEmptyVersions)
-                    }
-
-
-                    if (!exportJob.downloadUrl) {
-                        def messageNoDownloadUrl = "The is no download URl"
-                        logger.error(messageNoDownloadUrl)
-                        throw new GradleException(messageNoDownloadUrl)
                     }
                 }
             }
@@ -1097,13 +1270,386 @@ class SaagieClient {
         } catch (GradleException stopActionException) {
             throw stopActionException
         } catch (Exception exception) {
-            logger.error('Unknown error in projectsCreate')
+            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    ExportJobs getJobAndJobVersionDetailToExportV1(String jobId, listJobsByNameAndIds) {
+
+        checkRequiredConfig(
+            !configuration?.job?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        Request getJobDetailV1 = saagieUtils.getJobDetailRequestFromParamV1 jobId
+        ExportJobs exportJob = new ExportJobs()
+        exportJob.isV1 = true
+        try {
+            getV1Client().newCall(getJobDetailV1).execute().withCloseable { response ->
+                handleErrors response
+                String responseBody = response.body().string()
+                def parsedV1job = slurper.parseText responseBody
+                logger.debug("getJobDetailV1 response $responseBody")
+                testIfJobV1isValid(parsedV1job)
+
+                def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
+                def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
+
+                TechnologyService.instance.init(
+                    client,
+                    allTechnologies,
+                    allTechnologyVersions,
+                    slurper
+                )
+
+                def technologyV2 = TechnologyService.instance.getV2TechnologyByV1Name(parsedV1job.capsule_code)
+                if(!technologyV2) {
+                    throwAndLogError("No technology found from the v1 version to the v2 version")
+                }
+
+
+                //TODO Exc
+                def formatedCronFromSchedule = SaagieUtils.convertScheduleV1ToCron(parsedV1job.schedule)
+
+                def current = null
+
+                if(parsedV1job.current) {
+                    current = parsedV1job.current
+                } else {
+                    ArrayList jobV1Versions = parsedV1job.versions as ArrayList
+                    jobV1Versions.Sort()
+                    jobV1Versions.Reverse()
+                    current = jobV1Versions[0]
+                }
+
+                if(!current) {
+                    throwAndLogError("Current inside the getJob and jobVersionDetail toExport V1 can't be null")
+                }
+
+
+                exportJob.setJobFromV1ApiResult(
+                    parsedV1job,
+                    technologyV2,
+                    formatedCronFromSchedule
+                )
+                def technologyV2Version = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
+
+                exportJob.setJobVersionFromV1ApiResult(
+                    getRunTimeVersionMapper(technologyV2Version, technologyV2) ,
+                    current
+                )
+
+                if(configuration.job.include_all_versions && parsedV1job.versions) {
+                    def versions = parsedV1job.versions.findAll { version ->
+                        version.number != parsedV1job.current.number
+                    }
+
+                    versions.sort{ x, y ->
+                        x.number <=> y.number
+                    }
+
+                    versions.each{ version ->
+                        def technologyV2VersionForVersions = getTechnologyV2MappedInformation(parsedV1job?.current?.id as String, parsedV1job?.current)
+                        exportJob.addJobVersionFromV1ApiResult(
+                            getRunTimeVersionMapper(technologyV2VersionForVersions, technologyV2),
+                            version)
+                    }
+
+                    exportJob.versions.unique()
+                }
+
+                if(current.file) {
+                    exportJob.downloadUrl = current.file
+                    exportJob.downloadUrlVersion = current.number
+                }
+            }
+
+            return exportJob
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getJobAndJobVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    static Map getRunTimeVersionMapper(technologyV2Version, technologyV2) {
+        return technologyV2Version ? technologyV2Version : [version2: technologyV2, technologyV2Version: null] as Map
+    }
+
+    static Map getTechnologyV2MappedInformation(String technologyV2Id, version) {
+        def versionV1 = null
+        def extraTechV1 = [:]
+        if(version?.options?.language_version) {
+            versionV1 = version.options.language_version
+        }
+
+        if(version?.options?.extra_language) {
+            extraTechV1.language = version.options.extra_language
+        }
+
+        if(version?.options?.extra_version) {
+            extraTechV1.version = version.options.extra_version
+        }
+
+
+        def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2Id)
+        def technologyV2Version = null
+        if(resultTechnologiesVersions) {
+            technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1)
+        }
+
+        return technologyV2Version
+    }
+
+    boolean testIfJobV1isValid(parsedV1job) {
+        if (!parsedV1job.capsule_code) {
+            throwAndLogError("Something went wrong when getting job detail from v1 job")
+        }
+
+        if([JobV1Type.jupiter].contains(parsedV1job.capsule_code)) {
+            throwAndLogError("JUPYTER type not supported by current job task for job id $jobId")
+        }
+
+        if([JobV1Type.docker].contains(parsedV1job.capsule_code)) {
+            if(parsedV1job.capsule_code != JobV1Category.processing) {
+                throwAndLogError("Only processing jobs are avaible for docker")
+            }
+        }
+
+        return true
+    }
+
+    ExportPipeline getPipelineAndPipelineVersionDetailToExportV1(String pipelineId, listJobsWithNameAndIdFromV1) {
+
+        checkRequiredConfig(
+            !configuration?.pipeline?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        Request getPipelineDetailV1 = saagieUtils.getPipelineRequestFromParamV1(pipelineId)
+        def pipeline = configuration.pipeline
+        ExportPipeline exportPipeline = new ExportPipeline()
+        try {
+            getV1Client().newCall(getPipelineDetailV1).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getPipelineDetailV1 response $responseBody")
+                def parsedV1PipelineResult = slurper.parseText(responseBody)
+                def pipelineName= parsedV1PipelineResult.name
+                    if (pipelineName) {
+                        if(parsedV1PipelineResult.jobs  instanceof Collection && parsedV1PipelineResult.jobs.size() > 0) {
+                            parsedV1PipelineResult.jobs.each { element ->
+                                testIfJobV1isValid(element)
+                            }
+                        } else {
+                            throwAndLogError("Jobs list must be a not empty ArrayList")
+                        }
+
+                        listJobsWithNameAndIdFromV1.addAll(parsedV1PipelineResult.jobs.collect { job ->
+                            [
+                                id: job.id,
+                                name: job.name
+                            ]
+                        })
+
+                        if (pipeline.include_job) {
+                            if(!listJobsWithNameAndIdFromV1 instanceof ArrayList){
+                                throwAndLogError("listJobsByNameAndIdFromV1 must be a list of type ArrayList")
+                            }
+
+                            configuration.job.ids.addAll(listJobsWithNameAndIdFromV1.collect { job -> job.id})
+
+                        }
+                        exportPipeline.setPipelineFromV1ApiResult(parsedV1PipelineResult)
+
+                        if(configuration.pipeline.include_all_versions) {
+                            def listInstancesPipelines = getAllInstancePipelineInformation(pipelineId)
+                           def mappedListInstancesPipelines = listInstancesPipelines.collect{ workflow ->
+                                getInstancePipelineDetail(workflow.workflowId as String, workflow.id as String)
+                            }
+                           mappedListInstancesPipelines.collect { workflow ->
+                                workflow.jobs = workflow.jobs.id
+                                return workflow
+                           }
+                            mappedListInstancesPipelines.forEach{
+                                exportPipeline.addPipelineVersionDTOtoVersions(it.jobs, null)
+                            }
+                           if(exportPipeline.versions.size() > 1) {
+                               exportPipeline.versions.unique()
+                               exportPipeline.versions.collect { workflow ->
+                                   workflow.jobs = workflow.jobs.collect{ job->
+                                       [id: job]
+                                   }
+                               }
+                           }
+
+                        }
+                        exportPipeline.setPipelineVersionFromV1ApiResult(
+                            parsedV1PipelineResult.jobs.collect{ job ->
+                                [id: job.id]
+                            },
+                            parsedV1PipelineResult.hasProperty("releaseNote") ? parsedV1PipelineResult.releaseNote : null
+                        )
+                   }
+
+                return exportPipeline
+            }
+
+
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    ArrayList<?> getAllInstancePipelineInformation(String pipelineId) {
+        Request getPipelineInstancesV1Detail = saagieUtils.getPipelineInstancesRequestFromParamV1(pipelineId)
+        try {
+            getV1Client().newCall(getPipelineInstancesV1Detail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getPipelineInstancesV1Detail response $responseBody")
+                def parsedV1PipelineResult = slurper.parseText(responseBody)
+                def parsedV1PipelineResultContent = parsedV1PipelineResult.content
+                if(parsedV1PipelineResultContent && parsedV1PipelineResultContent.size() > 0) {
+                    logger.debug("getPipelineInstancesV1Detail body response $parsedV1PipelineResultContent")
+                    return parsedV1PipelineResultContent;
+                }else {
+                    return null
+                }
+            }
+        } catch (Exception exception) {
+            logger.error('Unknown error in getAllInstancePipelineInformation')
             throw exception
         }
 
     }
 
-    String callGetJobDetail(){
+    def getInstancePipelineDetail(String pipelineId, String instanceId) {
+        Request getPipelineInstanceV1Detail = saagieUtils.getPipelineInstanceDetailRequestFromParamV1(pipelineId, instanceId)
+        try {
+            getV1Client().newCall(getPipelineInstanceV1Detail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getPipelineInstanceV1Detail response $responseBody")
+                def parsedV1PipelineResult = slurper.parseText(responseBody)
+                return parsedV1PipelineResult
+            }
+        } catch (Exception exception) {
+            logger.error('Unknown error in getAllInstancePipelineInformation')
+            throw exception
+        }
+
+    }
+
+    ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {
+
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.pipeline?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
+        def pipeline = configuration.pipeline
+        ExportPipeline exportPipeline = new ExportPipeline()
+        try {
+            client.newCall(getPipelineDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null || parsedResult.data.pipeline == null) {
+                    def message = "Something went wrong when getting pipeline detail: $responseBody for pipeline id $pipelineId"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    def pipelineDetailResult = parsedResult.data.pipeline
+                    if (pipelineDetailResult) {
+                        exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
+                        if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
+                            pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                            pipelineDetailResult.versions.each {
+                                if (it.isCurrent) {
+                                    exportPipeline.setPipelineVersionFromApiResult(it)
+                                }
+                                if (it.jobs && pipeline.include_job) {
+                                    def jobIds = configuration.job.ids
+                                    configuration.job.ids = [jobIds, it.jobs.id].flatten()
+                                }
+                            }
+                        } else {
+                            def messageEmptyVersions = "No versions for the pipeline $pipelineId"
+                            logger.error(messageEmptyVersions)
+                            throw new GradleException(messageEmptyVersions)
+                        }
+                    }
+
+                }
+            }
+            return exportPipeline
+
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in getPipelineAndPipelineVersionDetailToExport')
+            throw exception
+        }
+    }
+
+    ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
+        return getPipelineAndPipelineVersions(this.&getPipelineAndPipelineVersionDetailToExport)
+    }
+    ExportPipeline[] getListPipelineAndpipelineVersionsFromConfigV1(ArrayList listJobsByNameAndIdFromV1){
+        return getPipelineAndPipelineVersions(this.&getPipelineAndPipelineVersionDetailToExportV1, listJobsByNameAndIdFromV1)
+    }
+
+    ExportPipeline[] getPipelineAndPipelineVersions(Closure operation, listJobsByNameAndIdFromV1 = null) {
+        checkRequiredConfig(
+            !configuration?.pipeline?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+        def listPipelineIds = configuration.pipeline.ids.unique { a, b -> a <=> b }
+        def arrayPipelines = []
+        listPipelineIds.each { pipelineId ->
+            def sPipeLineInd = pipelineId as String
+            arrayPipelines.add(listJobsByNameAndIdFromV1 != null ? operation(sPipeLineInd, listJobsByNameAndIdFromV1) : operation(sPipeLineInd))
+        }
+        return arrayPipelines as ExportPipeline[]
+    }
+
+    ExportJobs[] getListJobAndJobVersionsFromConfig() {
+        return getListJobAndJobVersions(this.&getJobAndJobVersionDetailToExport)
+    }
+
+    ExportJobs[] getListJobAndJobVersionsFromConfigV1(ArrayList listJobsByNameAndIdFromV1) {
+        return getListJobAndJobVersions(this.&getJobAndJobVersionDetailToExportV1, listJobsByNameAndIdFromV1)
+    }
+
+    ExportJobs[] getListJobAndJobVersions(Closure operation, listJobsByNameAndIdFromV1 = null) {
+        checkRequiredConfig(
+            !configuration?.job?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+        def listJobIdsInt = configuration.job.ids.collect { it as String }
+        def listJobIds = listJobIdsInt.unique { a, b -> a <=> b }
+        def arrayJobs = []
+
+        listJobIds.each { jobId ->
+            arrayJobs.add(listJobsByNameAndIdFromV1 != null ? operation(jobId as String, listJobsByNameAndIdFromV1) : operation(jobId as String))
+        }
+        return arrayJobs as ExportJobs[]
+    }
+
+    String callGetJobDetail() {
 
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.job?.id
@@ -1132,7 +1678,6 @@ class SaagieClient {
             logger.error('Unknown error in projectsCreate')
             throw exception
         }
-
     }
 
     String updateProject() {
@@ -1152,7 +1697,9 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map createdProjectResult = parsedResult.data.editProject
-                    return JsonOutput.toJson(createdProjectResult)
+                    return JsonOutput.toJson([
+                        status: 'success'
+                    ])
                 }
             }
         } catch (InvalidUserDataException invalidUserDataException) {
@@ -1170,10 +1717,11 @@ class SaagieClient {
 
         checkRequiredConfig(
             !configuration?.project?.id ||
-            !configuration?.importJob?.import_file
+                !configuration?.importArtifacts?.import_file
         )
 
-        String exportedJobFilePath = configuration.importJob.import_file
+        // Step 1. scan files and create job if needed, based on the existing rules
+        String exportedJobFilePath = configuration.importArtifacts.import_file
 
         File exportedJob = new File(exportedJobFilePath)
         if (!exportedJob.exists() || !exportedJob.canRead()) {
@@ -1182,87 +1730,134 @@ class SaagieClient {
         }
 
         def tempFolder = null
+        boolean bool = false
+
+
+        (bool, tempFolder) = getTemporaryFile(configuration.importArtifacts.temporary_directory, bool)
+
         try {
-            tempFolder = Files.createTempDirectory('job-exports').toFile()
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
         } catch (IOException e) {
-            logger.error('An error occurred when unzipping the job export file.', e.message)
+            logger.error('An error occurred when unzipping the artifacts export file.', e.message)
         }
 
         def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
-        def exportedJobPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
-        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedJobPathRoot)
-        def jobConfig = jobsConfigFromExportedZip.jobs.iterator().next()
-
-        // TODO: update this code when the support of multiple jobs will be added
-        def jobsId = jobsConfigFromExportedZip.jobs.keySet()[0]
-
-        Map jobConfigOverride = jobConfig.value.configOverride
-        File jobPackageFile = jobConfig.value.package
-
-        def newJobConfigWithOverride = [
-            *:jobConfigOverride.job,
-            *:SaagieUtils.extractProperties(configuration.jobOverride)
+        def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+        def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
+        def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
+        def response = [
+            status  : 'success',
+            job     : [],
+            pipeline: []
         ]
-        def oldId = null
-        if (configuration.job.id){
-            oldId = configuration.job.id
-        }
-        configuration.job = newJobConfigWithOverride as Job
-        configuration.jobVersion {
-            commandLine = jobConfigOverride.jobVersion.commandLine
-            releaseNote = jobConfigOverride.jobVersion.releaseNote
-            runtimeVersion = jobConfigOverride.jobVersion.runtimeVersion
-            dockerInfo {
-                image = jobConfigOverride.jobVersion.dockerInfo?.image
-                dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
+        def listJobs = null
+        def callbackJobToDebug = { newMappedJobData, job, id ->
+            configuration.job = newMappedJobData.job
+            configuration.jobVersion = newMappedJobData.jobVersion
+            configuration.job.id =  null
+
+            listJobs = getJobListByNameAndId()
+
+            if (listJobs) {
+                boolean nameExist = false
+                def foundNameId = null
+                listJobs.each {
+                    if (it.name == newMappedJobData.job.name) {
+                        nameExist = true
+                        foundNameId = it.id
+                    }
+                }
+                // the job do not exists, create it
+                if (nameExist) {
+                    configuration.job.id = foundNameId
+                    addJobVersionFromConfiguration()
+                } else {
+                    createProjectJobWithOrWithFile()
+                }
+            } else {
+                createProjectJobWithOrWithFile()
             }
-            packageInfo {
-                name = jobPackageFile.absolutePath
+
+            response.job << [
+                id  : job.key,
+                name: newMappedJobData.job.name
+            ]
+
+        }
+
+        def listPipelines = null;
+        def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id ->
+            configuration.pipeline = newMappedPipeline.pipeline
+            configuration.pipelineVersion = newMappedPipeline.pipelineVersion
+            configuration.pipeline.id =  null
+            listPipelines = getPipelineListByNameAndId()
+            if (listPipelines) {
+                boolean nameExist = false
+                def pipelineFoundId = null;
+                listPipelines.each {
+                    if (it.name == newMappedPipeline.pipeline.name) {
+                        pipelineFoundId = it.id
+                        nameExist = true
+                    }
+                }
+                // the pipeline do not exists, create it
+
+                if (nameExist) {
+                    configuration.pipeline.id = pipelineFoundId
+                    updatePipelineVersion()
+                } else {
+                    createProjectPipelineJob()
+                }
+            } else {
+                createProjectPipelineJob()
             }
+
+            response.pipeline << [
+                id  : pipeline.key,
+                name: newMappedPipeline.pipeline.name
+            ]
+        }
+
+        if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
+            ImportJobService.importAndCreateJobs(
+                jobsConfigFromExportedZip.jobs,
+                configuration,
+                callbackJobToDebug
+            )
         }
 
 
+        if (pipelinesConfigFromExportedZip && pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
+            def newJobList = getJobListByNameAndId()
+            ImportPipelineService.importAndCreatePipelines(
+                pipelinesConfigFromExportedZip.pipelines,
+                configuration,
+                callbackPipelinesToDebug,
+                newJobList
+            )
+        }
 
+        if(bool){
+            SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
+        }else{
+            SaagieUtils.cleanDirectory(tempFolder, logger)
+        }
+        return response
+    }
+
+
+    private getJobListByNameAndId() {
+        def listJobs = null
         try {
-            // the job do not exists, create it
-            if(oldId) {
-                configuration.job = SaagieUtils.extractProperties(configuration.jobOverride) as Job
-                configuration.job.id = oldId
-                callGetJobDetail()
-                return parseDataAndReturnJsonOutPut(updateProjectJobWithGraphQLFormatted())
-            }
             Request jobsListRequest = saagieUtils.getProjectJobsRequestGetNameAndId()
             client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
                 def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
                 if (parsedResultForJobList.data?.jobs) {
-                    def listJobs = parsedResultForJobList.data.jobs
-                    def foundJob = null
-                    boolean nameExist = false
-                    listJobs.each {
-                        if (it.name == configuration.job.name) {
-                            foundJob = it
-                            configuration.job.id = it.id
-                            nameExist = true
-                        }
-                    }
-                    if (nameExist) {
-                        addJobVersionFromConfiguration()
-                        return JsonOutput.toJson([
-                            status: 'success',
-                            id: foundJob.id
-                        ])
-                    } else {
-                        return parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
-                    }
-                } else {
-                    return parseDataAndReturnJsonOutPut(createProjectJobWithGraphQL())
+                    listJobs = parsedResultForJobList.data.jobs
                 }
-
-
-
+                return listJobs
             }
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -1273,12 +1868,37 @@ class SaagieClient {
             throw exception
         }
     }
+
+    private getPipelineListByNameAndId() {
+        def listPipelines = null;
+        try {
+            Request pipelineListRequest = saagieUtils.getProjectPipelinesRequestGetNameAndId()
+            // the job do not exists, create it
+            client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
+                handleErrors(responsePipelineList)
+                String responseBodyForPipelineList = responsePipelineList.body().string()
+                def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
+                if (parsedResultForPipelineList.data?.pipelines) {
+                    listPipelines = parsedResultForPipelineList.data.pipelines
+                }
+                return listPipelines
+            }
+        } catch (InvalidUserDataException invalidUserDataException) {
+            throw invalidUserDataException
+        } catch (GradleException stopActionException) {
+            throw stopActionException
+        } catch (Exception exception) {
+            logger.error('Unknown error in projectsImport')
+            throw exception
+        }
+    }
+
     private String parseDataAndReturnJsonOutPut(String data) {
         def jsonResult = slurper.parseText(data)
         if (jsonResult.id) {
             return JsonOutput.toJson([
                 status: 'success',
-                id: jsonResult.id
+                id    : jsonResult.id
             ])
         } else {
             return JsonOutput.toJson([
@@ -1286,6 +1906,7 @@ class SaagieClient {
             ])
         }
     }
+
     private checkRequiredConfig(boolean conditions) {
         logger.info('Checking required pre-conditions...')
         if (conditions) {
@@ -1294,19 +1915,19 @@ class SaagieClient {
         }
     }
 
-    private handleErrors(Response response) {
-        logger.debug('Checking server response')
-        if (response.successful) {
-            logger.debug('No error in server response.')
-            return
-        }
-        String body = response.body().string()
+    static handleErrors(Response response) {
+        SaagieUtils.handleErrorClosure(logger, response)
+    }
 
-        SaagieUtils.debugResponse(response)
+    static throwAndLogError(message){
+        SaagieUtils.throwAndLogError(logger, message)
+    }
 
-        String status = "${response.code()}"
-        def message = "Error $status when requesting on ${configuration.server.url}:\n$body"
-        logger.error(message)
-        throw new GradleException(message)
+    def getV1Client() {
+         HttpClientBuilder.getHttpClientV1(configuration)
+    }
+
+    def isArray(array) {
+        return array != null && array.getClass().isArray()
     }
 }

@@ -1,17 +1,19 @@
 package io.saagie.plugin.dataops.utils
 
 import groovy.json.JsonGenerator
-import groovy.transform.TypeChecked
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
+import io.saagie.plugin.dataops.models.JobMapper
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.tasks.projects.enums.UnitTime
 import okhttp3.Credentials
+import okhttp3.HttpUrl
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
@@ -23,8 +25,14 @@ import okio.Buffer
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import groovy.json.JsonOutput
+import org.threeten.extra.PeriodDuration
 
-@TypeChecked
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+
+
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
     static final MediaType JSON = MediaType.parse('application/json; charset=utf-8')
@@ -126,6 +134,54 @@ class SaagieUtils {
         ''')
     }
 
+    Request getProjectPipelinesRequestGetNameAndId() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ projectId: project.id ])
+
+        def listProjectJobs = gq('''
+            query pipelines($projectId: UUID!) {
+                pipelines(projectId: $projectId) {
+                    id
+                    name
+                }
+            }
+        ''', gqVariables)
+        return buildRequestFromQuery(listProjectJobs)
+    }
+
+    static boolean isCollectionOrArray(object) {
+        [Collection, Object[]].any { it.isAssignableFrom(object.getClass()) }
+    }
+
+    Request getListTechnologyVersionsRequest(String technologyId) {
+        logger.debug('Generating getListTechnologyVersionsRequest [technology={}]', technologyId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ technologyId: technologyId ])
+
+        def listTechnologyVersions = gq('''
+            query TechnologiesVersions($technologyId: UUID!) {
+            technologiesVersions(technologyId: $technologyId) {
+              versionLabel
+              technologyLabel
+              secondaryTechnologies {
+                   label     isAvailable      versions
+              }
+            }
+          }
+        ''', gqVariables)
+        return buildRequestFromQuery(listTechnologyVersions)
+    }
+
     Request getProjectJobsRequestBuild(String query) {
         Project project = configuration.project
         logger.debug('Generating getProjectJobsRequest [projectId={}]', project.id)
@@ -190,25 +246,116 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectTechnologies)
     }
 
+    Request getPipelineRequestFromParamV1(String pipelineId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get pipeline detail from V1')
+
+        Request newRequest = new Request.Builder()
+            .url("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}")
+            .get()
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    static ArrayList getDifferenceOfTwoArrays(ArrayList collection1, ArrayList collection2) {
+        return ((collection1 - collection2) + (collection2 - collection1))
+    }
+
+    Request getPipelineInstancesRequestFromParamV1(String pipelineId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get pipeline detail from V1')
+
+        HttpUrl.Builder httpBuilder = HttpUrl.parse("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}/instance").newBuilder();
+        httpBuilder.addQueryParameter("page", "1");
+        httpBuilder.addQueryParameter("size", "10");
+
+        Request newRequest = new Request.Builder()
+            .url(httpBuilder.build())
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    Request getPipelineInstanceDetailRequestFromParamV1(String pipelineId, String instanceId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get pipeline detail from V1')
+
+        Request newRequest = new Request.Builder()
+            .url("${server.url}/manager/api/v1/platform/${server.environment}/workflow/${pipelineId}/instance/${instanceId}")
+            .get()
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+    Request getPipelineRequestFromParam(pipelineId) {
+        Project project = configuration.project
+        logger.debug('generating getPipelineRequest [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([ pipelineId: pipelineId ])
+
+        def pipelineResult = gq('''
+            query pipeline ($pipelineId: UUID!) {
+                pipeline(id: $pipelineId) {
+                    id
+                    name
+                    description
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        jobs {
+                          id
+                        }
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
+
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(pipelineResult)
+    }
+
+
     @Deprecated
     Request getProjectCreateJobRequest() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
-
-        job.projectId = configuration.project.id
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
-            .excludeFieldsByName('id')
             .excludeFieldsByName('usePreviousArtifact')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
-            jobVersion: jobVersion.toMap()
-        ])
+            job: mapedJobAndJobVersion?.job,
+            jobVersion: mapedJobAndJobVersion?.jobVersion
+        ]);
 
         def createProjectJob = gq('''
             mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!) {
@@ -225,15 +372,14 @@ class SaagieUtils {
     Request getProjectCreateJobRequestWithGraphQL() {
         Job job = configuration.job
         JobVersion jobVersion = configuration.jobVersion
+        Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
-        job.projectId = configuration.project.id
         File file = new File(jobVersion.packageInfo.name)
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -241,8 +387,8 @@ class SaagieUtils {
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
-            jobVersion: jobVersion.toMap()
+            job: mapedJobAndJobVersion?.job,
+            jobVersion: mapedJobAndJobVersion?.jobVersion
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
@@ -266,23 +412,28 @@ class SaagieUtils {
 
     Request getProjectUpdateJobRequest() {
         Job job = configuration.job
-        logger.debug('Generating getProjectUpdateJobRequest [job={}]', job)
+        Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
+        logger.debug('Generating getProjectUpdateJobRequest [job={}]', mappedJob)
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
         def gqVariables = jsonGenerator.toJson([
-            job: job.toMap(),
+            job: mappedJob,
         ])
         getProjectUpdateJobRequestFormat(gqVariables)
-
     }
 
     Request getProjectUpdateJobFromDataRequest() {
         Job job = configuration.job
+        Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
+        getProjectUpdateJobFromDataRequestFromParams(mappedJob.job)
+    }
+
+    Request getProjectUpdateJobFromDataRequestFromParams(job) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
-        Map formattedJob = getFormatForUpdateJob(job.toMap())
+        Map formattedJob = getFormatForUpdateJob(job)
         def gqVariables = jsonGenerator.toJson([
             job: formattedJob,
         ])
@@ -290,8 +441,6 @@ class SaagieUtils {
     }
 
     Request getProjectUpdateJobRequestFormat(String gqVariables) {
-
-
         def updateProjectJob = gq('''
             mutation editJobMutation($job: JobEditionInput!) {
                 editJob(job: $job) {
@@ -303,6 +452,7 @@ class SaagieUtils {
 
         return buildRequestFromQuery(updateProjectJob)
     }
+
     @Deprecated
     Request getAddJobVersionRequest() {
         Job job = configuration.job
@@ -311,7 +461,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -349,7 +498,6 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -379,12 +527,13 @@ class SaagieUtils {
         JobVersion jobVersion = configuration.jobVersion
         logger.debug('Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion)
 
-        def jsonGenerator = new JsonGenerator.Options()
+        def jsonGeneratorParams = new JsonGenerator.Options()
             .excludeNulls()
-            .excludeFieldsByName('dockerInfo') // TODO: remove this line when `dockerInfo` will be available
             .excludeFieldsByName('packageInfo')
-            .build()
-
+        if (!configuration.jobVersion.packageInfo?.downloadUrl) {
+            jsonGeneratorParams =  jsonGeneratorParams.excludeFieldsByName('usePreviousArtifact')
+        }
+        def jsonGenerator = jsonGeneratorParams.build()
         def gqVariables = jsonGenerator.toJson([
             jobId     : job.id,
             jobVersion: jobVersion.toMap()
@@ -462,6 +611,15 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
+    static cleanDirectory(File temp,Logger logger) {
+        try {
+            temp.deleteDir()
+        } catch (Exception exception) {
+            logger.warn('The directory couldn\'t be cleaned')
+            logger.warn(exception.message)
+        }
+    }
+
     Request getCreatePipelineRequest() {
         Project project = configuration.project
         Pipeline pipeline = configuration.pipeline
@@ -519,11 +677,16 @@ class SaagieUtils {
         PipelineInstance pipelineinstance = configuration.pipelineinstance
         logger.debug('Generating getProjectPipelineInstanceStatusRequest [pipelineInstanceId={}]', pipelineinstance.id)
 
+
+        return getProjectPipelineInstanceStatusRequestWithparam(pipelineinstance.id)
+    }
+
+    Request getProjectPipelineInstanceStatusRequestWithparam(String id) {
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ id: pipelineinstance.id ])
+        def gqVariables = jsonGenerator.toJson([ id: id ])
 
         def getPipelineInstanceStatus = gq('''
             query getPipelineInstanceStatus($id: UUID!) {
@@ -560,6 +723,11 @@ class SaagieUtils {
     Request getAddPipelineVersionRequest() {
         Pipeline pipeline = configuration.pipeline
         PipelineVersion pipelineVersion = configuration.pipelineVersion
+        return getAddPipelineVersionRequestFromParams(pipeline, pipelineVersion)
+
+    }
+
+    Request getAddPipelineVersionRequestFromParams(Pipeline pipeline,PipelineVersion pipelineVersion){
         logger.debug('Generating getAddPipelineVersionRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -590,6 +758,7 @@ class SaagieUtils {
 
         return buildRequestFromQuery(addPipelineVersionRequest)
     }
+
 
     Request getProjectRunPipelineRequest() {
         Pipeline pipeline = configuration.pipeline
@@ -633,7 +802,7 @@ class SaagieUtils {
 
     Request getProjectArchiveJobRequest() {
         Job job = configuration.job
-        logger.debug('Generating getProjectArchiveJobRequest [jobId={}]', job.id)
+        logger.debug('Generating getProjectDeleteJobRequest [jobId={}]', job.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -709,6 +878,15 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
+    private boolean checkIfStringIsJson(String query) {
+        try {
+            JsonOutput.prettyPrint(query)
+            return true
+        } catch (ignored) {
+            return false
+        }
+    }
+
     private Request buildMultipartRequestFromQuery(String query) {
         logger.debug('Generating multipart request from query="{}"', query)
         def file = new File(configuration.jobVersion.packageInfo.name)
@@ -765,7 +943,7 @@ class SaagieUtils {
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
         Request newRequest = new Request.Builder()
-            .url("${configuration.server.url}/security/api/rights")
+            .url("${configuration.server.url}/security/api/groups/authorizations/${configuration.server.environment}/permissions/projects")
             .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=${jwtToken}")
             .addHeader('Saagie-Realm', realm.toLowerCase())
             .get()
@@ -793,6 +971,29 @@ class SaagieUtils {
                     id
                     name
                     description
+                    versions {
+                        number
+                        creationDate
+                        releaseNote
+                        jobs {
+                          id
+                        }
+                        isCurrent
+                        isMajor
+                        creator
+                    }
+
+                    isScheduled
+                    cronScheduling
+                    scheduleStatus
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
                 }
             }
         ''', gqVariables)
@@ -847,14 +1048,17 @@ class SaagieUtils {
 
     Request getJobDetailRequest() {
         Job job = configuration.job;
-        Project project = configuration.project;
-        logger.debug('Generating getJobDetailRequest for getting job detail [id={}] with project Id [id={}]', project.id, job.id)
+      return getJobDetailRequestFromParam(job.id)
+    }
+
+    Request getJobDetailRequestFromParam(jobId) {
+        logger.debug('Generating getJobDetailRequest for getting job detail [id={}]', jobId)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([ jobId: job.id ])
+        def gqVariables = jsonGenerator.toJson([ jobId: jobId ])
 
         def getJobDetailRequest = gq('''
            query job($jobId: UUID!) {
@@ -908,6 +1112,22 @@ class SaagieUtils {
 
         return buildRequestFromQuery(getJobDetailRequest)
     }
+
+
+    Request getJobDetailRequestFromParamV1(String jobId) {
+        Server server = configuration.server
+        logger.debug('Generating request in order to get job detail from V1')
+
+        Request newRequest = new Request.Builder()
+            .url("${server.url}/manager/api/v1/platform/${server.environment}/job/${jobId}")
+            .get()
+            .build()
+
+        debugRequest(newRequest)
+        return newRequest
+    }
+
+
 
     Request getJobVersionDetailRequest() {
         Project project = configuration.project;
@@ -964,6 +1184,32 @@ class SaagieUtils {
         return buildRequestFromQuery(updateProjectRequest)
     }
 
+    Request getListVersionForJobRequest(String jobId) {
+        Project project = configuration.project
+        logger.debug('Generating getListVersionForJobRequest for getting list a new job [id={}]', jobId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            jobId: jobId
+        ])
+
+        def listVersionForAJobRequest = gq('''
+           query job($jobId: UUID!) {
+                job(id: $jobId) {
+                    versions {
+                        number
+                        isCurrent
+                    }
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listVersionForAJobRequest)
+    }
+
     private Request buildRequestFromQuery(String query) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
@@ -991,15 +1237,16 @@ class SaagieUtils {
         return newRequest
     }
 
-    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client ) {
+    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, name) {
         InputStream inputStream = null
         OutputStream outputStream = null
 
         try {
+            logger.debug("Downloading artifiacts ....")
             Request request = this.buildRequestForFile(urlFrom)
             def response = client.newCall(request).execute()
             inputStream = response.body().byteStream();
-            outputStream = new FileOutputStream(new File(to + "/" + getFileNameFromUrl(urlFrom)))
+            outputStream = new FileOutputStream(new File(to + "/" + name))
             byte[] buffer = new byte[2048]
             int length;
             int downloaded = 0;
@@ -1012,6 +1259,7 @@ class SaagieUtils {
         } catch (Exception ex) {
             throw new GradleException(ex.message)
         }
+        logger.debug("Artifacts downloaded.")
         outputStream.close()
         inputStream.close()
     }
@@ -1032,7 +1280,7 @@ class SaagieUtils {
     }
 
     static String getFileNameFromUrl(String url) {
-        return url.substring( url.lastIndexOf('/')+1, url.length() );
+        return url ? url.substring( url.lastIndexOf('/')+1, url.length() ) : null;
     }
 
     static removeLastSlash(String url ){
@@ -1056,6 +1304,17 @@ class SaagieUtils {
             }
     }
 
+    static boolean distinctValues(int[] arr){
+        Set<String> foundNumbers = new HashSet<String>()
+        for (String num : arr) {
+            if(foundNumbers.contains(num)){
+                return false
+            }
+            foundNumbers.add(num)
+        }
+        return true
+    }
+
     static debugRequest(Request request) {
         logger.debug("====== Request ======")
         logger.debug("${request.method} ${request.url.url().path}")
@@ -1075,4 +1334,92 @@ class SaagieUtils {
         logger.debug("${response.protocol().toString()} ${response.code} ${response.message}")
         response.headers().names().each { logger.debug("${it}: ${response.headers().get(it)}") }
     }
+
+    static handleErrorClosure = { Logger l, response ->
+        l.debug('Checking server response')
+        if (response.successful) {
+            l.debug('No error in server response.')
+            return
+        }
+        String body = response.body().string()
+
+        debugResponse(response)
+
+        String status = "${response.code()}"
+        def message = "Error $status when requesting \n$body"
+        l.error(message)
+        throw new GradleException(message)
+    }
+
+    static throwAndLogError(l, message){
+        l.error(message)
+        throw new GradleException(message)
+    }
+
+    static String convertScheduleV1ToCron(String cronString){
+        if(!cronString) {
+            return null
+        }
+        int startPeriod = cronString.indexOf('/', cronString.indexOf("/") + 1);
+        if(!startPeriod) {
+            throwAndLogError("Can't parse cronString, couldn t find '/'")
+        }
+        String startDate = cronString.substring(cronString.indexOf('/') + 1, startPeriod)
+        String cronPeriod = cronString.substring(startPeriod +1, cronString.length());
+
+        Date cronDate = Date.from(ZonedDateTime.parse(startDate, DateTimeFormatter.ISO_ZONED_DATE_TIME.withZone(ZoneOffset.UTC)).toInstant());
+        PeriodDuration period = PeriodDuration.parse(cronPeriod)
+        def minutes ,hours, dayOfMonths, months = null
+        def time = UnitTime.SECOND.value
+
+        if(period.getPeriod().months) {
+            time = UnitTime.MONTH.value
+            months = "*/" + period.getPeriod().months
+        } else if(time > UnitTime.MONTH.value) {
+            months = cronDate.month.toString()
+        }
+
+        if(period.getPeriod().days) {
+            time = UnitTime.DAYOFMONTH.value
+            dayOfMonths = "*/" + period.getPeriod().days
+        } else if(time > UnitTime.DAYOFMONTH.value) {
+            dayOfMonths = cronDate.day.toString()
+        }
+        def hoursTest = period.getDuration().toHours()
+        if(period.getDuration().toHours()) {
+            time = UnitTime.HOUR.value
+            hours = "*/" + hoursTest
+        } else if(time > UnitTime.HOUR.value) {
+            hours = cronDate.hours.toString()
+        }
+
+        def minutesTest = period.getDuration().toHours()
+        if(period.getDuration().toMinutes() && !period.getDuration().toHours()) {
+            time = UnitTime.MINUTE.value
+            minutes = "* / " + minutesTest
+        } else if(time > UnitTime.MINUTE.value) {
+            minutes = cronDate.minutes.toString()
+        }
+
+        return generateCronExpression(minutes ,hours, dayOfMonths, months)
+    }
+
+    static String generateCronExpression(final String minutes, final String hours,
+                                                 final String dayOfMonth,
+                                                 final String month)
+    {
+
+        return String.format('%1$s %2$s %3$s %4$s %5$s',
+            getValueOrStar(minutes),
+            getValueOrStar(hours),
+            getValueOrStar(dayOfMonth),
+            getValueOrStar(month),
+            "*");
+    }
+
+    private static getValueOrStar(String value) {
+         return value? value : '*'
+    }
+
+
 }

@@ -3,10 +3,12 @@ package io.saagie.plugin.dataops.models
 class Job implements IMapable {
     String name
     String id
+    def ids = []
     String projectId
     String description
     String category
     String technology
+    Boolean include_all_versions
     Boolean isScheduled = false
     Boolean isStreaming = false
     String cronScheduling

@@ -179,6 +179,7 @@ class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
             pipeline {
                 name = 'Pipeline name'
                 alerting {
+                    emails=['email@email.com']
                     logins = ['login']
                     statusList = ['FAILED']
                 }

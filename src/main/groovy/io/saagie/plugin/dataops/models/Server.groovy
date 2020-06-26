@@ -2,6 +2,7 @@ package io.saagie.plugin.dataops.models
 
 import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
+import javax.validation.constraints.Positive
 
 class Server {
 
@@ -13,6 +14,9 @@ class Server {
 
     @NotNull(message = 'password cannot be null')
     String password
+
+    @Positive
+    short timeout = 30
 
     String environment
 

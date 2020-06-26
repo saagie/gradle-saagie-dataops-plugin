@@ -5,6 +5,7 @@ import groovy.json.JsonSlurper
 class SaagieClientUtils {
     static final EXPORTED_JOB_CONFIG_FILENAME = 'job.json'
     static final EXPORTED_JOB_PACKAGE_FOLDER_NAME = 'package'
+    static final EXPORTED_PIPELINE_CONFIG_FILENAME = 'pipeline.json'
 
     /**
      * run through all files in the provided folder, and return
@@ -30,23 +31,55 @@ class SaagieClientUtils {
         ]
 
         File jobsFolder = new File("${exportedJobFolder.absolutePath}/Job")
-        jobsFolder.eachFile { jobFolder ->
-            String jobId = jobFolder.name
-            String jobFolderPath = jobFolder.absolutePath
+        if (jobsFolder.exists()) {
+            jobsFolder.eachFile { jobFolder ->
+                String jobId = jobFolder.name
+                String jobFolderPath = jobFolder.absolutePath
 
-            extractedConfig.jobs[jobId] = [
-                configOverride: null,
-                package: null
-            ]
+                extractedConfig.jobs[jobId] = [
+                    configOverride: null,
+                    package: null
+                ]
 
-            def jsonParser = new JsonSlurper()
-            File jobConfigFile = new File("${jobFolderPath}/${EXPORTED_JOB_CONFIG_FILENAME}")
-            extractedConfig.jobs[jobId].configOverride = jsonParser.parse(jobConfigFile)
+                def jsonParser = new JsonSlurper()
+                File jobConfigFile = new File("${jobFolderPath}/${EXPORTED_JOB_CONFIG_FILENAME}")
+                extractedConfig.jobs[jobId].configOverride = jsonParser.parse(jobConfigFile)
+                def packageFile = new File("${jobFolderPath}/${EXPORTED_JOB_PACKAGE_FOLDER_NAME}").listFiles()
+                def packageFileHead = null
+                if(packageFile && packageFile.head()) {
+                    packageFileHead = packageFile.head()
+                }
+                extractedConfig.jobs[jobId].package = packageFileHead
+            }
 
-            def packageFile = new File("${jobFolderPath}/${EXPORTED_JOB_PACKAGE_FOLDER_NAME}").listFiles().head()
-            extractedConfig.jobs[jobId].package = packageFile
+            return extractedConfig
         }
 
-        return extractedConfig
+        return null
+    }
+
+    def static extractPipelineConfigAndPackageFromExportedPipeline(File exportedZipFolder) {
+        Map extractedConfig = [
+            pipelines: [:],
+        ]
+
+        File pipelinesFolder = new File("${exportedZipFolder.absolutePath}/Pipeline")
+        if (pipelinesFolder.exists()){
+            pipelinesFolder.eachFile {  pipelineFolder ->
+                String pipelineId = pipelineFolder.name
+                String pipelineFolderPath = pipelineFolder.absolutePath
+
+                extractedConfig.pipelines[pipelineId] = [
+                    configOverride: null
+                ]
+
+                def jsonParser = new JsonSlurper()
+                File pipelineConfigFile = new File("${pipelineFolderPath}/${EXPORTED_PIPELINE_CONFIG_FILENAME}")
+                extractedConfig.pipelines[pipelineId].configOverride = jsonParser.parse(pipelineConfigFile)
+            }
+
+            return extractedConfig
+        }
+       return null
     }
 }
