@@ -12,6 +12,7 @@ class ZipUtils {
      * @param zipFileName Name of the zipFile to create
      * @return {File} zipPath File object where the zip file is created
      */
+
     static File zip(String inputDir, String zipFileName) {
         ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(zipFileName))
         new File(inputDir).eachFile() { file ->
