@@ -275,13 +275,13 @@ class FolderGenerator {
     }
 
     ArrayList generateFromPipelineVersions(versions) {
-        versions.collect {
+        versions.collectEntries {
             generatePipelineVersion(it)
         }
         return versions
     }
 
-    ArrayList generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
+    Map generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
         def jobForPipeVersionArray = []
         if(pipelineVersionDTO && pipelineVersionDTO.jobs) {
             jobList.each { job ->
@@ -307,7 +307,7 @@ class FolderGenerator {
                 releaseNote: pipelineVersionDTO?.releaseNote
             ]]
         }
-        return jobForPipeVersionArray
+        return pipelineVersionDetailJson
     }
 
     void generateFolderFromParams() {

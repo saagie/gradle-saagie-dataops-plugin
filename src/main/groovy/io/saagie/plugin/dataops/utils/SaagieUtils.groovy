@@ -123,7 +123,7 @@ class SaagieUtils {
         ''')
     }
 
-    Request getProjectJobsRequestGetNameAndId() {
+    Request getProjectJobsGetNameAndIdRequest() {
         getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
