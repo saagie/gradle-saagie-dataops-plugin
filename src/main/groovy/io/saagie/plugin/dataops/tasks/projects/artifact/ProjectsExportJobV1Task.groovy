@@ -7,19 +7,22 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
-class ProjectsExportJobV1Task  extends DefaultTask{
-    @Input DataOpsExtension configuration
-
-    @Input String taskName
-
-    @Internal SaagieClient saagieClient
-
-    @TaskAction
-    def exportProjectJob() {
-        saagieClient = new SaagieClient(configuration, taskName)
-
-        def result = saagieClient.exportArtifactsV1()
-        logger.quiet(result)
-        return result
-    }
+class ProjectsExportJobV1Task extends DefaultTask {
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@TaskAction
+	def exportProjectJob() {
+		saagieClient = new SaagieClient( configuration, taskName )
+		
+		def result = saagieClient.exportArtifactsV1()
+		logger.quiet( result )
+		return result
+	}
 }
