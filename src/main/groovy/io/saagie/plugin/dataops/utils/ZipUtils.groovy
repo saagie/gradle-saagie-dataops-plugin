@@ -13,21 +13,6 @@ class ZipUtils {
      * @return {File} zipPath File object where the zip file is created
      */
 
-    static File zip(String inputDir, String zipFileName) {
-        ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(zipFileName))
-        new File(inputDir).eachFile() { file ->
-            if (file.isFile()){
-                zipFile.putNextEntry(new ZipEntry(file.name))
-                def buffer = new byte[file.size()]
-                file.withInputStream {
-                    zipFile.write(buffer, 0, it.read(buffer))
-                }
-                zipFile.closeEntry()
-            }
-        }
-        zipFile.close()
-    }
-
     static File unzip(String zipFileName, String outputDir) {
         def zip = new ZipFile(new File(zipFileName))
         zip.entries().each{
