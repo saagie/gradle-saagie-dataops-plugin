@@ -8,17 +8,20 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.Input
 
 class PlatformListTask extends DefaultTask {
-    @Input DataOpsExtension configuration
-
-    @Input String taskName
-
-    @Internal SaagieClient saagieClient
-
-    @TaskAction
-    def archiveProjectJob() {
-        saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.listPlatforms()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@TaskAction
+	def archiveProjectJob() {
+		saagieClient = new SaagieClient( configuration, taskName )
+		def result = saagieClient.listPlatforms()
+		logger.quiet( result )
+		return result
+	}
 }

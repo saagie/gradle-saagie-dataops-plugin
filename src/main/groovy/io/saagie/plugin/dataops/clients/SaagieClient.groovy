@@ -31,7 +31,6 @@ import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
 
-
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
     static BAD_PROJECT_CONFIG = 'Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
@@ -948,10 +947,10 @@ class SaagieClient {
     String export(ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, listJobWithNameAndIdV1 = null, isV1 = false) {
 
         ExportContainer exportContainer = [configuration]
-        boolean bool = false
+        boolean customDirectoryExist = false
         def tempJobDirectory = null
 
-        (bool, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, bool)
+        (customDirectoryExist, tempJobDirectory) = getTemporaryFile(configuration.exportArtifacts.temporary_directory, customDirectoryExist)
 
         FolderGenerator folder = [
             tempJobDirectory.getAbsolutePath(),
@@ -974,7 +973,7 @@ class SaagieClient {
             folder.exportPipelineList = exportPipelines
             folder.jobList = listJobs
             folder.generateFolderFromParams()
-            ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, bool]
+            ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryExist]
             zippingFolder.generateZip(tempJobDirectory)
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
@@ -1001,34 +1000,38 @@ class SaagieClient {
 
     }
 
-    static getTemporaryFile(String url, boolean bool) {
+    static getTemporaryFile(String url, boolean customDirectoryExist) {
         def tempJobDirectory = null
-
+    
+    
+        UUID uuid = UUID.randomUUID()
+        
         if(url){
-            tempJobDirectory = new File(url)
-            bool = tempJobDirectory.exists()
-            if(!bool){
-                throw new GradleException("Could not find temporary directory, verify again please")
+            def tempJobDirectoryContainer = new File(url)
+            customDirectoryExist = tempJobDirectoryContainer.exists()
+            if(!customDirectoryExist){
+                throw new GradleException("Could not find main temporary directory, name : ${tempJobDirectoryContainer.name}, verify again please")
             }
+            tempJobDirectory = new File("${url}/artifacts-${uuid.toString()}")
+            tempJobDirectory.mkdir()
         }
-
-
-        if(!bool){
-            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
+        
+        if(!customDirectoryExist){
+            tempJobDirectory = File.createTempDir("artifacts-${uuid.toString()}", ".tmp")
             System.out.println("Directory created successfully");
         }
-
+        
         if(tempJobDirectory.equals("/tmp")) {
             throw new GradleException("Cannot name custom temporary directory as the tmp system folder")
         }
 
         if (tempJobDirectory.canWrite()) {
-            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
+            logger.debug("Temporary directory is created path and have write access {}", tempJobDirectory.getAbsolutePath())
         } else {
             throw new GradleException("Cannot Write inside temporary directory")
         }
 
-        return [ bool, tempJobDirectory]
+        return [ customDirectoryExist, tempJobDirectory]
     }
 
     ExportJobs getJobAndJobVersionDetailToExport(String jobId) {
