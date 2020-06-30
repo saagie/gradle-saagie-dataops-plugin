@@ -17,9 +17,9 @@ class ZippingFolder {
         this.isNotDefaultTemp = isNotDefaultTemp
     }
 
-    void generateZip( File tempFile ) throws IOException{
+    void generateZip( File tempFile ) throws IOException {
         try{
-            new ZipFile(zipFileName).addFolder(new File(inputDir))
+            new ZipFile( zipFileName).addFolder( new File( inputDir))
             logger.debug("Temporary file cache name : ${tempFile.name}")
             if(isNotDefaultTemp){
                 deleteInsideDirectory(tempFile)
@@ -35,11 +35,11 @@ class ZippingFolder {
     }
 
     static deleteInsideDirectory(File folder) {
-        String[] entries = folder.list()
+        String [] entries = folder.list()
 
         for (String s: entries) {
             Boolean isDeleted = true
-            File currentFile = new File(folder.getPath(),s)
+            File currentFile = new File( folder.getPath(), s)
             isDeleted = currentFile.deleteDir()
             if (!isDeleted) {
                 throw new GradleException("One of the files didn't get deleted. File name: ${s}. Path name: ${folder.getPath()}")
