@@ -948,10 +948,10 @@ class SaagieClient {
 	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, listJobWithNameAndIdV1 = null, isV1 = false ) {
 		
 		ExportContainer exportContainer = [ configuration ]
-		boolean bool = false
+		boolean customDirectoryDoeExist = false
 		def tempJobDirectory = null
 		
-		( bool, tempJobDirectory ) = getTemporaryFile( configuration.exportArtifacts.temporary_directory, bool )
+		( customDirectoryDoeExist, tempJobDirectory ) = getTemporaryFile( configuration.exportArtifacts.temporary_directory, customDirectoryDoeExist )
 		
 		FolderGenerator folder = [
 				tempJobDirectory.getAbsolutePath(),
@@ -974,7 +974,7 @@ class SaagieClient {
 			folder.exportPipelineList = exportPipelines
 			folder.jobList = listJobs
 			folder.generateFolderFromParams()
-			ZippingFolder zippingFolder = [ exportContainer.exportConfigPath, inputDirectoryToZip, bool ]
+			ZippingFolder zippingFolder = [ exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryDoeExist ]
 			zippingFolder.generateZip( tempJobDirectory )
 			
 			logger.debug( "path after: {}, ", exportContainer.exportConfigPath )
@@ -1001,19 +1001,19 @@ class SaagieClient {
 		
 	}
 	
-	static getTemporaryFile( String url, boolean bool ) {
+	static getTemporaryFile( String url, boolean customDirectoryDoeExist ) {
 		def tempJobDirectory = null
 		
 		if ( url ) {
 			tempJobDirectory = new File( url )
-			bool = tempJobDirectory.exists()
-			if ( !bool ) {
-				throw new GradleException( "Could not find temporary directory, verify again please" )
+			customDirectoryDoeExist = tempJobDirectory.exists()
+			if ( !customDirectoryDoeExist ) {
+				throw new GradleException( "Could not find temporary directory, verify again please path : ${tempJobDirectory.name}" )
 			}
 		}
 		
 		
-		if ( !bool ) {
+		if ( !customDirectoryDoeExist ) {
 			tempJobDirectory = File.createTempDir( "artifacts", ".tmp" )
 			System.out.println( "Directory created successfully" ) ;
 		}
@@ -1028,7 +1028,7 @@ class SaagieClient {
 			throw new GradleException( "Cannot Write inside temporary directory" )
 		}
 		
-		return [ bool, tempJobDirectory ]
+		return [ customDirectoryDoeExist, tempJobDirectory ]
 	}
 	
 	ExportJobs getJobAndJobVersionDetailToExport( String jobId ) {
@@ -1487,10 +1487,10 @@ class SaagieClient {
 		}
 		
 		def tempFolder = null
-		boolean bool = false
+		boolean customDirectoryDoeExist = false
 		
 		
-		( bool, tempFolder ) = getTemporaryFile( configuration.importArtifacts.temporary_directory, bool )
+		( customDirectoryDoeExist, tempFolder ) = getTemporaryFile( configuration.importArtifacts.temporary_directory, customDirectoryDoeExist )
 		
 		try {
 			ZipUtils.unzip( exportedJobFilePath, tempFolder.absolutePath )
@@ -1594,7 +1594,7 @@ class SaagieClient {
 			)
 		}
 		
-		if ( bool ) {
+		if ( customDirectoryDoeExist ) {
 			SaagieUtils.cleanDirectory( exportedArtifactsPathRoot, logger )
 		} else {
 			SaagieUtils.cleanDirectory( tempFolder, logger )
