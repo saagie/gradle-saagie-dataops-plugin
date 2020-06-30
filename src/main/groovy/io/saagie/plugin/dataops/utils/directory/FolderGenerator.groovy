@@ -260,11 +260,13 @@ class FolderGenerator {
                     pipeline: pipelineDetailJson,
                     pipelineVersion: pipelineVersionDetailJson
                 ]
+
                 if (exportPipeline.versions) {
                     pipelineBody << [*: [
                         versions: generateFromPipelineVersions(exportPipeline.versions)
                     ]]
                 }
+
                 def builder = new JsonBuilder(pipelineBody).toPrettyString()
                 File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")
                 jobFile.write(builder)
