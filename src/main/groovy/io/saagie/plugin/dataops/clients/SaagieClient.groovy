@@ -1012,9 +1012,14 @@ class SaagieClient {
             }
         }
 
+
         if(!bool){
             tempJobDirectory = File.createTempDir("artifacts", ".tmp")
             System.out.println("Directory created successfully");
+        }
+
+        if(tempJobDirectory.equals("/tmp")) {
+            throw new GradleException("Cannot name custom temporary directory as the tmp system folder")
         }
 
         if (tempJobDirectory.canWrite()) {
