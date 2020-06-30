@@ -31,7 +31,6 @@ import javax.validation.Validation
 import javax.validation.Validator
 import javax.validation.ValidatorFactory
 
-
 class SaagieClient {
     static final Logger logger = Logging.getLogger(SaagieClient.class)
     static BAD_PROJECT_CONFIG = 'Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/%WIKI%'
@@ -1003,27 +1002,31 @@ class SaagieClient {
 
     static getTemporaryFile(String url, boolean bool) {
         def tempJobDirectory = null
-
+    
+    
+        UUID uuid = UUID.randomUUID()
+        
         if(url){
-            tempJobDirectory = new File(url)
-            bool = tempJobDirectory.exists()
+            def tempJobDirectoryContainer = new File(url)
+            bool = tempJobDirectoryContainer.exists()
             if(!bool){
-                throw new GradleException("Could not find temporary directory, verify again please")
+                throw new GradleException("Could not find main temporary directory, verify again please")
             }
+            tempJobDirectory = new File("${url}/artifacts-${uuid.toString()}")
+            tempJobDirectory.mkdir()
         }
-
-
+        
         if(!bool){
-            tempJobDirectory = File.createTempDir("artifacts", ".tmp")
+            tempJobDirectory = File.createTempDir("artifacts-${uuid.toString()}", ".tmp")
             System.out.println("Directory created successfully");
         }
-
+        
         if(tempJobDirectory.equals("/tmp")) {
             throw new GradleException("Cannot name custom temporary directory as the tmp system folder")
         }
 
         if (tempJobDirectory.canWrite()) {
-            logger.debug("Directory is created path {}", tempJobDirectory.getAbsolutePath())
+            logger.debug("Temporary directory is created path and have write access {}", tempJobDirectory.getAbsolutePath())
         } else {
             throw new GradleException("Cannot Write inside temporary directory")
         }

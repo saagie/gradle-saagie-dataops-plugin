@@ -22,7 +22,7 @@ class ZippingFolder {
             new ZipFile( zipFileName).addFolder( new File( inputDir))
             logger.debug("Temporary file cache name : ${tempFile.name}")
             if(isNotDefaultTemp){
-                deleteInsideDirectory(tempFile)
+                deleteInsideDirectory( new File( tempFile.getParent()))
             } else {
                 boolean isDeletedTmpFile = tempFile.deleteDir()
                 if(!isDeletedTmpFile) {
