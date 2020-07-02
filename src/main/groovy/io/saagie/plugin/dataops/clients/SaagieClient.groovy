@@ -7,6 +7,8 @@ import io.saagie.plugin.dataops.models.ExportJobs
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
+import io.saagie.plugin.dataops.models.Pipeline
+import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
@@ -185,25 +187,25 @@ class SaagieClient {
     }
 
     @Deprecated
-    String createProjectJob() {
+    String createProjectJob(Job job, JobVersion jobVersion) {
         logger.info('Starting deprecated createProjectJob task')
         checkRequiredConfig(
             !configuration?.project?.id ||
-                !configuration?.job?.name ||
-                !configuration?.job?.technology ||
-                !configuration?.job?.category ||
-                !configuration?.jobVersion?.resources
+                !job?.name ||
+                !job?.technology ||
+                !job?.category ||
+                !jobVersion?.resources
         )
 
-        if (configuration.jobVersion.packageInfo?.name != null) {
-            File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
+        if (jobVersion.packageInfo?.name != null) {
+            File scriptToUpload = new File(jobVersion.packageInfo.name)
             if (!scriptToUpload.exists()) {
-                logger.error(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
-                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
+                logger.error(NO_FILE_MSG.replaceAll('%FILE%', jobVersion.packageInfo.name))
+                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', jobVersion.packageInfo.name))
             }
         }
 
-        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, job, jobVersion)
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
         tryCatchClosure({
@@ -242,33 +244,33 @@ class SaagieClient {
         }
     }
 
-    String createProjectJobWithOrWithFile(){
+    String createProjectJobWithOrWithFile(Job job, JobVersion jobVersion){
         if (configuration.jobVersion?.packageInfo?.name != null) {
-            createProjectJobWithGraphQL()
+            createProjectJobWithGraphQL(job, jobVersion)
         }else{
-            createProjectJob()
+            createProjectJob(job, jobVersion)
         }
     }
 
-    String createProjectJobWithGraphQL() {
+    String createProjectJobWithGraphQL(Job job, JobVersion jobVersion) {
         logger.info('Starting createProjectJob task')
         checkRequiredConfig(
             !configuration?.project?.id ||
-                !configuration?.job?.name ||
-                !configuration?.job?.technology ||
-                !configuration?.job?.category ||
-                !configuration?.jobVersion?.resources
+                !job?.name ||
+                !job?.technology ||
+                !job?.category ||
+                !jobVersion?.resources
         )
 
-        if (configuration.jobVersion.packageInfo?.name != null) {
-            File scriptToUpload = new File(configuration.jobVersion.packageInfo.name)
+        if (jobVersion.packageInfo?.name != null) {
+            File scriptToUpload = new File(jobVersion.packageInfo.name)
             if (!scriptToUpload.exists()) {
-                logger.error(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
-                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', configuration.jobVersion.packageInfo.name))
+                logger.error(NO_FILE_MSG.replaceAll('%FILE%', jobVersion.packageInfo.name))
+                throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', jobVersion.packageInfo.name))
             }
         }
 
-        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, configuration.job, configuration.jobVersion)
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', project, job, jobVersion)
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
         tryCatchClosure({
@@ -282,7 +284,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map createdJob = parsedResult.data.createJob
-                    configuration.job.id = createdJob.id
+                    job.id = createdJob.id
                     return JsonOutput.toJson(createdJob)
                 }
             }
@@ -364,7 +366,7 @@ class SaagieClient {
         String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
         updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
-        def updatedJobVersion = addJobVersionFromConfiguration()
+        def updatedJobVersion = addJobVersionFromConfiguration(configuration.job, configuration.jobVersion)
          Map upgradeStatus = [status: 'success', version: updatedJobVersion]
         return JsonOutput.toJson(upgradeStatus)
     }
@@ -377,19 +379,19 @@ class SaagieClient {
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequestFromParams(job)
         returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
 
-        addJobVersionFromConfiguration()
+        addJobVersionFromConfiguration(job, jobVersion)
 
         return returnData
     }
 
     String updateProjectJobFromParams(job, jobVersion) {
         logger.info('Starting updateProjectJob task')
-        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
+        logger.debug('Using config [job={}, jobVersion={}]', job, configuration.jobVersion)
         String returnData = null
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobRequest()
         returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
 
-        addJobVersionFromConfiguration()
+        addJobVersionFromConfiguration(job, jobVersion)
 
         return returnData
     }
@@ -403,7 +405,7 @@ class SaagieClient {
         Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
         String returnData = updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
 
-        addJobVersionFromConfiguration()
+        addJobVersionFromConfiguration(configuration.job, configuration.jobVersion)
 
         return returnData
     }
@@ -435,17 +437,17 @@ class SaagieClient {
     }
 
 
-    String addJobVersionFromConfiguration() {
+    String addJobVersionFromConfiguration(Job job, JobVersion jobVersion) {
         // 2. add jobVersion id there is a jobVersion config
         if (configuration?.jobVersion?.exists()) {
             Request addJobVersionRequest
             if (configuration.jobVersion.packageInfo?.name) {
-                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL()
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL(job, jobVersion)
             } else {
                 if(configuration.jobVersion.packageInfo?.downloadUrl){
                     configuration.jobVersion.usePreviousArtifact = true
                 }
-                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile()
+                addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile(job, jobVersion)
             }
             client.newCall(addJobVersionRequest).execute().withCloseable { updateResponse ->
                 handleErrors(updateResponse)
@@ -461,8 +463,8 @@ class SaagieClient {
                     return newJobVersion
                 }
             }
-        } else if (configuration?.job?.id) {
-            Request lisJobVersion  = saagieUtils.getListVersionForJobRequest(configuration?.job?.id)
+        } else if (job?.id) {
+            Request lisJobVersion  = saagieUtils.getListVersionForJobRequest(job?.id)
             client.newCall(lisJobVersion).execute().withCloseable { listJobVersionsResponse ->
                 handleErrors(listJobVersionsResponse)
                 String listJobVersionResponseBody = listJobVersionsResponse.body().string()
@@ -485,11 +487,11 @@ class SaagieClient {
         }
     }
 
-    String createProjectPipelineJob() {
+    String createProjectPipeline( Pipeline pipeline, PipelineVersion pipelineVersion) {
         logger.info('Starting createPipeline task')
-        checkRequiredConfig(!configuration?.project?.id || !configuration?.pipeline?.name)
+        checkRequiredConfig(!configuration?.project?.id || !pipeline?.name)
 
-        logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, configuration.pipeline, configuration.pipelineVersion)
+        logger.debug('Using config [project={}, pipeline={}, pipelineVersion={}]', configuration.project, pipeline, pipelineVersion)
 
         Request createPipelineRequest = saagieUtils.getCreatePipelineRequest()
         tryCatchClosure({
@@ -543,7 +545,7 @@ class SaagieClient {
         // 2. try to update pipeline version
         if (configuration?.pipelineVersion) {
             checkRequiredConfig(configuration?.pipelineVersion && configuration?.pipelineVersion?.jobs?.isEmpty())
-            updatePipelineVersion()
+            updatePipelineVersion(configuration?.pipeline, configuration?.pipelineVersion)
         }
 
         return pipelineResult
@@ -570,9 +572,9 @@ class SaagieClient {
         }, 'Unknown error in updateProjectPipeline')
     }
 
-    private updatePipelineVersion() {
-        logger.debug('Using config [pipelineVersion={}]', configuration.pipelineVersion)
-        Request updatePipelineVersionRequest = saagieUtils.getAddPipelineVersionRequest()
+    private updatePipelineVersion( Pipeline pipeline, PipelineVersion pipelineVersion) {
+        logger.debug('Using config [pipelineVersion={}]', pipelineVersion)
+        Request updatePipelineVersionRequest = saagieUtils.getAddPipelineVersionRequest(pipeline, pipelineVersion)
         tryCatchClosure({
             client.newCall(updatePipelineVersionRequest).execute().withCloseable { updateResponse ->
                 handleErrors(updateResponse)
@@ -1510,10 +1512,7 @@ class SaagieClient {
             pipeline: []
         ]
         def listJobs = null
-        def callbackJobToDebug = { newMappedJobData, job, id ->
-            configuration.job = newMappedJobData.job
-            configuration.jobVersion = newMappedJobData.jobVersion
-            configuration.job.id =  null
+        def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
 
             listJobs = getJobListByNameAndId()
 
@@ -1528,13 +1527,13 @@ class SaagieClient {
                 }
                 // the job do not exists, create it
                 if (nameExist) {
-                    configuration.job.id = foundNameId
-                    addJobVersionFromConfiguration()
+                    newMappedJobData.job.id = foundNameId
+                    addJobVersionFromConfiguration(newMappedJobData.job, newMappedJobData.jobVersion)
                 } else {
-                    createProjectJobWithOrWithFile()
+                    createProjectJobWithOrWithFile(newMappedJobData.job, newMappedJobData.jobVersion)
                 }
             } else {
-                createProjectJobWithOrWithFile()
+                createProjectJobWithOrWithFile(newMappedJobData.job, newMappedJobData.jobVersion)
             }
 
             response.job << [
@@ -1546,9 +1545,6 @@ class SaagieClient {
 
         def listPipelines = null;
         def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id ->
-            configuration.pipeline = newMappedPipeline.pipeline
-            configuration.pipelineVersion = newMappedPipeline.pipelineVersion
-            configuration.pipeline.id =  null
             listPipelines = getPipelineListByNameAndId()
             if (listPipelines) {
                 boolean nameExist = false
@@ -1559,16 +1555,15 @@ class SaagieClient {
                         nameExist = true
                     }
                 }
-                // the pipeline do not exists, create it
 
                 if (nameExist) {
-                    configuration.pipeline.id = pipelineFoundId
-                    updatePipelineVersion()
+                    newMappedPipeline.pipeline.id = pipelineFoundId
+                    updatePipelineVersion(newMappedPipeline.pipeline, newMappedPipeline.pipelineVersion)
                 } else {
-                    createProjectPipelineJob()
+                    createProjectPipeline(newMappedPipeline.pipeline, newMappedPipeline.pipelineVersion)
                 }
             } else {
-                createProjectPipelineJob()
+                createProjectPipeline(newMappedPipeline.pipeline, newMappedPipeline.pipelineVersion)
             }
 
             response.pipeline << [

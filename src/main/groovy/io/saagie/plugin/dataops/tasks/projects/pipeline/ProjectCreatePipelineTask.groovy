@@ -19,7 +19,7 @@ class ProjectCreatePipelineTask extends DefaultTask {
     @TaskAction
     def createProjectPipeline() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.createProjectPipelineJob()
+        def result = saagieClient.createProjectPipeline(configuration.pipeline, configuration.pipelineVersion)
         logger.quiet(result)
         resultData = result
     }

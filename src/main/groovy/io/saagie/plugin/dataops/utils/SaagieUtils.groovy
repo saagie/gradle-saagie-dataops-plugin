@@ -488,9 +488,7 @@ class SaagieUtils {
 		return data
 	}
 	
-	Request getAddJobVersionRequestWithGraphQL() {
-		Job job = configuration.job
-		JobVersion jobVersion = configuration.jobVersion
+	Request getAddJobVersionRequestWithGraphQL(Job job, JobVersion jobVersion) {
 		logger.debug( 'Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion )
 		
 		def file = new File( jobVersion.packageInfo.name )
@@ -522,15 +520,13 @@ class SaagieUtils {
 		return buildMultipartRequestFromQuery( updateProjectJob )
 	}
 	
-	Request getAddJobVersionRequestWithoutFile() {
-		Job job = configuration.job
-		JobVersion jobVersion = configuration.jobVersion
+	Request getAddJobVersionRequestWithoutFile(Job job, JobVersion jobVersion) {
 		logger.debug( 'Generating getAddJobVersionRequest for [jobId={}, jobVersion={}]', job.id, jobVersion )
 		
 		def jsonGeneratorParams = new JsonGenerator.Options()
 				.excludeNulls()
 				.excludeFieldsByName( 'packageInfo' )
-		if ( !configuration.jobVersion.packageInfo?.downloadUrl ) {
+		if ( !jobVersion.packageInfo?.downloadUrl ) {
 			jsonGeneratorParams = jsonGeneratorParams.excludeFieldsByName( 'usePreviousArtifact' )
 		}
 		def jsonGenerator = jsonGeneratorParams.build()
@@ -720,9 +716,7 @@ class SaagieUtils {
 		return buildRequestFromQuery( editPipeline )
 	}
 	
-	Request getAddPipelineVersionRequest() {
-		Pipeline pipeline = configuration.pipeline
-		PipelineVersion pipelineVersion = configuration.pipelineVersion
+	Request getAddPipelineVersionRequest(Pipeline pipeline, PipelineVersion pipelineVersion) {
 		return getAddPipelineVersionRequestFromParams( pipeline, pipelineVersion )
 		
 	}
