@@ -270,7 +270,7 @@ class SaagieClient {
             }
         }
 
-        logger.debug('Using config [project={}, job={}, jobVersion={}]', project, job, jobVersion)
+        logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, job, jobVersion)
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
         tryCatchClosure({
@@ -1513,7 +1513,10 @@ class SaagieClient {
         ]
         def listJobs = null
         def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
-
+            def jobToImport = new Job()
+            def jobVersionToImport = new JobVersion()
+            jobToImport = newMappedJobData.job
+            jobVersionToImport = newMappedJobData.jobVersion
             listJobs = getJobListByNameAndId()
 
             if (listJobs) {
@@ -1528,12 +1531,12 @@ class SaagieClient {
                 // the job do not exists, create it
                 if (nameExist) {
                     newMappedJobData.job.id = foundNameId
-                    addJobVersionFromConfiguration(newMappedJobData.job, newMappedJobData.jobVersion)
+                    addJobVersionFromConfiguration(jobToImport, jobVersionToImport)
                 } else {
-                    createProjectJobWithOrWithFile(newMappedJobData.job, newMappedJobData.jobVersion)
+                    createProjectJobWithOrWithFile(jobToImport, jobVersionToImport)
                 }
             } else {
-                createProjectJobWithOrWithFile(newMappedJobData.job, newMappedJobData.jobVersion)
+                createProjectJobWithOrWithFile(jobToImport, jobVersionToImport)
             }
 
             response.job << [
