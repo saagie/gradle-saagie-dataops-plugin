@@ -207,7 +207,7 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, job, jobVersion)
 
-        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest()
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequest(job, jobVersion)
         tryCatchClosure({
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -245,7 +245,7 @@ class SaagieClient {
     }
 
     String createProjectJobWithOrWithFile(Job job, JobVersion jobVersion){
-        if (configuration.jobVersion?.packageInfo?.name != null) {
+        if (jobVersion?.packageInfo?.name != null) {
             createProjectJobWithGraphQL(job, jobVersion)
         }else{
             createProjectJob(job, jobVersion)
@@ -272,7 +272,7 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, job={}, jobVersion={}]', configuration.project, job, jobVersion)
 
-        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL()
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateJobRequestWithGraphQL(job, jobVersion)
         tryCatchClosure({
             client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -439,13 +439,13 @@ class SaagieClient {
 
     String addJobVersionFromConfiguration(Job job, JobVersion jobVersion) {
         // 2. add jobVersion id there is a jobVersion config
-        if (configuration?.jobVersion?.exists()) {
+        if (jobVersion?.exists()) {
             Request addJobVersionRequest
-            if (configuration.jobVersion.packageInfo?.name) {
+            if (jobVersion.packageInfo?.name) {
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithGraphQL(job, jobVersion)
             } else {
-                if(configuration.jobVersion.packageInfo?.downloadUrl){
-                    configuration.jobVersion.usePreviousArtifact = true
+                if(jobVersion.packageInfo?.downloadUrl){
+                    jobVersion.usePreviousArtifact = true
                 }
                 addJobVersionRequest = saagieUtils.getAddJobVersionRequestWithoutFile(job, jobVersion)
             }
@@ -1513,8 +1513,8 @@ class SaagieClient {
         ]
         def listJobs = null
         def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
-            def jobToImport = configuration.job.clone()
-            def jobVersionToImport = configuration.jobVersion.clone()
+            def jobToImport = new Job()
+            def jobVersionToImport = new JobVersion()
             jobToImport = newMappedJobData.job
             jobVersionToImport = newMappedJobData.jobVersion
             listJobs = getJobListByNameAndId()

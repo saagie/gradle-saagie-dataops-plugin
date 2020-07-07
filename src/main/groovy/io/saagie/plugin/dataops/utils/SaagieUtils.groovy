@@ -341,9 +341,7 @@ class SaagieUtils {
 	
 	
 	@Deprecated
-	Request getProjectCreateJobRequest() {
-		Job job = configuration.job
-		JobVersion jobVersion = configuration.jobVersion
+	Request getProjectCreateJobRequest(Job job, JobVersion jobVersion) {
 		Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail( job, jobVersion, configuration.project.id )
 		logger.debug( 'Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion )
 		
@@ -352,26 +350,24 @@ class SaagieUtils {
 				.excludeFieldsByName( 'usePreviousArtifact' )
 				.build()
 		
-		def gqVariables = jsonGenerator.toJson( [
+		def gqVariables = jsonGenerator.toJson([
 				job        : mapedJobAndJobVersion?.job,
 				jobVersion : mapedJobAndJobVersion?.jobVersion
-		] ) ;
+		]) ;
 		
-		def createProjectJob = gq( '''
+		def createProjectJob = gq('''
             mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!) {
                 createJob(job: $job, jobVersion: $jobVersion) {
                     id
                     name
                 }
             }
-        ''', gqVariables )
+        ''', gqVariables)
 		
 		return buildRequestFromQuery( createProjectJob )
 	}
 	
-	Request getProjectCreateJobRequestWithGraphQL() {
-		Job job = configuration.job
-		JobVersion jobVersion = configuration.jobVersion
+	Request getProjectCreateJobRequestWithGraphQL(Job job, JobVersion jobVersion) {
 		Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail( job, jobVersion, configuration.project.id )
 		logger.debug( 'Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion )
 		
@@ -407,7 +403,7 @@ class SaagieUtils {
             }
         ''', gqVariablesWithNullFile )
 		
-		return buildMultipartRequestFromQuery( createProjectJob )
+		return buildMultipartRequestFromQuery( createProjectJob, job, jobVersion )
 	}
 	
 	Request getProjectUpdateJobRequest() {
@@ -517,7 +513,7 @@ class SaagieUtils {
             }
         ''', gqVariablesWithNullFile )
 		
-		return buildMultipartRequestFromQuery( updateProjectJob )
+		return buildMultipartRequestFromQuery( updateProjectJob, job, jobVersion )
 	}
 	
 	Request getAddJobVersionRequestWithoutFile(Job job, JobVersion jobVersion) {
@@ -881,9 +877,9 @@ class SaagieUtils {
 		}
 	}
 	
-	private Request buildMultipartRequestFromQuery( String query ) {
+	private Request buildMultipartRequestFromQuery( String query , Job job, JobVersion jobVersion ) {
 		logger.debug( 'Generating multipart request from query="{}"', query )
-		def file = new File( configuration.jobVersion.packageInfo.name )
+		def file = new File( jobVersion.packageInfo.name )
 		def fileName = file.name
 		logger.debug( 'Using [file={}] for upload', file.absolutePath )
 		
