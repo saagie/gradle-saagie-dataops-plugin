@@ -62,7 +62,11 @@ class JobVersionDTO implements IExists, Comparable{
         if(current.packageUrl) {
             dockerInfo.image = current.packageUrl
         }
-
+    
+        if ( current.releaseNote ) {
+            releaseNote = current.releaseNote
+        }
+        
         if(current.file) {
             packageInfo.name = current.file
         }

@@ -120,11 +120,11 @@ class FolderGenerator {
 		}
 	}
 	
-	ArrayList generateFromVersions( ArrayList<JobVersionDTO> versions ) {
-		versions.collect {
-			generateJobVersion( it, null )
+	ArrayList<Map> generateFromVersions( ArrayList<JobVersionDTO> versions ) {
+		def newJobVersionsCollections = versions.collect {
+			return generateJobVersion( it, null )
 		}
-		return versions
+		return newJobVersionsCollections
 	}
 	
 	void downloadArtifact(
@@ -186,6 +186,12 @@ class FolderGenerator {
 		if ( jobVersionDTO.runtimeVersion ) {
 			jobVersionDetailJsonObject << [ * : [
 					runtimeVersion : jobVersionDTO.runtimeVersion
+			] ]
+		}
+		
+		if ( jobVersionDTO.releaseNote ) {
+			jobVersionDetailJsonObject << [ * : [
+					releaseNote : jobVersionDTO.releaseNote
 			] ]
 		}
 		
@@ -276,11 +282,11 @@ class FolderGenerator {
 		}
 	}
 	
-	ArrayList generateFromPipelineVersions( versions ) {
-		versions.collectEntries {
-			generatePipelineVersion( it )
+	ArrayList<Map>  generateFromPipelineVersions( versions ) {
+		def newPipelineVersionsCollections = versions.collect{
+			return generatePipelineVersion( it )
 		}
-		return versions
+		return newPipelineVersionsCollections
 	}
 	
 	Map generatePipelineVersion( PipelineVersionDTO pipelineVersionDTO ) {
