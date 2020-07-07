@@ -1513,8 +1513,8 @@ class SaagieClient {
         ]
         def listJobs = null
         def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
-            def jobToImport = new Job()
-            def jobVersionToImport = new JobVersion()
+            def jobToImport = configuration.job.clone()
+            def jobVersionToImport = configuration.jobVersion.clone()
             jobToImport = newMappedJobData.job
             jobVersionToImport = newMappedJobData.jobVersion
             listJobs = getJobListByNameAndId()
