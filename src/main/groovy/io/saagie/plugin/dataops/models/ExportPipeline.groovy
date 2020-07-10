@@ -21,17 +21,17 @@ class ExportPipeline implements IExists{
         pipelineDTO.setPipelineFromV1ApiResult(pipelineDetailResult)
     }
 
-    void setPipelineVersionFromV1ApiResult(jobs, releaseNote) {
-        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote)
+    void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number = null) {
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
     }
 
     void setPipelineVersionFromApiResult(version){
         pipelineVersionDTO.setPipelineVersionFromApiResult(version)
     }
 
-    void addPipelineVersionDTOtoVersions(jobs, releaseNote) {
+    void addPipelineVersionDTOtoVersions(jobs, releaseNote, number = null) {
         PipelineVersionDTO pipelineVersionDTO = new PipelineVersionDTO()
-        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote)
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote as String, number as String)
         versions.add(pipelineVersionDTO)
     }
 }

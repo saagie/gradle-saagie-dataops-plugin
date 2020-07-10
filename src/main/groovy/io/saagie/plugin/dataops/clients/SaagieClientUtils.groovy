@@ -44,6 +44,19 @@ class SaagieClientUtils {
 				def jsonParser = new JsonSlurper()
 				File jobConfigFile = new File( "${ jobFolderPath }/${ EXPORTED_JOB_CONFIG_FILENAME }" )
 				extractedConfig.jobs[ jobId ].configOverride = jsonParser.parse( jobConfigFile )
+				if(extractedConfig.jobs[ jobId ].configOverride.versions) {
+					extractedConfig.jobs[ jobId ].configOverride.versions.collect {
+						def versionPackageName = new File( "${ jobFolderPath }/${ EXPORTED_JOB_PACKAGE_FOLDER_NAME }/${it.number}" ).listFiles()
+						def versionPackageFileHead = null
+						if ( versionPackageName && versionPackageName.head() ) {
+							versionPackageFileHead = versionPackageName.head()
+						}
+						it.packageInfo = [
+						        name: versionPackageFileHead
+						]
+					}
+				}
+				
 				def packageFile = new File( "${ jobFolderPath }/${ EXPORTED_JOB_PACKAGE_FOLDER_NAME }" ).listFiles()
 				def packageFileHead = null
 				if ( packageFile && packageFile.head() ) {

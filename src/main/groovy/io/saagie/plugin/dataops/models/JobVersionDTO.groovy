@@ -33,7 +33,11 @@ class JobVersionDTO implements IExists, Comparable{
         commandLine = version.commandLine
         runtimeVersion = version.runtimeVersion
         releaseNote = version.releaseNote
-
+    
+        if(current.number) {
+            number = current.number
+        }
+        
         if(version.packageInfo?.name){
             packageInfo.name = version.packageInfo?.name
         }
@@ -49,6 +53,11 @@ class JobVersionDTO implements IExists, Comparable{
         if(extraTechnologyData) {
             extraTechnology = extraTechnologyData
         }
+        
+        if(current.number) {
+            number = current.number
+        }
+        
         def runtimeTechnologyVersion =  version2 && version2.versionLabel ?
             version2.versionLabel : null
         if(!current) {

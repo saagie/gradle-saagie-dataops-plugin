@@ -244,7 +244,7 @@ class SaagieClient {
         }
     }
 
-    String createProjectJobWithOrWithFile(Job job, JobVersion jobVersion){
+    String createProjectJobWithOrWithoutFile( Job job, JobVersion jobVersion){
         if (jobVersion?.packageInfo?.name != null) {
             createProjectJobWithGraphQL(job, jobVersion)
         }else{
@@ -437,7 +437,7 @@ class SaagieClient {
     }
 
 
-    String addJobVersionFromConfiguration(Job job, JobVersion jobVersion) {
+    String addJobVersionFromConfiguration(job, jobVersion) {
         // 2. add jobVersion id there is a jobVersion config
         if (jobVersion?.exists()) {
             Request addJobVersionRequest
@@ -1273,8 +1273,8 @@ class SaagieClient {
                             return workflow
                         }
 
-                        mappedListInstancesPipelines.forEach {
-                            exportPipeline.addPipelineVersionDTOtoVersions(it.jobs, null)
+                        mappedListInstancesPipelines.eachWithIndex {  item, index ->
+                            exportPipeline.addPipelineVersionDTOtoVersions(item.jobs, null, index + 1 as String)
                         }
 
                         if(exportPipeline.versions.size() > 1) {
@@ -1291,7 +1291,7 @@ class SaagieClient {
                         parsedV1PipelineResult.jobs.collect{ job ->
                             [id: job.id]
                         },
-                        parsedV1PipelineResult?.releaseNote
+                        parsedV1PipelineResult?.releaseNote as String
                     )
                 }
 
@@ -1533,12 +1533,19 @@ class SaagieClient {
                     newMappedJobData.job.id = foundNameId
                     addJobVersionFromConfiguration(jobToImport, jobVersionToImport)
                 } else {
-                    createProjectJobWithOrWithFile(jobToImport, jobVersionToImport)
+                    createProjectJobWithOrWithoutFile(jobToImport, jobVersionToImport)
                 }
             } else {
-                createProjectJobWithOrWithFile(jobToImport, jobVersionToImport)
+                createProjectJobWithOrWithoutFile(jobToImport, jobVersionToImport)
             }
-
+            
+            if (versions && versions.size() > 1) {
+                versions.each {
+                    JobVersion jobVersionFromVersion = ImportJobService.convertFromMapToJsonVersion(it)
+                    addJobVersionFromConfiguration(jobToImport, jobVersionFromVersion)
+                }
+            }
+            
             response.job << [
                 id  : job.key,
                 name: newMappedJobData.job.name

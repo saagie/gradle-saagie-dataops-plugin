@@ -174,6 +174,12 @@ class FolderGenerator {
 			] ]
 		}
 		
+		if ( jobVersionDTO.number ) {
+			jobVersionDetailJsonObject << [ * : [
+					number : jobVersionDTO.number,
+			] ]
+		}
+		
 		if (
 		jobVersionDTO.dockerInfo &&
 				jobVersionDTO.dockerInfo.image
@@ -252,7 +258,7 @@ class FolderGenerator {
 				}
 				
 				if (
-				exportPipeline.pipelineDTO?.alerting &&
+				        exportPipeline.pipelineDTO?.alerting &&
 						exportPipeline.pipelineDTO?.alerting?.emails &&
 						exportPipeline.pipelineDTO?.alerting?.emails.size() > 0 ) {
 					pipelineDetailJson << [ * : [
@@ -313,6 +319,14 @@ class FolderGenerator {
 		) {
 			pipelineVersionDetailJson << [ * : [
 					releaseNote : pipelineVersionDTO?.releaseNote
+			] ]
+		}
+		
+		if (
+		pipelineVersionDTO?.number
+		) {
+			pipelineVersionDetailJson << [ * : [
+					number : pipelineVersionDTO?.number
 			] ]
 		}
 		return pipelineVersionDetailJson
