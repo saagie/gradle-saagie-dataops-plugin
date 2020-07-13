@@ -46,12 +46,12 @@ class CategoryService {
 		def indexCategoryV1PerTechnologyV1 = categoryV1PerTechnologyV1.value
 		
 		if ( !indexCategoryV1PerTechnologyV1 && indexCategoryV1PerTechnologyV1 != 0 ) {
-			throw new GradleException( "Couldn't find category v1 from enum" )
+			throw new GradleException( "Couldn't find category v1 from enum for params categoryV1Name: ${categoryV1Name} and technologyV2Name: ${technologyV2Name}" )
 		}
 		
 		def indexCategoryValuesPerTechnologyFound = null
 		
-		if ( !categoryValuesPerTechnologyFound ) {
+		if ( !categoryValuesPerTechnologyFound?.value ) {
 			indexCategoryValuesPerTechnologyFound = 0
 		} else {
 			indexCategoryValuesPerTechnologyFound = categoryValuesPerTechnologyFound.value.contains( indexCategoryV1PerTechnologyV1 )

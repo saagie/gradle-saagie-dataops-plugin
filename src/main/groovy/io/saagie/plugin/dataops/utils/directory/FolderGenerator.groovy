@@ -12,8 +12,8 @@ import org.gradle.api.GradleException
 
 class FolderGenerator {
 	
-	ExportJobs[] exportJobList = [ ]
-	ExportPipeline[] exportPipelineList = [ ]
+	ExportJobs[] exportJobList = []
+	ExportPipeline[] exportPipelineList = []
 	def inputDire
 	SaagieUtils saagieUtils
 	OkHttpClient client
@@ -21,7 +21,7 @@ class FolderGenerator {
 	String serverUrl
 	String projectId
 	String environment
-	def jobList = [ ]
+	def jobList = []
 	String name
 	Boolean overwrite
 	def sl = File.separator ;
@@ -41,19 +41,19 @@ class FolderGenerator {
 	
 	void generateFolderForJob( ExportJobs exportJob ) {
 		def jobId = exportJob.jobDTO.id
-		def urlJobIdFolder = "${ inputDire }${ sl }${ name }${ sl }Job${ sl }${ jobId }"
-		def folder = new File( urlJobIdFolder ) ;
+		def urlJobIdFolder = "${inputDire}${sl}${name}${sl}Job${sl}${jobId}"
+		def folder = new File(urlJobIdFolder) ;
 		
-		if ( overwrite && folder.exists() ) {
+		if (overwrite && folder.exists()) {
 			def folderStatus = folder.deleteDir()
-			if ( !folderStatus ) {
-				throw new GradleException( "Couldn t delete existing folder ${ inputDire }${ sl }${ name }${ sl }Job" )
+			if (!folderStatus) {
+				throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}Job")
 			}
 		}
 		
-		if ( exportJob.exists() ) {
+		if (exportJob.exists()) {
 			def createFolderForJob = folder.mkdirs()
-			if ( createFolderForJob ) {
+			if (createFolderForJob) {
 				Map jobDetailObject = [
 						name           : exportJob.jobDTO.name,
 						category       : exportJob.jobDTO.category,
@@ -65,35 +65,35 @@ class FolderGenerator {
 				if (
 				exportJob.jobDTO.alerting &&
 						exportJob.jobDTO.alerting.emails &&
-						exportJob.jobDTO.alerting.emails.size() > 0 ) {
-					jobDetailObject << [ * : [
+						exportJob.jobDTO.alerting.emails.size() > 0) {
+					jobDetailObject << [* : [
 							alerting : exportJob.jobDTO.alerting
-					] ]
+					]]
 				}
 				
-				if ( exportJob.jobDTO?.description ) {
-					jobDetailObject << [ * : [
+				if (exportJob.jobDTO?.description) {
+					jobDetailObject << [* : [
 							description : exportJob.jobDTO?.description
-					] ]
+					]]
 				}
 				
-				def jobVersionDetailJsonObject = generateJobVersion( exportJob.jobVersionDTO, exportJob.downloadUrl )
+				def jobVersionDetailJsonObject = generateJobVersion(exportJob.jobVersionDTO, exportJob.downloadUrl)
 				Map jobJsonObject = [
 						job        : jobDetailObject,
 						jobVersion : jobVersionDetailJsonObject
 				]
 				
-				if ( exportJob.versions ) {
-					jobJsonObject << [ * : [
-							versions : generateFromVersions( exportJob.versions )
-					] ]
+				if (exportJob.versions) {
+					jobJsonObject << [* : [
+							versions : generateFromVersions(exportJob.versions)
+					]]
 				}
-				def builder = new JsonBuilder( jobJsonObject ).toPrettyString()
-				File jobFile = new File( "${ urlJobIdFolder }${ sl }job.json" )
-				jobFile.write( builder )
-				if ( exportJob.versions && exportJob.versions.size() > 0 ) {
+				def builder = new JsonBuilder(jobJsonObject).toPrettyString()
+				File jobFile = new File("${urlJobIdFolder}${sl}job.json")
+				jobFile.write(builder)
+				if (exportJob.versions && exportJob.versions.size() > 0) {
 					exportJob.versions.each {
-						if ( it.packageInfo.name ) {
+						if (it.packageInfo.name) {
 							downloadArtifact(
 									urlJobIdFolder,
 									it.number,
@@ -105,7 +105,7 @@ class FolderGenerator {
 					}
 				}
 				
-				if ( exportJob.downloadUrl && exportJob.downloadUrlVersion ) {
+				if (exportJob.downloadUrl && exportJob.downloadUrlVersion) {
 					downloadArtifact(
 							urlJobIdFolder,
 							exportJob.downloadUrlVersion,
@@ -115,14 +115,14 @@ class FolderGenerator {
 				}
 				
 			} else {
-				throw new GradleException( "Cannot create directories for the job" )
+				throw new GradleException("Cannot create directories for the job")
 			}
 		}
 	}
 	
 	ArrayList<Map> generateFromVersions( ArrayList<JobVersionDTO> versions ) {
 		def newJobVersionsCollections = versions.collect {
-			return generateJobVersion( it, null )
+			return generateJobVersion(it, null)
 		}
 		return newJobVersionsCollections
 	}
@@ -135,91 +135,91 @@ class FolderGenerator {
 			String extraFolder = '',
 			isV1 = false ) {
 		try {
-			def urlFileOflocalPackage = "${ urlJobIdFolder }${ sl }package"
-			if ( extraFolder && extraFolder.length() > 0 ) {
-				urlFileOflocalPackage += "${ sl }${ extraFolder }"
+			def urlFileOflocalPackage = "${urlJobIdFolder}${sl}package"
+			if (extraFolder && extraFolder.length() > 0) {
+				urlFileOflocalPackage += "${sl}${extraFolder}"
 			}
-			File localPackage = new File( urlFileOflocalPackage )
+			File localPackage = new File(urlFileOflocalPackage)
 			localPackage.mkdirs()
 			String urlToDownload = ""
 			
-			if ( isV1 ) {
-				urlToDownload = SaagieUtils.removeLastSlash( serverUrl ) + "/manager/api/v1/platform/${ environment }/job/${ jobId }/version/${ downloadUrlVersion }/binary"
+			if (isV1) {
+				urlToDownload = SaagieUtils.removeLastSlash(serverUrl) + "/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
 			} else {
-				urlToDownload = SaagieUtils.removeLastSlash( serverUrl ) +
-						"${ sl }api${ sl }v1${ sl }projects${ sl }platform${ sl }${ environment }${ sl }project${ sl }" +
+				urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+						"${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}" +
 						projectId +
-						"${ sl }job${ sl }" +
+						"${sl}job${sl}" +
 						jobId +
-						"${ sl }version${ sl }${ downloadUrlVersion }${ sl }artifact${ sl }" +
-						SaagieUtils.getFileNameFromUrl( downloadUrl )
+						"${sl}version${sl}${downloadUrlVersion}${sl}artifact${sl}" +
+						SaagieUtils.getFileNameFromUrl(downloadUrl)
 			}
 			saagieUtils.downloadFromHTTPSServer(
 					urlToDownload,
 					urlFileOflocalPackage,
 					client,
-					SaagieUtils.getFileNameFromUrl( downloadUrl )
+					SaagieUtils.getFileNameFromUrl(downloadUrl)
 			)
-		} catch ( IOException e ) {
-			throw new GradleException( e.message )
+		} catch (IOException e) {
+			throw new GradleException(e.message)
 		}
 	}
 	
 	static Map generateJobVersion( JobVersionDTO jobVersionDTO, String downloadUrl ) {
-		Map jobVersionDetailJsonObject = [ : ]
+		Map jobVersionDetailJsonObject = [:]
 		
-		if ( jobVersionDTO.commandLine ) {
-			jobVersionDetailJsonObject << [ * : [
+		if (jobVersionDTO.commandLine) {
+			jobVersionDetailJsonObject << [* : [
 					commandLine : jobVersionDTO.commandLine,
-			] ]
+			]]
 		}
 		
-		if ( jobVersionDTO.number ) {
-			jobVersionDetailJsonObject << [ * : [
+		if (jobVersionDTO.number) {
+			jobVersionDetailJsonObject << [* : [
 					number : jobVersionDTO.number,
-			] ]
+			]]
 		}
 		
 		if (
 		jobVersionDTO.dockerInfo &&
 				jobVersionDTO.dockerInfo.image
 		) {
-			jobVersionDetailJsonObject << [ * : [
+			jobVersionDetailJsonObject << [* : [
 					dockerInfo : jobVersionDTO.dockerInfo,
-			] ]
+			]]
 		}
 		
-		if ( jobVersionDTO.runtimeVersion ) {
-			jobVersionDetailJsonObject << [ * : [
+		if (jobVersionDTO.runtimeVersion) {
+			jobVersionDetailJsonObject << [* : [
 					runtimeVersion : jobVersionDTO.runtimeVersion
-			] ]
+			]]
 		}
 		
-		if ( jobVersionDTO.releaseNote ) {
-			jobVersionDetailJsonObject << [ * : [
+		if (jobVersionDTO.releaseNote) {
+			jobVersionDetailJsonObject << [* : [
 					releaseNote : jobVersionDTO.releaseNote
-			] ]
+			]]
 		}
 		
 		if (
 		jobVersionDTO.packageInfo &&
 				jobVersionDTO.packageInfo.name && jobVersionDTO.number || downloadUrl
 		) {
-			jobVersionDetailJsonObject << [ * : [
+			jobVersionDetailJsonObject << [* : [
 					packageInfo : [
 							downloadUrl : downloadUrl,
 							name        : jobVersionDTO.packageInfo.name,
 					]
-			] ]
+			]]
 		}
 		
 		if (
 		jobVersionDTO.extraTechnology &&
 				jobVersionDTO.extraTechnology.language
 		) {
-			jobVersionDetailJsonObject << [ * : [
+			jobVersionDetailJsonObject << [* : [
 					extraTechnology : jobVersionDTO.extraTechnology
-			] ]
+			]]
 		}
 		
 		return jobVersionDetailJsonObject
@@ -229,20 +229,20 @@ class FolderGenerator {
 	void generateFolderForPipeline( ExportPipeline exportPipeline ) {
 		
 		def pipelineId = exportPipeline.pipelineDTO.id
-		def urlPipelineIdFolder = "${ inputDire }${ sl }${ name }${ sl }Pipeline${ sl }${ pipelineId }"
-		def folder = new File( urlPipelineIdFolder ) ;
+		def urlPipelineIdFolder = "${inputDire}${sl}${name}${sl}Pipeline${sl}${pipelineId}"
+		def folder = new File(urlPipelineIdFolder) ;
 		
 		
-		if ( overwrite && folder.exists() ) {
+		if (overwrite && folder.exists()) {
 			def folderStatus = folder.deleteDir()
-			if ( !folderStatus ) {
-				throw new GradleException( "Couldn t delete existing folder ${ inputDire }${ sl }${ name }${ sl }Pipeline" )
+			if (!folderStatus) {
+				throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}Pipeline")
 			}
 		}
 		
-		if ( exportPipeline.exists() ) {
+		if (exportPipeline.exists()) {
 			def createFolderForPipeLine = folder.mkdirs()
-			if ( createFolderForPipeLine && jobList ) {
+			if (createFolderForPipeLine && jobList) {
 				
 				Map pipelineDetailJson = [
 						name           : exportPipeline.pipelineDTO?.name,
@@ -251,60 +251,61 @@ class FolderGenerator {
 						cronScheduling : exportPipeline.pipelineDTO?.cronScheduling,
 				]
 				
-				if ( exportPipeline.pipelineDTO?.description ) {
-					pipelineDetailJson << [ * : [
+				if (
+				exportPipeline.pipelineDTO?.description) {
+					pipelineDetailJson << [* : [
 							description : exportPipeline.pipelineDTO?.description
-					] ]
+					]]
 				}
 				
 				if (
-				        exportPipeline.pipelineDTO?.alerting &&
+				exportPipeline.pipelineDTO?.alerting &&
 						exportPipeline.pipelineDTO?.alerting?.emails &&
-						exportPipeline.pipelineDTO?.alerting?.emails.size() > 0 ) {
-					pipelineDetailJson << [ * : [
+						exportPipeline.pipelineDTO?.alerting?.emails.size() > 0) {
+					pipelineDetailJson << [* : [
 							alerting : exportPipeline.pipelineDTO?.alerting
-					] ]
+					]]
 				}
 				
-				def pipelineVersionDetailJson = generatePipelineVersion( exportPipeline.pipelineVersionDTO )
+				def pipelineVersionDetailJson = generatePipelineVersion(exportPipeline.pipelineVersionDTO)
 				
 				def pipelineBody = [
 						pipeline        : pipelineDetailJson,
 						pipelineVersion : pipelineVersionDetailJson
 				]
 				
-				if ( exportPipeline.versions ) {
-					pipelineBody << [ * : [
-							versions : generateFromPipelineVersions( exportPipeline.versions )
-					] ]
+				if (exportPipeline.versions) {
+					pipelineBody << [* : [
+							versions : generateFromPipelineVersions(exportPipeline.versions)
+					]]
 				}
 				
-				def builder = new JsonBuilder( pipelineBody ).toPrettyString()
-				File jobFile = new File( "${ urlPipelineIdFolder }${ sl }pipeline.json" )
-				jobFile.write( builder )
+				def builder = new JsonBuilder(pipelineBody).toPrettyString()
+				File jobFile = new File("${urlPipelineIdFolder}${sl}pipeline.json")
+				jobFile.write(builder)
 			} else {
-				throw new GradleException( "Cannot create directories for the pipeline" )
+				throw new GradleException("Cannot create directories for the pipeline")
 			}
 		}
 	}
 	
-	ArrayList<Map>  generateFromPipelineVersions( versions ) {
-		def newPipelineVersionsCollections = versions.collect{
-			return generatePipelineVersion( it )
+	ArrayList<Map> generateFromPipelineVersions( versions ) {
+		def newPipelineVersionsCollections = versions.collect {
+			return generatePipelineVersion(it)
 		}
 		return newPipelineVersionsCollections
 	}
 	
 	Map generatePipelineVersion( PipelineVersionDTO pipelineVersionDTO ) {
-		def jobForPipeVersionArray = [ ]
-		if ( pipelineVersionDTO && pipelineVersionDTO.jobs ) {
+		def jobForPipeVersionArray = []
+		if (pipelineVersionDTO && pipelineVersionDTO.jobs) {
 			jobList.each { job ->
 				pipelineVersionDTO?.jobs?.each { jobId ->
-					if ( jobId && job && jobId.id == job.id ) {
-						jobForPipeVersionArray.add( [
+					if (jobId && job && jobId.id == job.id) {
+						jobForPipeVersionArray.add([
 								id   : job.id,
 								name : job.name
-						] )
+						])
 					}
 				}
 			}
@@ -317,46 +318,46 @@ class FolderGenerator {
 		if (
 		pipelineVersionDTO?.releaseNote
 		) {
-			pipelineVersionDetailJson << [ * : [
+			pipelineVersionDetailJson << [* : [
 					releaseNote : pipelineVersionDTO?.releaseNote
-			] ]
+			]]
 		}
 		
 		if (
 		pipelineVersionDTO?.number
 		) {
-			pipelineVersionDetailJson << [ * : [
+			pipelineVersionDetailJson << [* : [
 					number : pipelineVersionDTO?.number
-			] ]
+			]]
 		}
 		return pipelineVersionDetailJson
 	}
 	
 	void generateFolderFromParams() {
-		if ( !exportJobList.length && !exportPipelineList.length ) {
-			throw new GradleException( "jobs and pipelines to be exported can t be empty at the same time" )
+		if (!exportJobList.length && !exportPipelineList.length) {
+			throw new GradleException("jobs and pipelines to be exported can t be empty at the same time")
 		}
 		exportJobList.each { exportJob ->
-			generateFolderForJob( exportJob )
+			generateFolderForJob(exportJob)
 		}
 		exportPipelineList.each { exportPipeline ->
-			generateFolderForPipeline( exportPipeline )
+			generateFolderForPipeline(exportPipeline)
 		}
 	}
 	
 	static extractNameFileFromUrl( String url ) {
-		return url.substring( url.lastIndexOf( '/' ) + 1, url.length() )
+		return url.substring(url.lastIndexOf('/') + 1, url.length())
 	}
 	
 	static extractNameFileFromUrlWithoutExtension( String text ) {
-		if ( text.lastIndexOf( '.' ) < 0 ) {
-			throw new GradleException( "The file you want to export doesn't contain an extension" )
+		if (text.lastIndexOf('.') < 0) {
+			throw new GradleException("The file you want to export doesn't contain an extension")
 		}
-		return text.replace( text.substring( text.lastIndexOf( '.' ), text.length() ), "" )
+		return text.replace(text.substring(text.lastIndexOf('.'), text.length()), "")
 	}
 	
 	static extractUrlWithoutFileName( String urlString ) {
-		return urlString.replace( extractNameFileFromUrl( urlString ), "" ) ;
+		return urlString.replace(extractNameFileFromUrl(urlString), "") ;
 		
 	}
 }

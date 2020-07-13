@@ -23,7 +23,6 @@ class PipelineVersionDTO  implements IExists, Comparable{
         if(number) {
             this.number = number
         }
-    
     }
 
     def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {

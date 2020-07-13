@@ -18,6 +18,35 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared String exportJobWithoutPipelineZipFilename = './exportedJobWithoutPipeline.zip'
     @Shared String exportJobJustJobVersionWithoutPipelineZipFilename = './exportJobJustJobVersionWithoutPipelineZipFilename.zip'
 
+    def "TEST : the task should add jobVersion based on the build configuration if name exist with overwrite"() {
+        given:
+        buildFile << """
+        saagie {
+            server {
+                url = "https://saagie-workspace.prod.saagie.io/"
+                login ="mohamed.amin.ziraoui"
+                password = "1!@#qweASD"
+                environment = 4
+                jwt = true
+                acceptSelfSigned = true
+            }
+
+            project {
+                id = '2438b9b6-a9ee-4816-bfa8-9ed89896dfb4'
+            }
+
+            importArtifacts {
+                import_file = "/home/amine/Desktop/test_gradle/exportTestWithIncludejobs.zip"
+            }
+        }
+    """
+        when:
+        BuildResult result = gradle(taskName, "-d")
+        then:
+        notThrown(Exception)
+        assert true == true
+    }
+
     def "the task should fail if required params are not provided"() {
         given:
         buildFile << """
@@ -30,26 +59,26 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
-
-    def "the task should add jobVersion based on the build configuration if name exist with overwrite"() {
-
-        given:
-        URL resource = classLoader.getResource(exportJobJustJobVersionWithoutPipelineZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
+	
+	def "the task should add jobVersion based on the build configuration if name exist with overwrite"() {
+		
+		given:
+		URL resource = classLoader.getResource(exportJobJustJobVersionWithoutPipelineZipFilename)
+		File exportedConfig = new File(resource.getFile())
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
+		
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -76,26 +105,26 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-1, name=test added job}], pipeline=[]}')
-    }
-
-    def "the task should create a new pipeline and new job based on the exported config if name doesn't exist"() {
-        given:
-        URL resource = classLoader.getResource(exportJobZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline id 3"},{"id":"id-5","name":"test pipeline id 5"}]}}')
-        enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{status=success, job=[{id=id-1, name=test added job}], pipeline=[]}')
+	}
+	
+	def "the task should create a new pipeline and new job based on the exported config if name doesn't exist"() {
+		given:
+		URL resource = classLoader.getResource(exportJobZipFilename)
+		File exportedConfig = new File(resource.getFile())
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline id 3"},{"id":"id-5","name":"test pipeline id 5"}]}}')
+		enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
+		
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -113,25 +142,25 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
-    }
-
-    def "the task should create a new job and add new version to another job without pipeline based on the exported config"() {
-        given:
-        URL resource = classLoader.getResource(exportJobWithoutPipelineZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}]}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
+	}
+	
+	def "the task should create a new job and add new version to another job without pipeline based on the exported config"() {
+		given:
+		URL resource = classLoader.getResource(exportJobWithoutPipelineZipFilename)
+		File exportedConfig = new File(resource.getFile())
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}]}}')
+		enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
+		
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -149,26 +178,26 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[]}')
-    }
-
-    def "the task should create a new job and update pipline with new version based on the exported config if name doesn exist"() {
-        given:
-        URL resource = classLoader.getResource(exportJobZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
-        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline 23"},{"id":"id-5","name":"test pipeline id 5"}]}}')
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[]}')
+	}
+	
+	def "the task should create a new job and update pipline with new version based on the exported config if name doesn exist"() {
+		given:
+		URL resource = classLoader.getResource(exportJobZipFilename)
+		File exportedConfig = new File(resource.getFile())
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
+		enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline 23"},{"id":"id-5","name":"test pipeline id 5"}]}}')
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
+		
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -195,26 +224,26 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
-    }
-
-    def "the task should create a new pipeline and add new version to another pipeline without job based on the exported config"() {
-        given:
-        URL resource = classLoader.getResource(exportPipelineWithoutJobZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
-        enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
-        enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
-        enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
+	}
+	
+	def "the task should create a new pipeline and add new version to another pipeline without job based on the exported config"() {
+		given:
+		URL resource = classLoader.getResource(exportPipelineWithoutJobZipFilename)
+		File exportedConfig = new File(resource.getFile())
+		enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
+		enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
+		enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
+		enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
+		enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
+		
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -232,19 +261,19 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}]}')
-    }
-
-    def "the task should fail if the import_file does not exists"() {
-
-        given:
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}]}')
+	}
+	
+	def "the task should fail if the import_file does not exists"() {
+		
+		given:
+		buildFile << """
             saagie {
                 server {
                     url = '${mockServerUrl}'
@@ -262,14 +291,14 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Check that there is a file to upload in 'invalid/path/test.zip'. Be sure that 'invalid/path/test.zip' is a correct file path.")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains("Check that there is a file to upload in 'invalid/path/test.zip'. Be sure that 'invalid/path/test.zip' is a correct file path.")
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
 }

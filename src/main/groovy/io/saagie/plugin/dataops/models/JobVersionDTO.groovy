@@ -44,7 +44,7 @@ class JobVersionDTO implements IExists, Comparable{
 
     }
 
-    void setJobVersionFromV1ApiResult(technologyV2container, current) {
+    void setJobVersionFromV1ApiResult(technologyV2container, jobV1) {
         if(!technologyV2container.version2){
             throw new GradleException("technologyV2container doesn't contain critical data information")
         }
@@ -54,42 +54,42 @@ class JobVersionDTO implements IExists, Comparable{
             extraTechnology = extraTechnologyData
         }
         
-        if(current.number) {
-            number = current.number
+        if(jobV1.number) {
+            number = jobV1.number
         }
         
         def runtimeTechnologyVersion =  version2 && version2.versionLabel ?
             version2.versionLabel : null
-        if(!current) {
+        if(!jobV1) {
             throw new GradleException("Current can't be null from version V1")
         }
 
-        if(current.template) {
-            commandLine = current.template
+        if(jobV1.template) {
+            commandLine = jobV1.template
         }
 
-        if(current.packageUrl) {
-            dockerInfo.image = current.packageUrl
+        if(jobV1.packageUrl) {
+            dockerInfo.image = jobV1.packageUrl
         }
     
-        if ( current.releaseNote ) {
-            releaseNote = current.releaseNote
+        if ( jobV1.releaseNote ) {
+            releaseNote = jobV1.releaseNote
         }
         
-        if(current.file) {
-            packageInfo.name = current.file
+        if(jobV1.file) {
+            packageInfo.name = jobV1.file
         }
 
-        if(current.number) {
-            number = current.number
+        if(jobV1.number) {
+            number = jobV1.number
         }
 
         if(runtimeTechnologyVersion) {
             runtimeVersion = runtimeTechnologyVersion
         }
 
-        if(current.releaseNote){
-            releaseNote = current.releaseNote
+        if(jobV1.releaseNote){
+            releaseNote = jobV1.releaseNote
         }
     }
 
