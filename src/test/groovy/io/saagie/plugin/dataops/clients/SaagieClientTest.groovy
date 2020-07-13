@@ -257,7 +257,7 @@ class SaagieClientTest extends Specification {
         client = new SaagieClient(configuration, 'projectsList')
 
         when:
-        def createdJobConfig = client.createProjectJob()
+        def createdJobConfig = client.createProjectJob(configuration.job, configuration.jobVersion)
 
         then:
         createdJobConfig instanceof String
@@ -360,7 +360,7 @@ class SaagieClientTest extends Specification {
         client = new SaagieClient(configuration, 'projectsList')
 
         when:
-        String createPipelineJobConfig = client.createProjectPipelineJob()
+        String createPipelineJobConfig = client.createProjectPipeline(configuration.pipeline, configuration.pipelineVersion)
 
         then:
         createPipelineJobConfig == '{"id":"pipeline-instance-id"}'

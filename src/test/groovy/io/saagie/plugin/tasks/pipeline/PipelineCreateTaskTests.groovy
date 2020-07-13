@@ -151,7 +151,7 @@ class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
         SaagieUtils saagieUtils = new SaagieUtils(config)
 
         when:
-        Request request = saagieUtils.getCreatePipelineRequest()
+        Request request = saagieUtils.getCreatePipelineRequest(config.pipeline, config.pipelineVersion)
         final Buffer buffer = new Buffer()
         request.body().writeTo(buffer)
         String body = buffer.readUtf8()
@@ -193,7 +193,7 @@ class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
         SaagieUtils saagieUtils = new SaagieUtils(config)
 
         when:
-        Request request = saagieUtils.getCreatePipelineRequest()
+        Request request = saagieUtils.getCreatePipelineRequest(config.pipeline, config.pipelineVersion)
         final Buffer buffer = new Buffer()
         request.body().writeTo(buffer)
         String body = buffer.readUtf8()

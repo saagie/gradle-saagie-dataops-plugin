@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull
 
 class PipelineVersionDTO  implements IExists, Comparable{
     String releaseNote
+    String number
     def jobs =[]
 
     @Override
@@ -16,20 +17,25 @@ class PipelineVersionDTO  implements IExists, Comparable{
         initPipelineVersionWithCommunFields(pipelineVersionDetailResult)
     }
 
-    void setPipelineVersionFromV1ApiResult(jobs, releaseNote) {
+    void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number) {
         this.releaseNote = releaseNote
         this.jobs = jobs
+        if(number) {
+            this.number = number
+        }
     }
 
     def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
         jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id]}
+        if(number) {
+            this.number = number
+        }
     }
 
     @Override
     int compareTo(@NotNull Object o) {
         def diffJobs = SaagieUtils.getDifferenceOfTwoArrays(jobs, o.jobs)
         return diffJobs.size() > 0 ? 1 : releaseNote <=> o.releaseNote
-
     }
 }

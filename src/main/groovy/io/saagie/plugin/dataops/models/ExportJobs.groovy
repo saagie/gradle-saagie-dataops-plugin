@@ -20,7 +20,7 @@ class ExportJobs implements IExists{
         jobDTO.setJobFromApiResult(jobDetailResult)
     }
 
-    void setJobVersionFromApiResult(version){
+    void setJobVersionFromApiResult(version) {
         jobVersionDTO.setJobVersionFromApiResult(version)
     }
 
