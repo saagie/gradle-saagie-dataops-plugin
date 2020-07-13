@@ -2,6 +2,7 @@ package io.saagie.plugin.dataops.tasks.service.importTask
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.JobMapper
+import io.saagie.plugin.dataops.models.JobVersion
 
 class ImportJobService {
 
@@ -21,7 +22,7 @@ class ImportJobService {
             def jobId = job.key
             Map jobConfigOverride = job.value.configOverride
             File jobPackageFile = job.value.package
-
+            def versions = null
             def newJobConfigWithOverride = [
                 * : jobConfigOverride.job
             ]
@@ -73,11 +74,22 @@ class ImportJobService {
                     dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
                 }
             }
+    
+            if(jobPackageFile && jobPackageFile.absolutePath) {
+                newMappedJobData.jobVersion?.packageInfo {
+                    name =  jobPackageFile.absolutePath
+                }
+            }
+            
             if(jobConfigOverride.jobVersion?.extraTechnology?.language ) {
                 newMappedJobData.jobVersion?.extraTechnology {
                     language = jobConfigOverride.jobVersion?.extraTechnology?.language
                     version = jobConfigOverride.jobVersion?.extraTechnology?.version
                 }
+            }
+            
+            if(jobConfigOverride.versions && jobConfigOverride.versions.size() > 0) {
+                versions = jobConfigOverride.versions
             }
 
 
@@ -87,15 +99,37 @@ class ImportJobService {
                 }
             }
 
-            if(jobPackageFile && jobPackageFile.absolutePath) {
-                newMappedJobData.jobVersion?.packageInfo {
-                    name =  jobPackageFile.absolutePath
-                }
-            }
-
-            mapClosure(newMappedJobData, job, job.key)
+            mapClosure(newMappedJobData, job, job.key, versions)
         }
 
+    }
+    
+    static convertFromMapToJsonVersion(jobVersionMap) {
+        JobVersion jobVersion = []
+        jobVersion.with {
+            commandLine = jobVersionMap.commandLine
+            releaseNote = jobVersionMap.releaseNote
+            runtimeVersion = jobVersionMap.runtimeVersion
+            dockerInfo {
+                image = jobVersionMap.dockerInfo?.image
+                dockerCredentialsId = jobVersionMap.dockerInfo?.dockerCredentialsId
+            }
+        }
+    
+        if(jobVersionMap?.packageInfo?.name) {
+            jobVersion.packageInfo {
+                name =  jobVersionMap.packageInfo.name
+            }
+        }
+        
+        if(jobVersionMap?.extraTechnology?.language ) {
+            jobVersion.extraTechnology {
+                language = jobVersionMap?.extraTechnology?.language
+                version = jobVersionMap?.extraTechnology?.version
+            }
+        }
+        
+        return jobVersion
     }
 
 }

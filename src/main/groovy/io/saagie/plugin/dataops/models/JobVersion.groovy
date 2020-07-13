@@ -12,7 +12,6 @@ class JobVersion implements IMapable, IExists {
 
     List<String> volume = []
     List<ExposedPort> exposedPorts = []
-
     @Deprecated
     PackageInfo packageInfo = new PackageInfo()
 
@@ -21,7 +20,16 @@ class JobVersion implements IMapable, IExists {
     Resources resources = new Resources()
 
     ExtraTechnology extraTechnology = new ExtraTechnology()
-
+    
+    JobVersion() {
+        // TODO: remember to parameterize that once it will be available
+        resources.with {
+            disk = 512
+            memory = 512
+            cpu = 0.3f
+        }
+    }
+    
     @Deprecated
     Object packageInfo(Closure closure) {
         packageInfo.with(closure)

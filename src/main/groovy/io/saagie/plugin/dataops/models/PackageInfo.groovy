@@ -24,14 +24,12 @@ class PackageInfo implements IMapable, IExists {
 
     @Override
     boolean equals(o) {
-        println "equals(o) triggered"
         if (this.is(o)) return true
         if (getClass() != o.class) return false
 
         PackageInfo packageInfo = (PackageInfo) o
 
         if (name != packageInfo.name) return false
-        if (downloadUrl != packageInfo.downloadUrl) return false
 
         return true
     }
