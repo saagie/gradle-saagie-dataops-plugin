@@ -1489,10 +1489,10 @@ class SaagieClient {
         }
 
         def tempFolder = null
-        boolean bool = false
+        boolean customDirectoryExist = false
 
 
-        (bool, tempFolder) = getTemporaryFile(configuration.importArtifacts.temporary_directory, bool)
+        (customDirectoryExist, tempFolder) = getTemporaryFile(configuration.importArtifacts.temporary_directory, customDirectoryExist)
 
         try {
             ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
@@ -1595,12 +1595,8 @@ class SaagieClient {
                 newJobList
             )
         }
-
-        if(bool){
-            SaagieUtils.cleanDirectory(exportedArtifactsPathRoot, logger)
-        }else{
-            SaagieUtils.cleanDirectory(tempFolder, logger)
-        }
+    
+        SaagieUtils.cleanDirectory(tempFolder, logger)
         return response
     }
 
