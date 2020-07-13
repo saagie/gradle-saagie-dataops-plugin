@@ -1575,7 +1575,7 @@ class SaagieClient {
 			
 			if (versions && versions.size() >= 1) {
 				versions.each {
-					if (!parsedNewlyCreatedPipeline?.id && newlyCreatedPipeline) {
+					if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
 						throw new GradleException("Coundl't id for the pipeline after creation or update")
 					}
 					if (parsedNewlyCreatedPipeline?.id) {
