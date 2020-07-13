@@ -56,7 +56,7 @@ class ImportPipelineService {
 				jobs = getJobsNameFromJobList(jobList, pipelineConfigOverride.pipelineVersion?.jobs).reverse()
 			}
 			
-			mapClosure(newMappedPipeLineData, pipeline, pipeline.key, versions)
+			mapClosure(newMappedPipeLineData, pipeline, pipeline.key, versions, jobList)
 		}
 	}
 	

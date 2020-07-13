@@ -34,8 +34,8 @@ class JobVersionDTO implements IExists, Comparable{
         runtimeVersion = version.runtimeVersion
         releaseNote = version.releaseNote
     
-        if(current.number) {
-            number = current.number
+        if(version.number) {
+            number = version.number
         }
         
         if(version.packageInfo?.name){
