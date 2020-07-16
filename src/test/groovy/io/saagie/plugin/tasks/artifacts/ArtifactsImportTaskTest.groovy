@@ -40,6 +40,8 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
 		e.getBuildResult().task(":${taskName}").outcome == FAILED
 	}
+	
+	
 	def "the task should fail if the import_file does not exists"() {
 		
 		given:
