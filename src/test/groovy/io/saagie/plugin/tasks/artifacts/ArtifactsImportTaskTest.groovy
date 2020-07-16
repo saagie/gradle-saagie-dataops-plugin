@@ -35,7 +35,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		BuildResult result = gradle(taskName)
 		
 		then:
-		UnexpectedBuildFailure e = throkwn()
+		UnexpectedBuildFailure e = thrown()
 		result == null
 		e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
 		e.getBuildResult().task(":${taskName}").outcome == FAILED
