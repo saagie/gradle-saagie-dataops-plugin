@@ -1105,9 +1105,7 @@ class SaagieClient {
 				)
 				
 				if (configuration.job.include_all_versions && parsedV1job.versions) {
-					def versions = parsedV1job.versions.findAll { version ->
-						version.number != parsedV1job.current.number
-					}
+					def versions = parsedV1job.versions
 					
 					versions.sort { x, y ->
 						x.number <=> y.number
@@ -1119,8 +1117,9 @@ class SaagieClient {
 								getRunTimeVersionMapper(technologyV2VersionForVersions, technologyV2),
 								version)
 					}
-					
-					exportJob.versions.unique()
+					if (configuration.job.version_dedup) {
+						exportJob.versions.unique()
+					}
 				}
 				
 				if (current.file) {
@@ -1237,7 +1236,9 @@ class SaagieClient {
 							exportPipeline.addPipelineVersionDtoToVersions(item.jobs, null, null)
 						}
 						if (exportPipeline.versions.size() > 1) {
-							exportPipeline.versions.unique()
+							if (configuration.pipeline.version_dedup) {
+								exportPipeline.versions.unique()
+							}
 							exportPipeline.versions.withIndex().collect { workflow, index ->
 								workflow.number = "${index + 1}"
 								workflow.jobs = workflow.jobs.collect { job ->

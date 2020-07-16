@@ -1,5 +1,7 @@
 package io.saagie.plugin.dataops.models
 
+import com.sun.org.apache.xpath.internal.operations.Bool
+
 class Job implements IMapable {
     String name
     String id
@@ -9,6 +11,7 @@ class Job implements IMapable {
     String category
     String technology
     Boolean include_all_versions
+    Boolean version_dedup = false
     Boolean isScheduled = false
     Boolean isStreaming = false
     String cronScheduling
