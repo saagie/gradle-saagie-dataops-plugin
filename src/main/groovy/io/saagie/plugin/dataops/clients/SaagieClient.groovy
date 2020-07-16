@@ -1453,174 +1453,176 @@ class SaagieClient {
 	}
 	
 	String importJob() {
-		logger.info('Starting importJob task')
-		
-		checkRequiredConfig(
-				!configuration?.project?.id ||
-						!configuration?.importArtifacts?.import_file
-		)
-		
-		// Step 1. scan files and create job if needed, based on the existing rules
-		String exportedJobFilePath = configuration.importArtifacts.import_file
-		
-		File exportedJob = new File(exportedJobFilePath)
-		if (!exportedJob.exists() || !exportedJob.canRead()) {
-			logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
-			throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
-		}
-		
-		def tempFolder = null
-		boolean customDirectoryExist = false
-		
-		
-		( customDirectoryExist, tempFolder ) = getTemporaryFile(configuration.importArtifacts.temporary_directory, customDirectoryExist)
-		
-		try {
-			ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
-		} catch (IOException e) {
-			logger.error('An error occurred when unzipping the artifacts export file.', e.message)
-		}
-		
-		def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
-		def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
-		def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
-		def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
-		def response = [
-				status   : 'success',
-				job      : [],
-				pipeline : []
-		]
-		def listJobs = null
-		def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
-			def jobToImport = new Job()
-			def jobVersionToImport = new JobVersion()
-			jobToImport = newMappedJobData.job
-			jobVersionToImport = newMappedJobData.jobVersion
-			listJobs = getJobListByNameAndId()
-			boolean nameExist = false
-			def foundNameId = null
-			if (listJobs) {
-				listJobs.each {
-					if (it.name == newMappedJobData.job.name) {
-						nameExist = true
-						foundNameId = it.id
-					}
-				}
-			}
-			def parsedNewlyCreatedJob = null
-			// change the job to Queue so we can remove the first
-			if (listJobs && nameExist) {
-				addJobVersion(jobToImport, jobVersionToImport)
-			} else {
-				versions = versions as Queue
-				if (versions && versions.size() >= 1) {
-					def firstVersionInV1Format = versions.poll()
-					JobVersion firstVersion = ImportJobService.convertFromMapToJsonVersion(firstVersionInV1Format)
-					jobVersionToImport = firstVersion
-				}
-				def resultCreatedJob = createProjectJobWithOrWithoutFile(jobToImport, jobVersionToImport)
-				parsedNewlyCreatedJob = slurper.parseText(resultCreatedJob)
+		tryCatchClosure({
+			logger.info('Starting importJob task')
+			
+			checkRequiredConfig(
+					!configuration?.project?.id ||
+							!configuration?.importArtifacts?.import_file
+			)
+			
+			// Step 1. scan files and create job if needed, based on the existing rules
+			String exportedJobFilePath = configuration.importArtifacts.import_file
+			
+			File exportedJob = new File(exportedJobFilePath)
+			if (!exportedJob.exists() || !exportedJob.canRead()) {
+				logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+				throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
 			}
 			
+			def tempFolder = null
+			boolean customDirectoryExist = false
 			
-			if (versions && versions.size() >= 1) {
-				if (!parsedNewlyCreatedJob?.id && !foundNameId) {
-					throw new GradleException("Couldn't get id for the job after creation or update")
-				}
-				if (parsedNewlyCreatedJob?.id) {
-					jobToImport.id = parsedNewlyCreatedJob?.id
-				} else {
-					jobToImport.id = foundNameId
-				}
-				versions.each {
-					JobVersion jobVersionFromVersions = ImportJobService.convertFromMapToJsonVersion(it)
-					addJobVersion(jobToImport, jobVersionFromVersions)
-				}
+			
+			( customDirectoryExist, tempFolder ) = getTemporaryFile(configuration.importArtifacts.temporary_directory, customDirectoryExist)
+			
+			try {
+				ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
+			} catch (IOException e) {
+				logger.error('An error occurred when unzipping the artifacts export file.', e.message)
 			}
 			
-			response.job << [
-					id   : job.key,
-					name : newMappedJobData.job.name
+			def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
+			def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+			def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
+			def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
+			def response = [
+					status   : 'success',
+					job      : [],
+					pipeline : []
 			]
-			
-		}
-		
-		def listPipelines = null
-		def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id, versions, newlistJobs ->
-			listPipelines = getPipelineListByNameAndId()
-			def pipelineToImport = newMappedPipeline.pipeline
-			def pipelineVersionToImport = newMappedPipeline.pipelineVersion
-			boolean nameExist = false
-			def pipelineFoundId = null
-			if (listPipelines) {
-				listPipelines.each {
-					if (it.name == newMappedPipeline.pipeline.name) {
-						pipelineFoundId = it.id
-						nameExist = true
+			def listJobs = null
+			def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
+				def jobToImport = new Job()
+				def jobVersionToImport = new JobVersion()
+				jobToImport = newMappedJobData.job
+				jobVersionToImport = newMappedJobData.jobVersion
+				listJobs = getJobListByNameAndId()
+				boolean nameExist = false
+				def foundNameId = null
+				if (listJobs) {
+					listJobs.each {
+						if (it.name == newMappedJobData.job.name) {
+							nameExist = true
+							foundNameId = it.id
+						}
 					}
 				}
+				def parsedNewlyCreatedJob = null
 				// change the job to Queue so we can remove the first
-			}
-			
-			pipelineToImport.id = pipelineFoundId
-			def parsedNewlyCreatedPipeline = null
-			
-			if (listPipelines && nameExist) {
-				updatePipelineVersion(pipelineToImport, pipelineVersionToImport)
-			} else {
-				if (versions && versions.size() >= 1) {
+				if (listJobs && nameExist) {
+					addJobVersion(jobToImport, jobVersionToImport)
+				} else {
 					versions = versions as Queue
-					def firstVersionInV1Format = versions.poll()
-					PipelineVersion firstVersion = ImportPipelineService.convertFromMapToJsonVersion(firstVersionInV1Format, newlistJobs)
-					pipelineVersionToImport = firstVersion
+					if (versions && versions.size() >= 1) {
+						def firstVersionInV1Format = versions.poll()
+						JobVersion firstVersion = ImportJobService.convertFromMapToJsonVersion(firstVersionInV1Format)
+						jobVersionToImport = firstVersion
+					}
+					def resultCreatedJob = createProjectJobWithOrWithoutFile(jobToImport, jobVersionToImport)
+					parsedNewlyCreatedJob = slurper.parseText(resultCreatedJob)
 				}
 				
-				def newlyCreatedPipeline = createProjectPipeline(pipelineToImport, pipelineVersionToImport)
-				parsedNewlyCreatedPipeline = slurper.parseText(newlyCreatedPipeline)
-			}
-			
-			if (versions && versions.size() >= 1) {
-				versions.each {
-					if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
-						throw new GradleException("Couldn't get id for the pipeline after creation or update")
+				
+				if (versions && versions.size() >= 1) {
+					if (!parsedNewlyCreatedJob?.id && !foundNameId) {
+						throw new GradleException("Couldn't get id for the job after creation or update")
 					}
-					if (parsedNewlyCreatedPipeline?.id) {
-						pipelineToImport.id = parsedNewlyCreatedPipeline?.id
+					if (parsedNewlyCreatedJob?.id) {
+						jobToImport.id = parsedNewlyCreatedJob?.id
 					} else {
-						pipelineToImport.id = pipelineFoundId
+						jobToImport.id = foundNameId
 					}
-					PipelineVersion pipelineVersionFromVersions = ImportPipelineService.convertFromMapToJsonVersion(it, newlistJobs)
-					updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
-					
+					versions.each {
+						JobVersion jobVersionFromVersions = ImportJobService.convertFromMapToJsonVersion(it)
+						addJobVersion(jobToImport, jobVersionFromVersions)
+					}
 				}
+				
+				response.job << [
+						id   : job.key,
+						name : newMappedJobData.job.name
+				]
+				
 			}
 			
-			response.pipeline << [
-					id   : pipeline.key,
-					name : newMappedPipeline.pipeline.name
-			]
-		}
-		
-		if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
-			ImportJobService.importAndCreateJobs(
-					jobsConfigFromExportedZip.jobs,
-					configuration,
-					callbackJobToDebug
-			)
-		}
-		
-		if (pipelinesConfigFromExportedZip && pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
-			def newlistJobs = getJobListByNameAndId()
-			ImportPipelineService.importAndCreatePipelines(
-					pipelinesConfigFromExportedZip.pipelines,
-					configuration,
-					callbackPipelinesToDebug,
-					newlistJobs
-			)
-		}
-		
-		SaagieUtils.cleanDirectory(tempFolder, logger)
-		return response
+			def listPipelines = null
+			def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id, versions, newlistJobs ->
+				listPipelines = getPipelineListByNameAndId()
+				def pipelineToImport = newMappedPipeline.pipeline
+				def pipelineVersionToImport = newMappedPipeline.pipelineVersion
+				boolean nameExist = false
+				def pipelineFoundId = null
+				if (listPipelines) {
+					listPipelines.each {
+						if (it.name == newMappedPipeline.pipeline.name) {
+							pipelineFoundId = it.id
+							nameExist = true
+						}
+					}
+					// change the job to Queue so we can remove the first
+				}
+				
+				pipelineToImport.id = pipelineFoundId
+				def parsedNewlyCreatedPipeline = null
+				
+				if (listPipelines && nameExist) {
+					updatePipelineVersion(pipelineToImport, pipelineVersionToImport)
+				} else {
+					if (versions && versions.size() >= 1) {
+						versions = versions as Queue
+						def firstVersionInV1Format = versions.poll()
+						PipelineVersion firstVersion = ImportPipelineService.convertFromMapToJsonVersion(firstVersionInV1Format, newlistJobs)
+						pipelineVersionToImport = firstVersion
+					}
+					
+					def newlyCreatedPipeline = createProjectPipeline(pipelineToImport, pipelineVersionToImport)
+					parsedNewlyCreatedPipeline = slurper.parseText(newlyCreatedPipeline)
+				}
+				
+				if (versions && versions.size() >= 1) {
+					versions.each {
+						if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
+							throw new GradleException("Couldn't get id for the pipeline after creation or update")
+						}
+						if (parsedNewlyCreatedPipeline?.id) {
+							pipelineToImport.id = parsedNewlyCreatedPipeline?.id
+						} else {
+							pipelineToImport.id = pipelineFoundId
+						}
+						PipelineVersion pipelineVersionFromVersions = ImportPipelineService.convertFromMapToJsonVersion(it, newlistJobs)
+						updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
+						
+					}
+				}
+				
+				response.pipeline << [
+						id   : pipeline.key,
+						name : newMappedPipeline.pipeline.name
+				]
+			}
+			
+			if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
+				ImportJobService.importAndCreateJobs(
+						jobsConfigFromExportedZip.jobs,
+						configuration,
+						callbackJobToDebug
+				)
+			}
+			
+			if (pipelinesConfigFromExportedZip && pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
+				def newlistJobs = getJobListByNameAndId()
+				ImportPipelineService.importAndCreatePipelines(
+						pipelinesConfigFromExportedZip.pipelines,
+						configuration,
+						callbackPipelinesToDebug,
+						newlistJobs
+				)
+			}
+			
+			SaagieUtils.cleanDirectory(tempFolder, logger)
+			return response
+		}, 'importJob', 'projectsImport')
 	}
 	
 	
