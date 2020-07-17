@@ -1522,6 +1522,10 @@ class SaagieClient {
 				parsedNewlyCreatedJob = slurper.parseText(resultCreatedJob)
 			}
 			
+			response.job << [
+					id   : job.key,
+					name : newMappedJobData.job.name
+			]
 			
 			if (versions && versions.size() >= 1) {
 				if (!parsedNewlyCreatedJob?.id && !foundNameId) {
@@ -1536,12 +1540,11 @@ class SaagieClient {
 					JobVersion jobVersionFromVersions = ImportJobService.convertFromMapToJsonVersion(it)
 					addJobVersion(jobToImport, jobVersionFromVersions)
 				}
+				
+				response.job << [
+						versions: versions.size()
+				]
 			}
-			
-			response.job << [
-					id   : job.key,
-					name : newMappedJobData.job.name
-			]
 			
 		}
 		
@@ -1579,6 +1582,11 @@ class SaagieClient {
 				parsedNewlyCreatedPipeline = slurper.parseText(newlyCreatedPipeline)
 			}
 			
+			response.pipeline << [
+					id   : pipeline.key,
+					name : newMappedPipeline.pipeline.name
+			]
+			
 			if (versions && versions.size() >= 1) {
 				versions.each {
 					if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
@@ -1593,12 +1601,12 @@ class SaagieClient {
 					updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
 					
 				}
+				
+				response.pipeline << [
+						versions: versions.size()
+				]
 			}
 			
-			response.pipeline << [
-					id   : pipeline.key,
-					name : newMappedPipeline.pipeline.name
-			]
 		}
 		
 		if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
