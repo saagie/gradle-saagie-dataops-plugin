@@ -1543,6 +1543,12 @@ class SaagieClient {
 					name : newMappedJobData.job.name
 			]
 			
+			if(versions && versions.size() > 0) {
+				response.job << [
+						versions: versions.size()
+				]
+			}
+			
 		}
 		
 		def listPipelines = null
@@ -1599,6 +1605,12 @@ class SaagieClient {
 					id   : pipeline.key,
 					name : newMappedPipeline.pipeline.name
 			]
+			
+			if(versions && versions.size() > 0) {
+				response.pipeline << [
+				   versions: versions.size()
+				]
+			}
 		}
 		
 		if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
