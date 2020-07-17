@@ -1453,7 +1453,7 @@ class SaagieClient {
 		}, 'Unknown error in the Task: projectsUpdate', 'Function: updateProject')
 	}
 	
-	String importJob() {
+	String importArtifacts() {
 		logger.info('Starting importJob task')
 		
 		checkRequiredConfig(
@@ -1511,7 +1511,10 @@ class SaagieClient {
 			def parsedNewlyCreatedJob = null
 			// change the job to Queue so we can remove the first
 			if (listJobs && nameExist) {
+				
+				jobToImport.id = foundNameId
 				addJobVersion(jobToImport, jobVersionToImport)
+				
 			} else {
 				versions = versions as Queue
 				if (versions && versions.size() >= 1) {
@@ -1528,11 +1531,13 @@ class SaagieClient {
 				if (!parsedNewlyCreatedJob?.id && !foundNameId) {
 					throw new GradleException("Couldn't get id for the job after creation or update")
 				}
+				
 				if (parsedNewlyCreatedJob?.id) {
 					jobToImport.id = parsedNewlyCreatedJob?.id
 				} else {
 					jobToImport.id = foundNameId
 				}
+				
 				versions.each {
 					JobVersion jobVersionFromVersions = ImportJobService.convertFromMapToJsonVersion(it)
 					addJobVersion(jobToImport, jobVersionFromVersions)
