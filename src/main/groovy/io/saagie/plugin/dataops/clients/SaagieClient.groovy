@@ -1541,7 +1541,7 @@ class SaagieClient {
 					addJobVersion(jobToImport, jobVersionFromVersions)
 				}
 				
-				response.job << [
+				response.job.last()  << [
 						versions: versions.size()
 				]
 			}
@@ -1602,7 +1602,7 @@ class SaagieClient {
 					
 				}
 				
-				response.pipeline << [
+				response.pipeline.last() << [
 						versions: versions.size()
 				]
 			}
