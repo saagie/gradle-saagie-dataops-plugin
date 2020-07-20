@@ -1633,8 +1633,7 @@ class SaagieClient {
 		} catch (GradleException stopActionException) {
 			throw stopActionException
 		} catch (Exception exception) {
-			logger.error(message)
-			logger.error("${exception.message} ${potentialFunctionName ?: ''}")
+			logger.error(exception.message)
 			throw exception
 		} finally {
 			SaagieUtils.cleanDirectory(tempFolder, logger)
