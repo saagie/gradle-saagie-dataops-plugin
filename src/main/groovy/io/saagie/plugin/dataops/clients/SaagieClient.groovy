@@ -1511,7 +1511,9 @@ class SaagieClient {
 				def parsedNewlyCreatedJob = null
 				// change the job to Queue so we can remove the first
 				if (listJobs && nameExist) {
+					jobToImport.id = foundNameId
 					addJobVersion(jobToImport, jobVersionToImport)
+					
 				} else {
 					versions = versions as Queue
 					if (versions && versions.size() >= 1) {
@@ -1588,7 +1590,7 @@ class SaagieClient {
 						name : newMappedPipeline.pipeline.name
 				]
 				
-				if (versions && versions.size() >= 1) {
+				if (versions?.size() >= 1) {
 					versions.each {
 						if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
 							throw new GradleException("Couldn't get id for the pipeline after creation or update")
@@ -1610,7 +1612,7 @@ class SaagieClient {
 				
 			}
 			
-			if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
+			if (jobsConfigFromExportedZip?.jobs) {
 				ImportJobService.importAndCreateJobs(
 						jobsConfigFromExportedZip.jobs,
 						configuration,
@@ -1618,7 +1620,7 @@ class SaagieClient {
 				)
 			}
 			
-			if (pipelinesConfigFromExportedZip && pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
+			if ( pipelinesConfigFromExportedZip?.pipelines && response.status == 'success') {
 				def newlistJobs = getJobListByNameAndId()
 				ImportPipelineService.importAndCreatePipelines(
 						pipelinesConfigFromExportedZip.pipelines,
