@@ -1627,7 +1627,6 @@ class SaagieClient {
 						newlistJobs
 				)
 			}
-			throw new GradleException("testing invalid import")
 			return response
 		} catch (InvalidUserDataException invalidUserDataException) {
 			throw invalidUserDataException
