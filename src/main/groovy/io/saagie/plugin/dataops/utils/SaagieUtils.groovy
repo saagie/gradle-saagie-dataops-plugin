@@ -1251,10 +1251,10 @@ class SaagieUtils {
 	}
 	// This function is helpful to get for example size of a file without downloading it
 	
-	static int getOnlyHeaderInformationFromApi(String url, OkHttpClient client, version) {
+	int getOnlyHeaderInformationFromApi(String url, OkHttpClient client, version) {
 		def response = null;
 		try {
-			logger.debug("getting file size from header for v1 ${version.name}....")
+			logger.debug("getting file size from header for v1 ${version}....")
 			Request request = this.buildRequestForFileHeader(url)
 			response = client.newCall(request).execute()
 			return response.body().contentLength();
@@ -1264,8 +1264,9 @@ class SaagieUtils {
 				
 			}
 			e.printStackTrace();
+			logger.error("Error when getting header request");
+			throw new GradleException(e.message)
 		}
-		return 0
 	}
 	
 	Request buildRequestForFile( String url ) {

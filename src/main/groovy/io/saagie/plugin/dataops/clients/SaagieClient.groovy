@@ -1114,9 +1114,9 @@ class SaagieClient {
 					
 					versions.each { version ->
 						def technologyV2VersionForVersions = getTechnologyV2MappedInformation(technologyV2.id as String, parsedV1job?.current)
-						long fileSize = null
+						Long fileSize = null
 						if (version?.file) {
-							fileSize = SaagieUtils.getOnlyHeaderInformationFromApi(
+							fileSize = saagieUtils.getOnlyHeaderInformationFromApi(
 									SaagieUtils.getDownloadUrlV1(configuration.server.url, configuration.server.environment, parsedV1job?.id, version?.number),
 									client,
 									parsedV1job?.name)

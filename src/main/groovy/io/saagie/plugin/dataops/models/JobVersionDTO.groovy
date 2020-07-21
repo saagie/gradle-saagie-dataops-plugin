@@ -10,7 +10,7 @@ class JobVersionDTO implements IExists, Comparable{
     ExtraTechnology extraTechnology
     PackageInfo packageInfo = new PackageInfo()
     String number
-    long fileSize
+    Long fileSize
     
     @Override
     boolean exists() {
@@ -44,7 +44,7 @@ class JobVersionDTO implements IExists, Comparable{
         }
     }
     
-    void setJobVersionFromV1ApiResult(technologyV2container, jobV1, fileSize) {
+    void setJobVersionFromV1ApiResult(technologyV2container, jobV1, Long fileSize) {
         if(!technologyV2container.version2){
             throw new GradleException("technologyV2container doesn't contain critical data information")
         }
