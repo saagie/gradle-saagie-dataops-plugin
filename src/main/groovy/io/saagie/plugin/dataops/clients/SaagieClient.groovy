@@ -1480,7 +1480,8 @@ class SaagieClient {
 			try {
 				ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
 			} catch (IOException e) {
-				logger.error('An error occurred when unzipping the artifacts export file.', e.message)
+				logger.error('An error occurred when unzipping the artifacts export file.')
+				throw new GradleException(e.message)
 			}
 			
 			def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
