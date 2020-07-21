@@ -1249,6 +1249,24 @@ class SaagieUtils {
 		outputStream.close()
 		inputStream.close()
 	}
+	// This function is helpful to get for example size of a file without downloading it
+	
+	static int getOnlyHeaderInformationFromApi(String url, OkHttpClient client, version) {
+		def response = null;
+		try {
+			logger.debug("getting file size from header for v1 ${version.name}....")
+			Request request = this.buildRequestForFileHeader(url)
+			response = client.newCall(request).execute()
+			return response.body().contentLength();
+		} catch (IOException e) {
+			if (response!=null) {
+				response.close();
+				
+			}
+			e.printStackTrace();
+		}
+		return 0
+	}
 	
 	Request buildRequestForFile( String url ) {
 		logger.debug('Generating request for url="{}"', url)
@@ -1263,6 +1281,27 @@ class SaagieUtils {
 		
 		debugRequest(newRequest)
 		return newRequest
+	}
+	
+	Request buildRequestForFileHeader( String url ) {
+		logger.debug('Generationg head request (without body return)', url)
+		Server server = configuration.server
+		Request newRequest
+		logger.debug('Fetching file with basic auth ...')
+		
+		newRequest = new Request.Builder()
+				.url(url)
+				.addHeader('Authorization', getCredentials())
+				.head()
+				.build()
+		
+		debugRequest(newRequest)
+		return newRequest
+		
+	}
+	
+	static String getDownloadUrlV1(serverUrl, environment, jobId, downloadUrlVersion) {
+		return removeLastSlash(serverUrl) + "/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
 	}
 	
 	static String getFileNameFromUrl( String url ) {

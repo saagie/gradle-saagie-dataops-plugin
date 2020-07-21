@@ -28,13 +28,13 @@ class ExportJobs implements IExists{
         jobDTO.setJobFromV1ApiResult(jobV1DetailResult, technology, cronScheduling)
     }
 
-    void setJobVersionFromV1ApiResult(runTimeVersion, currentVersion){
-        jobVersionDTO.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion)
+    void setJobVersionFromV1ApiResult(runTimeVersion, currentVersion, filesize){
+        jobVersionDTO.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion, filesize)
     }
 
-    void addJobVersionFromV1ApiResult(runTimeVersion, currentVersion) {
+    void addJobVersionFromV1ApiResult(runTimeVersion, currentVersion, fileSize) {
         JobVersionDTO jobVersionDTOElement = new JobVersionDTO()
-        jobVersionDTOElement.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion)
+        jobVersionDTOElement.setJobVersionFromV1ApiResult(runTimeVersion, currentVersion, fileSize)
         versions.add(jobVersionDTOElement)
     }
 }

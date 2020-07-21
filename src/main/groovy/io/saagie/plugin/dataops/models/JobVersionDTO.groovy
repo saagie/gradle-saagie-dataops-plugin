@@ -10,7 +10,8 @@ class JobVersionDTO implements IExists, Comparable{
     ExtraTechnology extraTechnology
     PackageInfo packageInfo = new PackageInfo()
     String number
-
+    long fileSize
+    
     @Override
     boolean exists() {
         return commandLine ||
@@ -41,10 +42,9 @@ class JobVersionDTO implements IExists, Comparable{
         if(version.packageInfo?.name){
             packageInfo.name = version.packageInfo?.name
         }
-
     }
-
-    void setJobVersionFromV1ApiResult(technologyV2container, jobV1) {
+    
+    void setJobVersionFromV1ApiResult(technologyV2container, jobV1, fileSize) {
         if(!technologyV2container.version2){
             throw new GradleException("technologyV2container doesn't contain critical data information")
         }
@@ -58,17 +58,21 @@ class JobVersionDTO implements IExists, Comparable{
             number = jobV1.number
         }
         
+        if(fileSize) {
+            this.fileSize = fileSize
+        }
+        
         def runtimeTechnologyVersion =  version2 && version2.versionLabel ?
             version2.versionLabel : null
-        if(!jobV1) {
+        if( !jobV1 ) {
             throw new GradleException("Current can't be null from version V1")
         }
 
-        if(jobV1.template) {
+        if( jobV1.template ) {
             commandLine = jobV1.template
         }
 
-        if(jobV1.packageUrl) {
+        if( jobV1.packageUrl ) {
             dockerInfo.image = jobV1.packageUrl
         }
     

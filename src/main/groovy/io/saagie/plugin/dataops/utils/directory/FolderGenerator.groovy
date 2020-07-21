@@ -144,7 +144,7 @@ class FolderGenerator {
 			String urlToDownload = ""
 			
 			if (isV1) {
-				urlToDownload = SaagieUtils.removeLastSlash(serverUrl) + "/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
+				urlToDownload = SaagieUtils.getDownloadUrlV1(serverUrl, environment, jobId, downloadUrlVersion)
 			} else {
 				urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
 						"${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}" +
