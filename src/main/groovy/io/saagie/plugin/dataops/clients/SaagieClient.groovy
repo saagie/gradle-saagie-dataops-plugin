@@ -867,6 +867,7 @@ class SaagieClient {
 	
 	String exportArtifactsV1() {
 		logger.debug('Starting Export artifacts v1 task')
+		configuration.pipeline.include_job = true
 		checkRequiredConfig(
 				!configuration?.exportArtifacts?.export_file
 		)
