@@ -867,6 +867,7 @@ class SaagieClient {
 	
 	String exportArtifactsV1() {
 		logger.debug('Starting Export artifacts v1 task')
+		configuration.pipeline.include_job = true
 		checkRequiredConfig(
 				!configuration?.exportArtifacts?.export_file
 		)
@@ -1453,29 +1454,29 @@ class SaagieClient {
 	}
 	
 	String importJob() {
-		tryCatchClosure({
-			logger.info('Starting importJob task')
-			
-			checkRequiredConfig(
-					!configuration?.project?.id ||
-							!configuration?.importArtifacts?.import_file
-			)
-			
-			// Step 1. scan files and create job if needed, based on the existing rules
-			String exportedJobFilePath = configuration.importArtifacts.import_file
-			
-			File exportedJob = new File(exportedJobFilePath)
-			if (!exportedJob.exists() || !exportedJob.canRead()) {
-				logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
-				throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
-			}
-			
-			def tempFolder = null
-			boolean customDirectoryExist = false
-			
-			
-			( customDirectoryExist, tempFolder ) = getTemporaryFile(configuration.importArtifacts.temporary_directory, customDirectoryExist)
-			
+		logger.info('Starting importJob task')
+		
+		checkRequiredConfig(
+				!configuration?.project?.id ||
+						!configuration?.importArtifacts?.import_file
+		)
+		
+		// Step 1. scan files and create job if needed, based on the existing rules
+		String exportedJobFilePath = configuration.importArtifacts.import_file
+		
+		File exportedJob = new File(exportedJobFilePath)
+		if (!exportedJob.exists() || !exportedJob.canRead()) {
+			logger.error(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+			throw new InvalidUserDataException(NO_FILE_MSG.replaceAll('%FILE%', exportedJobFilePath))
+		}
+		
+		def tempFolder = null
+		boolean customDirectoryExist = false
+		
+		
+		( customDirectoryExist, tempFolder ) = getTemporaryFile(configuration.importArtifacts.temporary_directory, customDirectoryExist)
+		
+		try {
 			try {
 				ZipUtils.unzip(exportedJobFilePath, tempFolder.absolutePath)
 			} catch (IOException e) {
@@ -1511,7 +1512,9 @@ class SaagieClient {
 				def parsedNewlyCreatedJob = null
 				// change the job to Queue so we can remove the first
 				if (listJobs && nameExist) {
+					jobToImport.id = foundNameId
 					addJobVersion(jobToImport, jobVersionToImport)
+					
 				} else {
 					versions = versions as Queue
 					if (versions && versions.size() >= 1) {
@@ -1523,6 +1526,10 @@ class SaagieClient {
 					parsedNewlyCreatedJob = slurper.parseText(resultCreatedJob)
 				}
 				
+				response.job << [
+						id   : job.key,
+						name : newMappedJobData.job.name
+				]
 				
 				if (versions && versions.size() >= 1) {
 					if (!parsedNewlyCreatedJob?.id && !foundNameId) {
@@ -1537,12 +1544,11 @@ class SaagieClient {
 						JobVersion jobVersionFromVersions = ImportJobService.convertFromMapToJsonVersion(it)
 						addJobVersion(jobToImport, jobVersionFromVersions)
 					}
+					
+					response.job.last() << [
+							versions : versions.size()
+					]
 				}
-				
-				response.job << [
-						id   : job.key,
-						name : newMappedJobData.job.name
-				]
 				
 			}
 			
@@ -1580,7 +1586,12 @@ class SaagieClient {
 					parsedNewlyCreatedPipeline = slurper.parseText(newlyCreatedPipeline)
 				}
 				
-				if (versions && versions.size() >= 1) {
+				response.pipeline << [
+						id   : pipeline.key,
+						name : newMappedPipeline.pipeline.name
+				]
+				
+				if (versions?.size() >= 1) {
 					versions.each {
 						if (!parsedNewlyCreatedPipeline?.id && !pipelineFoundId) {
 							throw new GradleException("Couldn't get id for the pipeline after creation or update")
@@ -1594,15 +1605,15 @@ class SaagieClient {
 						updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
 						
 					}
+					
+					response.pipeline.last() << [
+							versions : versions.size()
+					]
 				}
 				
-				response.pipeline << [
-						id   : pipeline.key,
-						name : newMappedPipeline.pipeline.name
-				]
 			}
 			
-			if (jobsConfigFromExportedZip && jobsConfigFromExportedZip.jobs) {
+			if (jobsConfigFromExportedZip?.jobs) {
 				ImportJobService.importAndCreateJobs(
 						jobsConfigFromExportedZip.jobs,
 						configuration,
@@ -1610,7 +1621,7 @@ class SaagieClient {
 				)
 			}
 			
-			if (pipelinesConfigFromExportedZip && pipelinesConfigFromExportedZip.pipelines && response.status == 'success') {
+			if ( pipelinesConfigFromExportedZip?.pipelines && response.status == 'success') {
 				def newlistJobs = getJobListByNameAndId()
 				ImportPipelineService.importAndCreatePipelines(
 						pipelinesConfigFromExportedZip.pipelines,
@@ -1619,10 +1630,17 @@ class SaagieClient {
 						newlistJobs
 				)
 			}
-			
-			SaagieUtils.cleanDirectory(tempFolder, logger)
 			return response
-		}, 'importJob', 'projectsImport')
+		} catch (InvalidUserDataException invalidUserDataException) {
+			throw invalidUserDataException
+		} catch (GradleException stopActionException) {
+			throw stopActionException
+		} catch (Exception exception) {
+			logger.error(exception.message)
+			throw exception
+		} finally {
+			SaagieUtils.cleanDirectory(tempFolder, logger)
+		}
 	}
 	
 	

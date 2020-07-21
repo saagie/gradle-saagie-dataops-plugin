@@ -19,10 +19,10 @@ class ProjectsImportJobTask extends DefaultTask {
 	
 	@TaskAction
 	def importProjectJob() {
-		saagieClient = new SaagieClient( configuration, taskName )
+		saagieClient = new SaagieClient(configuration, taskName)
 		
 		def result = saagieClient.importJob()
-		logger.quiet( result )
+		logger.quiet(result)
 		return result
 	}
 }

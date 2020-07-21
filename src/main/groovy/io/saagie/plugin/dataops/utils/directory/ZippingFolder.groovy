@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops.utils.directory
 
+import io.saagie.plugin.dataops.utils.SaagieUtils
 import net.lingala.zip4j.ZipFile
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
@@ -21,16 +22,10 @@ class ZippingFolder {
 		try {
 			new ZipFile( zipFileName ).addFolder( new File( inputDir ) )
 			logger.debug( "Temporary file cache name : ${ tempFile.name }" )
-			if ( isNotDefaultTemp ) {
-				deleteInsideDirectory( new File( tempFile.getParent() ) )
-			} else {
-				boolean isDeletedTmpFile = tempFile.deleteDir()
-				if ( !isDeletedTmpFile ) {
-					throw new GradleException( "One of the files didn't get deleted. File name: ${ tempFile.name }" )
-				}
-			}
 		} catch ( IOException ex ) {
 			throw new GradleException( ex.message )
+		} finally {
+			SaagieUtils.cleanDirectory(tempFile, logger)
 		}
 	}
 	
