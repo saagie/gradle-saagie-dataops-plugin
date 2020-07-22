@@ -1542,7 +1542,7 @@ class SaagieClient {
 					}
 					
 					response.job.last() << [
-							versions : versions.size()
+							versions : versions.size() + 1
 					]
 				}
 				
@@ -1603,7 +1603,7 @@ class SaagieClient {
 					}
 					
 					response.pipeline.last() << [
-							versions : versions.size()
+							versions : versions.size() + 1
 					]
 				}
 				
