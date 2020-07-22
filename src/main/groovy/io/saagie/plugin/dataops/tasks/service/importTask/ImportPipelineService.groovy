@@ -67,8 +67,8 @@ class ImportPipelineService {
 		if (jobs && JobsFromPipelines) {
 			def jobsByNames = JobsFromPipelines.name
 			jobs.each { job ->
-				def test = jobsByNames.find { it.equals(job.name)}
-				if(test) {
+				def existingJob = jobsByNames.find { it.equals(job.name)}
+				if(existingJob) {
 					jobForPipeVersionArray.add(job.id)
 				}
 			}
