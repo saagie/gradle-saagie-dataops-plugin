@@ -60,7 +60,12 @@ class SaagieClientUtils {
 				def packageFile = new File( "${ jobFolderPath }/${ EXPORTED_JOB_PACKAGE_FOLDER_NAME }" ).listFiles()
 				def packageFileHead = null
 				if ( packageFile && packageFile.head() ) {
-					packageFileHead = packageFile.head()
+					packageFileHead = packageFile.find {
+						if(!it.isDirectory()) {
+							return true
+						}
+						return false
+					}
 				}
 				extractedConfig.jobs[ jobId ].package = packageFileHead
 			}
