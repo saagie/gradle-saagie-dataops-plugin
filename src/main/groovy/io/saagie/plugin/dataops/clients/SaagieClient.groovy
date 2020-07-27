@@ -1647,6 +1647,8 @@ class SaagieClient {
 			client.newCall(jobsListRequest).execute().withCloseable { responseJobList ->
 				handleErrors(responseJobList)
 				String responseBodyForJobList = responseJobList.body().string()
+				logger.debug("Jobs with name and id : ")
+				logger.debug(responseBodyForJobList)
 				def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
 				if (parsedResultForJobList.data?.jobs) {
 					listJobs = parsedResultForJobList.data.jobs
