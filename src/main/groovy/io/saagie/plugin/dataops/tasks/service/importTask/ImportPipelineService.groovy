@@ -80,11 +80,11 @@ class ImportPipelineService {
 			}
 		}
 		if ( jobsNotFound.size() > 0) {
-			logger.error("Some of the jobs contained in the pipeline version doesn't exist in targeted platform.");
-			throw new GradleException("Missing job names not found on the target platform => : ${jobsNotFound.toString()}");
+			logger.error("Some of the jobs contained in the pipeline version doesn't exist in targeted platform.")
+			throw new GradleException("Missing job names not found on the target platform => : ${jobsNotFound.toString()}")
 		}
 		
-		return jobForPipeVersionArray;
+		return jobForPipeVersionArray
 	}
 	
 	static convertFromMapToJsonVersion( pipelineVersionMap, jobList ) {
