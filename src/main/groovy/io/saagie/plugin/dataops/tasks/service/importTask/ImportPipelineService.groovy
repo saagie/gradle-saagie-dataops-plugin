@@ -5,9 +5,13 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.PipelineMapper
 import io.saagie.plugin.dataops.utils.SaagieUtils
+import org.gradle.api.GradleException
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 
 class ImportPipelineService {
 	
+	static final Logger logger = Logging.getLogger(ImportPipelineService.class)
 	def static importAndCreatePipelines( Map pipelines, DataOpsExtension globalConfig, Closure mapClosure, jobList ) {
 		pipelines.each { pipeline ->
 			def piplelineId = pipeline.key
@@ -63,15 +67,21 @@ class ImportPipelineService {
 	def static getJobsNameFromJobList( jobs, JobsFromPipelines ) {
 		
 		def jobForPipeVersionArray = []
-		
+		def jobsNotFound = []
 		if (jobs && JobsFromPipelines) {
 			def jobsByNames = JobsFromPipelines.name
-			jobs.each { job ->
-				def existingJob = jobsByNames.find { it.equals(job.name)}
-				if(existingJob) {
-					jobForPipeVersionArray.add(job.id)
+			jobsByNames.each { job ->
+				def existingJob = jobs.find { it.name.equals(job) }
+				if (existingJob && existingJob.id) {
+					jobForPipeVersionArray.add existingJob.id
+				} else {
+					jobsNotFound.add job
 				}
 			}
+		}
+		if ( jobsNotFound.size() > 0) {
+			logger.error("Some of the jobs contained in the pipeline version doesn't exist in targeted platform.")
+			throw new GradleException("Missing job names not found on the target platform => : ${jobsNotFound.toString()}")
 		}
 		
 		return jobForPipeVersionArray

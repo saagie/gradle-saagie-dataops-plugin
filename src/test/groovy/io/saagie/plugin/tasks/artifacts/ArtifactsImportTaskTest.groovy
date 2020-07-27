@@ -155,6 +155,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		notThrown(Exception)
 		result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}]}')
 	}
+	
 	def "the task should create a new pipeline and new job based on the exported config if name doesn't exist"() {
 		given:
 		URL resource = classLoader.getResource(exportJobZipFilename)
