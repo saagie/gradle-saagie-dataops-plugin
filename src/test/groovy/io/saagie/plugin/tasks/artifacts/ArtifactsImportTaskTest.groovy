@@ -31,6 +31,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
             }
         """
 		
+	    
 		when:
 		BuildResult result = gradle(taskName)
 		
