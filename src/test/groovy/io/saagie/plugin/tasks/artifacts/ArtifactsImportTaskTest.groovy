@@ -53,6 +53,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
                     environment = 1
                 }
 
+
                 project {
                     id = 'project-id'
                 }
