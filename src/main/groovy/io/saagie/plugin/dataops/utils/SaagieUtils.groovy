@@ -85,6 +85,43 @@ class SaagieUtils {
 		return buildRequestFromQuery(listProjectsRequest)
 	}
 	
+	Request getGlobalEnvironmentVariables() {
+		logger.debug('Generating getGlobalEnvironmentVariables') ;
+		
+		def getAllGlobalVariablesQuery = gq('''
+            query globalEnvironmentVariablesQuery {
+                globalEnvironmentVariables {
+                    id    name    scope   value    description   isPassword
+                }
+		    }
+        ''')
+		return buildRequestFromQuery(getAllGlobalVariablesQuery)
+	}
+	
+	Request getProjectEnvironmentVariables(String projectId) {
+		
+		logger.debug('Generating getProjectEnvironmentVariables [projectId={}]', projectId)
+		
+		def jsonGenerator = new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+		
+		def gqVariables = jsonGenerator.toJson([projectId : projectId])
+		
+		def getAllGlobalVariablesQuery = gq('''
+            query environmentVariablesQuery($projectId: UUID!) {
+                projectEnvironmentVariables(projectId: $projectId) {
+                    id   scope   name    value   description   isPassword
+                    overriddenValues {
+                        id      scope     value     description     isPassword
+                    }
+                }
+			}
+        ''', gqVariables)
+		return buildRequestFromQuery(getAllGlobalVariablesQuery)
+	}
+	
+	
 	Request getProjectJobsRequest() {
 		getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
@@ -612,7 +649,7 @@ class SaagieUtils {
 		}
 	}
 	
-	Request getCreatePipelineRequest(Pipeline pipeline, PipelineVersion pipelineVersion ) {
+	Request getCreatePipelineRequest( Pipeline pipeline, PipelineVersion pipelineVersion ) {
 		Project project = configuration.project
 		
 		logger.debug('Generating getCreatePipelineRequest for project [projectId={}, pipeline={}, pipelineVersion={}]', project.id, pipeline, pipelineVersion)
