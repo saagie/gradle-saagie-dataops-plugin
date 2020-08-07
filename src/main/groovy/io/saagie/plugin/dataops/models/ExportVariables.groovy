@@ -4,7 +4,7 @@ import groovy.transform.TypeChecked
 
 @TypeChecked
 class ExportVariables  implements IExists{
-	VariableEnvironmentDTO variableEnvironmentDTO;
+	VariableEnvironmentDTO variableEnvironmentDTO = new VariableEnvironmentDTO();
 	
 	@Override
 	boolean exists() {

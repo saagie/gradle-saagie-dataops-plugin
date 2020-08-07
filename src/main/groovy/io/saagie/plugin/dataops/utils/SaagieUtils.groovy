@@ -86,14 +86,19 @@ class SaagieUtils {
 	}
 	
 	Request getGlobalEnvironmentVariables() {
-		logger.debug('Generating getGlobalEnvironmentVariables') ;
+		logger.debug('Generating globalEnvironmentVariablesQuery') ;
 		
 		def getAllGlobalVariablesQuery = gq('''
-            query globalEnvironmentVariablesQuery {
-                globalEnvironmentVariables {
-                    id    name    scope   value    description   isPassword
-                }
-		    }
+          query globalEnvironmentVariablesQuery {
+           globalEnvironmentVariables {
+            id
+            name
+            scope
+            value
+            description
+            isPassword
+            }
+            }
         ''')
 		return buildRequestFromQuery(getAllGlobalVariablesQuery)
 	}
@@ -103,22 +108,30 @@ class SaagieUtils {
 		logger.debug('Generating getProjectEnvironmentVariables [projectId={}]', projectId)
 		
 		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
 				.build()
 		
 		def gqVariables = jsonGenerator.toJson([projectId : projectId])
 		
-		def getAllGlobalVariablesQuery = gq('''
-            query environmentVariablesQuery($projectId: UUID!) {
+		def getAllProjectVariablesQuery = gq('''
+            query globalEnvironmentVariablesQuery($projectId: UUID!) {
                 projectEnvironmentVariables(projectId: $projectId) {
-                    id   scope   name    value   description   isPassword
+                    id
+                    scope
+                    name
+                    value
+                    description
+                    isPassword
                     overriddenValues {
-                        id      scope     value     description     isPassword
+                        id
+                        scope
+                        value
+                        description
+                        isPassword
                     }
                 }
 			}
         ''', gqVariables)
-		return buildRequestFromQuery(getAllGlobalVariablesQuery)
+		return buildRequestFromQuery(getAllProjectVariablesQuery)
 	}
 	
 	
@@ -1342,7 +1355,7 @@ class SaagieUtils {
 		logger.debug("====== Request ======")
 		logger.debug("${request.method} ${request.url.url().path}")
 		logger.debug("Host: ${request.url.url().host}")
-		request.headers().names().each { logger.debug("${it}: ${request.headers().get(it)}") }
+		request.headers().names().forEach { logger.debug("${it}: ${request.headers().get(it)}") }
 		if (request.body()) {
 			logger.debug("Content-Length: ${request.body().contentLength()}")
 			
@@ -1368,8 +1381,9 @@ class SaagieUtils {
 		
 		debugResponse(response)
 		
-		String status = "${response.code()}"
-		def message = "Error $status when requesting \n$body"
+		def message = "Error ${response.code()} when requesting request"
+		debugRequest(response.request)
+		
 		l.error(message)
 		throw new GradleException(message)
 	}
