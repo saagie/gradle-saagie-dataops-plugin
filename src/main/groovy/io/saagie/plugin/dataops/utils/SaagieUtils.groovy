@@ -113,23 +113,7 @@ class SaagieUtils {
 		def gqVariables = jsonGenerator.toJson([projectId : projectId])
 		
 		def getAllProjectVariablesQuery = gq('''
-            query globalEnvironmentVariablesQuery($projectId: UUID!) {
-                projectEnvironmentVariables(projectId: $projectId) {
-                    id
-                    scope
-                    name
-                    value
-                    description
-                    isPassword
-                    overriddenValues {
-                        id
-                        scope
-                        value
-                        description
-                        isPassword
-                    }
-                }
-			}
+            query environmentVariablesQuery($projectId: UUID!) {  projectEnvironmentVariables(projectId: $projectId) {    id    scope    name    value    description    isPassword    overriddenValues {      id      scope      value      description      isPassword     }   }}
         ''', gqVariables)
 		return buildRequestFromQuery(getAllProjectVariablesQuery)
 	}
@@ -1381,9 +1365,8 @@ class SaagieUtils {
 		
 		debugResponse(response)
 		
-		def message = "Error ${response.code()} when requesting request"
-		debugRequest(response.request)
-		
+		String status = "${response.code()}"
+		def message = "Error $status when requesting \n$body"
 		l.error(message)
 		throw new GradleException(message)
 	}

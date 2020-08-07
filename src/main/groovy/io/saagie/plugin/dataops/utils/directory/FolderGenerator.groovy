@@ -301,7 +301,7 @@ class FolderGenerator {
 		
 		if (exportVariables.exists()) {
 			def createFolderForVariable = folder.mkdirs()
-			if (createFolderForVariable && jobList) {
+			if (createFolderForVariable) {
 				
 				Map variablebDetailObject =	generateBodyEnvironmentVariable( exportVariables.variableEnvironmentDTO.name, exportVariables.variableEnvironmentDTO.variableDetail)
 				

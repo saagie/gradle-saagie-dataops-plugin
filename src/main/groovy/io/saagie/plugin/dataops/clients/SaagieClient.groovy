@@ -953,7 +953,6 @@ class SaagieClient {
 			zippingFolder.generateZip(tempJobDirectory)
 			
 			logger.debug("path after: {}, ", exportContainer.exportConfigPath)
-			throw new GradleException("testing export")
 			return JsonOutput.toJson([
 					status     : "success",
 					exportfile : exportContainer.exportConfigPath
@@ -1468,23 +1467,33 @@ class SaagieClient {
 			}
 			
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())) {
-				listVariables.findAll {
+				listVariables = listVariables.findAll {
 					it.scope?.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
 				}.collect {
 					it
 				}
 			}
 			
+			if (!configuration.env.include_all_var && configuration.env.name && configuration.env.name.size() > 0 ) {
+				listVariables = listVariables.findAll {
+					configuration.env.name.contains(it.name)
+				}.collect {
+					it
+				}
+			}
+			
+			
+			
 			if (!configuration.env.include_all_var) {
 				configuration.env.name.forEach {
 					def foundName = listVariables.find { var -> var.name?.equals(it) }
 					if (!foundName) {
-						throw new GradleException("Didn't find ${it} in the required environment variables list for scope ${configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) ? EnvVarScopeTypeEnum.project.name().toString() : EnvVarScopeTypeEnum.global.name().toString()}")
+						throw new GradleException("Didn't find variable name: ${it} in the required environment variables list for scope ${configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) ? EnvVarScopeTypeEnum.project.name().toString() : EnvVarScopeTypeEnum.global.name().toString()}")
 					}
 				}
 			}
 			
-			ExportVariables[] exportVariables = []
+			def exportVariables = []
 			
 			listVariables.forEach {
 				ExportVariables newExportVariable = []

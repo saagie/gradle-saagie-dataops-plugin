@@ -8,8 +8,8 @@ class VariableEnvironmentDTO implements IExists{
 	def setVariableDetailValuesFromData(variableEnvV2Data) {
 		this.name = variableEnvV2Data.name
 		variableDetail.setVariableDetailValuesFromData(variableEnvV2Data)
-		if( overridenValues && overridenValues.size() > 0 ) {
-			setOverridenValues(overridenValues)
+		if( variableEnvV2Data.overriddenValues && variableEnvV2Data.overriddenValues.size() > 0 ) {
+			setOverridenValues(variableEnvV2Data.overriddenValues)
 		}
 	}
 	
@@ -25,6 +25,6 @@ class VariableEnvironmentDTO implements IExists{
 	
 	@Override
 	boolean exists() {
-		return name && VariableEnvironmentDetailDTO.exists()
+		return name && variableDetail.exists()
 	}
 }

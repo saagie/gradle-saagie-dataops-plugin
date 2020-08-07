@@ -10,7 +10,7 @@ import spock.lang.Title
 class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
 	@Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB
 	
-	def "the task should export environments variables of scope projects"() {
+	def "the task should export environments variables of scope global"() {
 		given:
 		
 		File tempJobDirectory = File.createTempDir("project", ".tmp")
@@ -24,7 +24,7 @@ class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
                     login = 'user'
                     password = 'password'
                     environment = 1
-                    jwt = true
+                    useLegacy = false
                 }
 				
 				project {
@@ -34,6 +34,54 @@ class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
                 env {
                   scope = 'global'
                   include_all_var = true
+
+                }
+
+                exportArtifacts {
+                  export_file = "${tempJobDirectory.getAbsolutePath()}/testvariable1.zip"
+                  overwrite=true
+                }
+           }
+        """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/testvariable1.zip"}"""
+		
+		then:
+		notThrown(Exception)
+		assert new File("${tempJobDirectory.getAbsolutePath()}/testvariable1.zip").exists()
+		result.output.contains(computedValue)
+	}
+	
+	def "the task should export environments variables with names and of scope project "() {
+		given:
+		
+		File tempJobDirectory = File.createTempDir("project", ".tmp")
+		
+		enqueueRequest("{\"data\":{\"projectEnvironmentVariables\":[{\"id\":\"project-environment-1-id\",\"scope\":\"GLOBAL\",\"name\":\"testUX2\",\"value\":\"lala1\",\"description\":\"lala1\",\"isPassword\":false,\"overriddenValues\":[]},{\"id\":\"project-environment-2-id\",\"scope\":\"GLOBAL\",\"name\":\"sjones\",\"value\":null,\"description\":\"description\",\"isPassword\":true,\"overriddenValues\":[]},{\"id\":\"project-environment-3-id\",\"scope\":\"PROJECT\",\"name\":\"globalvar\",\"value\":\"pro\",\"description\":\"pro\",\"isPassword\":false,\"overriddenValues\":[{\"id\":\"project-environment-4-id\",\"scope\":\"GLOBAL\",\"value\":\"GlobalEnvVAr\",\"description\":\"global variable\",\"isPassword\":false}]},{\"id\":\"project-environment-5-id\",\"scope\":\"GLOBAL\",\"name\":\"bbbb\",\"value\":\"bbbbb\",\"description\":\"\",\"isPassword\":false,\"overriddenValues\":[]},{\"id\":\"project-environment-6-id\",\"scope\":\"GLOBAL\",\"name\":\"WEBHDFS_URL\",\"value\":null,\"description\":\"\",\"isPassword\":true,\"overriddenValues\":[]}]}}")
+		
+		buildFile << """
+           saagie {
+                server {
+                   url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+				
+				project {
+                    id = 'project-id'
+				}
+
+                env {
+                  scope = 'project'
+                  include_all_var = false
+                  name = ['globalvar']
+					
+					
                 }
 
                 exportArtifacts {
