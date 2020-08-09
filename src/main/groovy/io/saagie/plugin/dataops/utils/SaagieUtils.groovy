@@ -249,6 +249,87 @@ class SaagieUtils {
 		return buildRequestFromQuery(getProjectInstanceStatus)
 	}
 	
+	Request saveProjectEnvironmentVariable( environmentVariable ) {
+		Project project = configuration.project
+		logger.debug('Generating saveEnvironmentVariable [ProjectId={}]', project.id)
+		
+		def jsonGenerator = new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+		
+		def gqVariables = jsonGenerator.toJson([
+				entityId : project.id,
+				envVar: environmentVariable
+		])
+		
+		def getProjectInstanceStatus = gq('''
+            mutation saveGlobalEnvVarMutation( $entityId: UUID, $envVar: EnvironmentVariableInput!) {
+			  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {
+			    id
+			    name
+			  }
+			}
+        ''', gqVariables)
+		
+		return buildRequestFromQuery(getProjectInstanceStatus)
+	}
+	
+	Request saveGlobalEnvironmentVariable( environmentVariable ) {
+		Project project = configuration.project
+		logger.debug('Generating saveEnvironmentVariable [ProjectId={}]', project.id)
+		
+		def jsonGenerator = new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+		
+		def gqVariables = jsonGenerator.toJson([
+				envVar: environmentVariable
+		])
+		
+		def getProjectInstanceStatus = gq('''
+            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) {
+			  saveEnvironmentVariable(environmentVariable: $envVar) {
+			    id   name
+			  }
+			}
+        ''', gqVariables)
+		
+		return buildRequestFromQuery(getProjectInstanceStatus)
+	}
+	
+	Request getGlobalVariableByNameAndId() {
+		logger.debug('Generating getGlobalVariableByNameAndId')
+		
+		def jsonGenerator = new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+		def getGlobalVariablesByNamesAndId = gq('''
+			query globalEnvironmentVariablesQuery {
+				globalEnvironmentVariables {
+					id    name  scope
+				}
+			}
+		''')
+		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
+	}
+	
+	Request getProjectVariableByNameAndId() {
+		Project project = configuration.project
+		logger.debug('Generating getProjectVariableByNameAndId [ProjectId={}]', project.id)
+		
+		def jsonGenerator = new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+		def getGlobalVariablesByNamesAndId = gq('''
+			query environmentVariablesQuery($projectId: UUID!) {
+			  projectEnvironmentVariables(projectId: $projectId) {
+			    id  name
+			  }
+			}
+		''')
+		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
+	}
+	
 	Request getProjectTechnologiesRequest() {
 		Project project = configuration.project
 		logger.debug('generating getProjectTechnologiesRequest [projectId={}]', project.id)
