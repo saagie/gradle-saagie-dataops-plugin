@@ -16,6 +16,7 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
+import io.saagie.plugin.dataops.tasks.service.VariableService
 import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
@@ -28,6 +29,7 @@ import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import org.codehaus.groovy.runtime.MethodClosure
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
@@ -132,7 +134,6 @@ class SaagieClient {
 					return JsonOutput.toJson(projects)
 				}
 			}
-			
 		}, 'Unknown error in Task: projectsList', 'Function: getProjects')
 	}
 	
@@ -729,7 +730,7 @@ class SaagieClient {
 		}, 'Unknown error in task : deleteProjectJob', 'Function: deleteProjectJob')
 	}
 	
-	String saveEnvironmentVariable( environmentVariable ) {
+	def saveEnvironmentVariable( environmentVariable ) {
 		logger.info('saveEnvironmentVariable')
 		def requestSaveEnvironmentVariable = null
 		def isProjectRequest = environmentVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
@@ -743,11 +744,13 @@ class SaagieClient {
 				handleErrors(response)
 				String responseBody = response.body().string()
 				def parsedResult = slurper.parseText(responseBody)
+				
 				if (parsedResult.errors) {
 					def message = "Something went wrong when saving environment variable: $responseBody"
 					logger.error(message)
 					throw new GradleException(message)
 				} else {
+					logger.debug("saved environment variable : $responseBody")
 					return parsedResult.data.saveEnvironmentVariable
 					
 				}
@@ -1591,11 +1594,12 @@ class SaagieClient {
 			def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
 			def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
 			def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
-			def variablesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
+			def variablesConfigFromExportedZip = SaagieClientUtils.extractVariableConfigAndPackageFromExportedVariable(exportedArtifactsPathRoot)
 			def response = [
 					status   : 'success',
 					job      : [],
-					pipeline : []
+					pipeline : [],
+					variable : []
 			]
 			def listJobs = null
 			def processJobImportation = { newMappedJobData, job, id, versions = null ->
@@ -1718,14 +1722,7 @@ class SaagieClient {
 				
 			}
 			
-			def listVariables = null
 			def processVariableToImport = { newMappedVariable, variable, id ->
-				def listVariablesByNameAndId = getVariableEnvironmentFromList(newMappedVariable)
-				listVariablesByNameAndId.each {
-					if (newMappedVariable.name.equals(it.name) && newMappedVariable.scope.equals(it.scope)) {
-						throw new GradleException("Environmnent varaible name : ${newMappedVariable.name} already existe in the targeted platform")
-					}
-				}
 				
 				def newlyCreatedVariable = saveEnvironmentVariable(newMappedVariable)
 				
@@ -1755,9 +1752,23 @@ class SaagieClient {
 			}
 			
 			if (variablesConfigFromExportedZip?.variables && response.status == 'success') {
+				
+				
+				
+				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
+					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
+					def foundVariable = listVariablesByNameAndId.find {
+						variable.name.equals(it.name) && variable.scope.equals(it.scope)
+					}
+					
+					if(foundVariable) {
+						throw new GradleException("Environmnent varaible name : ${newMappedVariable.name} already existe in the targeted platform")
+					}
+				}
+				
 				ImportVariableService.importAndCreateVariables(
 						variablesConfigFromExportedZip.variables,
-						processPipelineToImport
+						processVariableToImport
 				)
 			}
 			
@@ -1779,7 +1790,7 @@ class SaagieClient {
 		def listVariables = null
 		def isProjectRequest = newMappedVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
 		if (isProjectRequest) {
-			requestlistVariablesByNameAndId = saagieUtils.getProjectEnvironmentVariables()
+			requestlistVariablesByNameAndId = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
 		} else {
 			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndId()
 		}
@@ -1787,7 +1798,7 @@ class SaagieClient {
 			client.newCall(requestlistVariablesByNameAndId).execute().withCloseable { responseVariableList ->
 				handleErrors(responseVariableList)
 				String responseBodyForVariableList = responseVariableList.body().string()
-				logger.debug("variable list :", responseBodyForVariableList)
+				logger.debug("variable list : $responseBodyForVariableList")
 				def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
 				if (isProjectRequest) {
 					listVariables = parsedResultForVariableList.data.projectEnvironmentVariables

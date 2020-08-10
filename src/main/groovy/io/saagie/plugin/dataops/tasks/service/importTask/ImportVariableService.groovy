@@ -12,7 +12,7 @@ class ImportVariableService {
 			def variableId = variable.key
 			Map variableValue = variable.value.configOverride
 			def newVariableConfig = [
-					* : variableValue.variable
+					* : variableValue
 			]
 			
 			VariableMapper newMappedVariable = new VariableMapper()

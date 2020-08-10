@@ -303,7 +303,7 @@ class FolderGenerator {
 			def createFolderForVariable = folder.mkdirs()
 			if (createFolderForVariable) {
 				
-				Map variablebDetailObject =	generateBodyEnvironmentVariable( exportVariables.variableEnvironmentDTO.name, exportVariables.variableEnvironmentDTO.variableDetail)
+				Map variablebDetailObject = generateBodyEnvironmentVariable(exportVariables.variableEnvironmentDTO.name, exportVariables.variableEnvironmentDTO.variableDetail)
 				
 				if (
 				exportVariables.variableEnvironmentDTO?.overridenValues && exportVariables?.variableEnvironmentDTO?.overridenValues.size() > 0) {

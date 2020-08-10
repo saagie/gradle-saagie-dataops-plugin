@@ -263,12 +263,7 @@ class SaagieUtils {
 		])
 		
 		def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation( $entityId: UUID, $envVar: EnvironmentVariableInput!) {
-			  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {
-			    id
-			    name
-			  }
-			}
+            mutation saveGlobalEnvVarMutation($entityId: UUID, $envVar: EnvironmentVariableInput!) {  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {    id   name   __typename  }}
         ''', gqVariables)
 		
 		return buildRequestFromQuery(getProjectInstanceStatus)
@@ -287,11 +282,7 @@ class SaagieUtils {
 		])
 		
 		def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) {
-			  saveEnvironmentVariable(environmentVariable: $envVar) {
-			    id   name
-			  }
-			}
+            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) { saveEnvironmentVariable(environmentVariable: $envVar) {    id name  __typename  }}
         ''', gqVariables)
 		
 		return buildRequestFromQuery(getProjectInstanceStatus)

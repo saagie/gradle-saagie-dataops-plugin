@@ -3,7 +3,6 @@ package io.saagie.plugin
 import org.gradle.testkit.runner.BuildResult
 import spock.lang.*
 
-
 @Title("Plugin integration test with gradle")
 class DataOpsPluginTest extends DataOpsGradleTaskSpecification {
 
