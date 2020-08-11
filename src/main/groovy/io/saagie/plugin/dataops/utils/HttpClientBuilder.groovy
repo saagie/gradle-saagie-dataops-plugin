@@ -9,11 +9,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
-import okhttp3.logging.HttpLoggingInterceptor
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.ssl.SSLContexts
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
