@@ -4,8 +4,10 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.ExportJobs
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
+import io.saagie.plugin.dataops.models.ExportVariables
 import io.saagie.plugin.dataops.models.JobVersionDTO
 import io.saagie.plugin.dataops.models.PipelineVersionDTO
+import io.saagie.plugin.dataops.models.VariableEnvironmentDetailDTO
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import org.gradle.api.GradleException
@@ -14,6 +16,7 @@ class FolderGenerator {
 	
 	ExportJobs[] exportJobList = []
 	ExportPipeline[] exportPipelineList = []
+	ExportVariables[] exportVariableList = []
 	def inputDire
 	SaagieUtils saagieUtils
 	OkHttpClient client
@@ -289,6 +292,62 @@ class FolderGenerator {
 		}
 	}
 	
+	void generateFolderForVariable( ExportVariables exportVariables ) {
+		
+		def variableId = exportVariables.variableEnvironmentDTO.variableDetail.id
+		def urlVariableIdFolder = "${inputDire}${sl}${name}${sl}Variable${sl}${variableId}"
+		def folder = new File(urlVariableIdFolder) ;
+		
+		
+		if (exportVariables.exists()) {
+			def createFolderForVariable = folder.mkdirs()
+			if (createFolderForVariable) {
+				
+				Map variablebDetailObject = generateBodyEnvironmentVariable(exportVariables.variableEnvironmentDTO.name, exportVariables.variableEnvironmentDTO.variableDetail)
+				
+				if (
+				exportVariables.variableEnvironmentDTO?.overridenValues && exportVariables?.variableEnvironmentDTO?.overridenValues.size() > 0) {
+					ArrayList<Map> overridenValues = []
+					exportVariables.variableEnvironmentDTO.overridenValues.forEach { it ->
+						overridenValues.add(generateBodyEnvironmentVariable(null, it))
+					}
+					variablebDetailObject << [* : [
+							overridenValues : overridenValues
+					]]
+				}
+				
+				def builder = new JsonBuilder(variablebDetailObject).toPrettyString()
+				File variableFile = new File("${urlVariableIdFolder}${sl}variable.json")
+				variableFile.write(builder)
+			} else {
+				throw new GradleException("Cannot create directories for the variable")
+			}
+		}
+	}
+	
+	Map generateBodyEnvironmentVariable( String name, VariableEnvironmentDetailDTO variableDetail ) {
+		Map variablebDetailObject = [
+				scope       : variableDetail.scope,
+				value       : variableDetail.value,
+				description : variableDetail.description,
+				isPassword  : variableDetail.isPassword,
+		]
+		
+		if (name) {
+			variablebDetailObject << [* : [
+					name : name,
+			]]
+		}
+		
+		if (variableDetail.id) {
+			variablebDetailObject << [* : [
+					id : variableDetail.id,
+			]]
+		}
+		
+		return variablebDetailObject
+	}
+	
 	ArrayList<Map> generateFromPipelineVersions( versions ) {
 		def newPipelineVersionsCollections = versions.collect {
 			return generatePipelineVersion(it)
@@ -334,14 +393,18 @@ class FolderGenerator {
 	}
 	
 	void generateFolderFromParams() {
-		if (!exportJobList.length && !exportPipelineList.length) {
-			throw new GradleException("jobs and pipelines to be exported can t be empty at the same time")
+		if (!exportJobList.length && !exportPipelineList.length && !exportVariableList.length) {
+			throw new GradleException("jobs, pipelines and variables to be exported can t be empty at the same time")
 		}
 		exportJobList.each { exportJob ->
 			generateFolderForJob(exportJob)
 		}
 		exportPipelineList.each { exportPipeline ->
 			generateFolderForPipeline(exportPipeline)
+		}
+		
+		exportVariableList.each { exportVariable ->
+			generateFolderForVariable(exportVariable)
 		}
 	}
 	

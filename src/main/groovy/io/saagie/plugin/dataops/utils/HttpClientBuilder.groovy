@@ -31,7 +31,6 @@ class HttpClientBuilder {
 	static OkHttpClient getHttpClient( DataOpsExtension configuration ) {
 		Server server = configuration.server
 		OkHttpClient client = new OkHttpClient()
-		
 		if ( server.acceptSelfSigned ) {
 			TrustManager[] trustAllCerts = [
 					new X509TrustManager() {
@@ -54,9 +53,9 @@ class HttpClientBuilder {
 			trustAllSslContext.init( null, trustAllCerts, new SecureRandom() )
 			SSLSocketFactory trustAllSslSocketFactory = trustAllSslContext.getSocketFactory()
 			def clientBuilder = client.newBuilder()
-			clientBuilder.connectTimeout( configuration.server.timeout, TimeUnit.SECONDS ) ;
-			clientBuilder.readTimeout( configuration.server.timeout, TimeUnit.SECONDS ) ;
-			clientBuilder.writeTimeout( configuration.server.timeout, TimeUnit.SECONDS ) ;
+			clientBuilder.connectTimeout( configuration.server.timeout, TimeUnit.SECONDS )
+			clientBuilder.readTimeout( configuration.server.timeout, TimeUnit.SECONDS )
+			clientBuilder.writeTimeout( configuration.server.timeout, TimeUnit.SECONDS )
 			client = clientBuilder.sslSocketFactory( trustAllSslSocketFactory, ( X509TrustManager ) trustAllCerts[ 0 ] )
 					.hostnameVerifier( new HostnameVerifier() {
 						@Override
