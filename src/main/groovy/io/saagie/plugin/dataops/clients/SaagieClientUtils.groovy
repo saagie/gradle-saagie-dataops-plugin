@@ -6,7 +6,6 @@ class SaagieClientUtils {
 	static final EXPORTED_JOB_CONFIG_FILENAME = 'job.json'
 	static final EXPORTED_JOB_PACKAGE_FOLDER_NAME = 'package'
 	static final EXPORTED_PIPELINE_CONFIG_FILENAME = 'pipeline.json'
-	static final EXPORTED_VARIABLE_CONFIG_FILENAME = 'variable.json'
 	
 	/**
 	 * run through all files in the provided folder, and return
@@ -95,31 +94,6 @@ class SaagieClientUtils {
 				def jsonParser = new JsonSlurper()
 				File pipelineConfigFile = new File( "${ pipelineFolderPath }/${ EXPORTED_PIPELINE_CONFIG_FILENAME }" )
 				extractedConfig.pipelines[ pipelineId ].configOverride = jsonParser.parse( pipelineConfigFile )
-			}
-			
-			return extractedConfig
-		}
-		return null
-	}
-	
-	def static extractVariableConfigAndPackageFromExportedVariable( File exportedZipFolder ) {
-		Map extractedConfig = [
-				variables : [ : ],
-		]
-		
-		File variablesFolder = new File( "${ exportedZipFolder.absolutePath }/Variable" )
-		if ( variablesFolder.exists() ) {
-			variablesFolder.eachFile { variableFolder ->
-				String variableId = variableFolder.name
-				String variableFolderPath = variableFolder.absolutePath
-				
-				extractedConfig.variables[ variableId ] = [
-						configOverride : null
-				]
-				
-				def jsonParser = new JsonSlurper()
-				File variableConfigFile = new File( "${ variableFolderPath }/${ EXPORTED_VARIABLE_CONFIG_FILENAME }" )
-				extractedConfig.variables[ variableId ].configOverride = jsonParser.parse( variableConfigFile )
 			}
 			
 			return extractedConfig

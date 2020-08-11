@@ -1,7 +1,6 @@
 package io.saagie.plugin.dataops
 
 import groovy.transform.TypeChecked
-import io.saagie.plugin.dataops.models.EnvVariable
 import io.saagie.plugin.dataops.models.Export
 import io.saagie.plugin.dataops.models.ImportJob
 import io.saagie.plugin.dataops.models.Job
@@ -46,8 +45,6 @@ class DataOpsExtension {
 	
 	Export exportArtifacts = new Export()
 	
-	EnvVariable env = new EnvVariable()
-	
 	// ====== Closures to create a proper DSL
 	Object server( Closure closure ) {
 		server = new Server()
@@ -77,11 +74,6 @@ class DataOpsExtension {
 	Object pipeline( Closure closure ) {
 		pipeline = new Pipeline()
 		pipeline.with( closure )
-	}
-	
-	Object env( Closure closure ) {
-		env = new EnvVariable()
-		env.with( closure )
 	}
 	
 	Object pipelineVersion( Closure closure ) {

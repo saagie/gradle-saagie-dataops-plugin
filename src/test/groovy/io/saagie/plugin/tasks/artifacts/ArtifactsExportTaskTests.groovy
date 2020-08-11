@@ -11,11 +11,12 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('JobExportTaskTests task tests')
 class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB
-
-    def "the task should fail if required params are not provided"() {
-        given:
-        buildFile << """
+	@Shared
+	String taskName = DataOpsModule.PROJECTS_EXPORT_JOB
+	
+	def "the task should fail if required params are not provided"() {
+		given:
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'

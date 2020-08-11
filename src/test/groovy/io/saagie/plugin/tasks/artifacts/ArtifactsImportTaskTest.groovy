@@ -116,7 +116,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}], variable=[]}')
+		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
 	}
 	
 	def "the task should create a new pipeline and add new version to another pipeline without job based on the exported config"() {
@@ -153,7 +153,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}], variable=[]}')
+		result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}]}')
 	}
 	
 	def "the task should create a new pipeline and new job based on the exported config if name doesn't exist"() {
@@ -190,7 +190,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}], variable=[]}')
+		result.output.contains('{status=success, job=[{id=id-1, name=Test Job3 imported from file}], pipeline=[{id=id-1, name=test pipeline 23}]}')
 	}
 	def "the task should create new job and add new version to another job without pipeline based on the exported config"() {
 		given:
@@ -225,7 +225,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[], variable=[]}')
+		result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[]}')
 	}
 	
 	def "the task should add jobVersion based on the build configuration if name exist with overwrite"() {
@@ -260,7 +260,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[{id=id-1, name=test added job}], pipeline=[], variable=[]}')
+		result.output.contains('{status=success, job=[{id=id-1, name=test added job}], pipeline=[]}')
 	}
 	
 	

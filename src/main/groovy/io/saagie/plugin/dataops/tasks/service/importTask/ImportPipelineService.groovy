@@ -30,9 +30,7 @@ class ImportPipelineService {
 				]]
 				
 				if (globalConfig.pipelineOverride.alerting && globalConfig.pipelineOverride.alerting.emails) {
-					newPipelineConfigWithOverride << [* : [
-							alerting : globalConfig.pipelineOverride?.alerting
-					]]
+					newPipelineConfigWithOverride << [* : [alerting : globalConfig.pipelineOverride?.alerting]]
 				}
 			}
 			
