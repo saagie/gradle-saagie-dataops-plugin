@@ -3,10 +3,8 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.EnvVarScopeTypeEnum
 import io.saagie.plugin.dataops.models.ExportJobs
 import io.saagie.plugin.dataops.models.ExportPipeline
-import io.saagie.plugin.dataops.models.ExportVariables
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineVersion
@@ -16,11 +14,9 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
-import io.saagie.plugin.dataops.tasks.service.VariableService
 import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
-import io.saagie.plugin.dataops.tasks.service.importTask.ImportVariableService
 import io.saagie.plugin.dataops.utils.HttpClientBuilder
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import io.saagie.plugin.dataops.utils.ZipUtils
@@ -29,7 +25,6 @@ import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.codehaus.groovy.runtime.MethodClosure
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
@@ -730,34 +725,6 @@ class SaagieClient {
 		}, 'Unknown error in task : deleteProjectJob', 'Function: deleteProjectJob')
 	}
 	
-	def saveEnvironmentVariable( environmentVariable ) {
-		logger.info('saveEnvironmentVariable')
-		def requestSaveEnvironmentVariable = null
-		def isProjectRequest = environmentVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
-		if (isProjectRequest) {
-			requestSaveEnvironmentVariable = saagieUtils.saveProjectEnvironmentVariable(environmentVariable)
-		} else {
-			requestSaveEnvironmentVariable = saagieUtils.saveGlobalEnvironmentVariable(environmentVariable)
-		}
-		tryCatchClosure({
-			client.newCall(requestSaveEnvironmentVariable).execute().withCloseable { response ->
-				handleErrors(response)
-				String responseBody = response.body().string()
-				def parsedResult = slurper.parseText(responseBody)
-				
-				if (parsedResult.errors) {
-					def message = "Something went wrong when saving environment variable: $responseBody"
-					logger.error(message)
-					throw new GradleException(message)
-				} else {
-					logger.debug("saved environment variable : $responseBody")
-					return parsedResult.data.saveEnvironmentVariable
-					
-				}
-			}
-		}, 'Unknown error in task : importJob', 'Function: saveEnvironmentVariable')
-	}
-	
 	String stopPipelineInstance() {
 		logger.info('Starting stopPipelineInstance task')
 		checkRequiredConfig(!configuration?.pipelineinstance?.id)
@@ -917,9 +884,7 @@ class SaagieClient {
 			exportJobs = getListJobAndJobVersionsFromConfigV1(listJobsByNameAndIdFromV1)
 		}
 		
-		ExportVariables[] exportVariables = []
-		
-		return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, true)
+		return export(exportPipelines, exportJobs, listJobsByNameAndIdFromV1, true)
 	}
 	
 	String exportArtifacts() {
@@ -938,17 +903,11 @@ class SaagieClient {
 			exportJobs = getListJobAndJobVersionsFromConfig()
 		}
 		
-		ExportVariables[] exportVariables = []
-		def testCondition = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
-		if (testCondition) {
-			exportVariables = getListVariablesFromConfig()
-		}
-		
-		return export(exportPipelines, exportJobs, exportVariables)
+		return export(exportPipelines, exportJobs)
 	}
 	
 	
-	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, isV1 = false ) {
+	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, listJobWithNameAndIdV1 = null, isV1 = false ) {
 		
 		ExportContainer exportContainer = [configuration]
 		boolean customDirectoryExist = false
@@ -969,13 +928,12 @@ class SaagieClient {
 			def listJobs = null
 			if (isV1) {
 				listJobs = listJobWithNameAndIdV1
-			} else if (exportPipelines.size() > 0 || exportJobs.size() > 0) {
+			} else {
 				listJobs = getProjectJobsByNameAndId()
 			}
 			def inputDirectoryToZip = tempJobDirectory.getAbsolutePath() + File.separator + exportContainer.fileName
 			folder.exportJobList = exportJobs
 			folder.exportPipelineList = exportPipelines
-			folder.exportVariableList = exportVariables
 			folder.jobList = listJobs
 			folder.generateFolderFromParams()
 			ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryExist]
@@ -1466,75 +1424,6 @@ class SaagieClient {
 		
 	}
 	
-	ExportVariables[] getListVariablesFromConfig() {
-		logger.info('Starting getting environment variables from configuration for v2 ... ')
-		checkRequiredConfig(
-				(!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()))) ||
-						(configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null)) ||
-						(!configuration.env.include_all_var && (!configuration.env.name || !configuration.env.name.size())))
-		def listVariables = []
-		tryCatchClosure({
-			Request variablesListRequest = null
-			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name())) {
-				variablesListRequest = saagieUtils.getGlobalEnvironmentVariables()
-			} else {
-				variablesListRequest = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
-			}
-			client.newCall(variablesListRequest).execute().withCloseable { responseVariableList ->
-				handleErrors(responseVariableList)
-				String responseBodyForVariableList = responseVariableList.body().string()
-				logger.debug("variable list :", responseBodyForVariableList)
-				def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
-				if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && parsedResultForVariableList.data?.globalEnvironmentVariables) {
-					listVariables = parsedResultForVariableList.data.globalEnvironmentVariables
-				} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
-					listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
-				}
-			}
-			if (listVariables.size().equals(0)) {
-				return null
-			}
-			
-			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())) {
-				listVariables = listVariables.findAll {
-					it.scope?.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
-				}.collect {
-					it
-				}
-			}
-			
-			if (!configuration.env.include_all_var && configuration.env.name && configuration.env.name.size() > 0) {
-				listVariables = listVariables.findAll {
-					configuration.env.name.contains(it.name)
-				}.collect {
-					it
-				}
-			}
-			
-			
-			if (!configuration.env.include_all_var) {
-				configuration.env.name.forEach {
-					def foundName = listVariables.find { var -> var.name?.equals(it) }
-					if (!foundName) {
-						throw new GradleException("Didn't find variable name: ${it} in the required environment variables list for scope ${configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) ? EnvVarScopeTypeEnum.project.name().toString() : EnvVarScopeTypeEnum.global.name().toString()}")
-					}
-				}
-			}
-			
-			def exportVariables = []
-			
-			listVariables.forEach {
-				ExportVariables newExportVariable = []
-				newExportVariable.variableEnvironmentDTO.setVariableDetailValuesFromData(it)
-				exportVariables.add(newExportVariable)
-			}
-			
-			return exportVariables
-			
-		}, 'Unknown error in getListVariablesFromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
-		
-	}
-	
 	String updateProject() {
 		logger.info('Starting projectsUpdate task')
 		
@@ -1594,15 +1483,13 @@ class SaagieClient {
 			def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
 			def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
 			def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
-			def variablesConfigFromExportedZip = SaagieClientUtils.extractVariableConfigAndPackageFromExportedVariable(exportedArtifactsPathRoot)
 			def response = [
 					status   : 'success',
 					job      : [],
-					pipeline : [],
-					variable : []
+					pipeline : []
 			]
 			def listJobs = null
-			def processJobImportation = { newMappedJobData, job, id, versions = null ->
+			def callbackJobToDebug = { newMappedJobData, job, id, versions = null ->
 				def jobToImport = new Job()
 				def jobVersionToImport = new JobVersion()
 				jobToImport = newMappedJobData.job
@@ -1662,7 +1549,7 @@ class SaagieClient {
 			}
 			
 			def listPipelines = null
-			def processPipelineToImport = { newMappedPipeline, pipeline, id, versions, newlistJobs ->
+			def callbackPipelinesToDebug = { newMappedPipeline, pipeline, id, versions, newlistJobs ->
 				listPipelines = getPipelineListByNameAndId()
 				def pipelineToImport = newMappedPipeline.pipeline
 				def pipelineVersionToImport = newMappedPipeline.pipelineVersion
@@ -1722,56 +1609,23 @@ class SaagieClient {
 				
 			}
 			
-			def processVariableToImport = { newMappedVariable, variable, id ->
-				
-				def newlyCreatedVariable = saveEnvironmentVariable(newMappedVariable)
-				
-				response.variable << [
-						id   : newlyCreatedVariable.id,
-						name : newlyCreatedVariable.name
-				]
-				
-			}
-			
 			if (jobsConfigFromExportedZip?.jobs) {
 				ImportJobService.importAndCreateJobs(
 						jobsConfigFromExportedZip.jobs,
 						configuration,
-						processJobImportation
+						callbackJobToDebug
 				)
 			}
 			
-			if (pipelinesConfigFromExportedZip?.pipelines && response.status == 'success') {
+			if ( pipelinesConfigFromExportedZip?.pipelines && response.status == 'success') {
 				def newlistJobs = getJobListByNameAndId()
 				ImportPipelineService.importAndCreatePipelines(
 						pipelinesConfigFromExportedZip.pipelines,
 						configuration,
-						processPipelineToImport,
+						callbackPipelinesToDebug,
 						newlistJobs
 				)
 			}
-			
-			if (variablesConfigFromExportedZip?.variables && response.status == 'success') {
-				
-				
-				
-				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
-					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
-					def foundVariable = listVariablesByNameAndId.find {
-						variable.name.equals(it.name) && variable.scope.equals(it.scope)
-					}
-					
-					if(foundVariable) {
-						throw new GradleException("Environmnent varaible name : ${newMappedVariable.name} already existe in the targeted platform")
-					}
-				}
-				
-				ImportVariableService.importAndCreateVariables(
-						variablesConfigFromExportedZip.variables,
-						processVariableToImport
-				)
-			}
-			
 			return response
 		} catch (InvalidUserDataException invalidUserDataException) {
 			throw invalidUserDataException
@@ -1785,30 +1639,6 @@ class SaagieClient {
 		}
 	}
 	
-	private getVariableEnvironmentFromList( newMappedVariable ) {
-		Request requestlistVariablesByNameAndId = null
-		def listVariables = null
-		def isProjectRequest = newMappedVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
-		if (isProjectRequest) {
-			requestlistVariablesByNameAndId = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
-		} else {
-			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndId()
-		}
-		tryCatchClosure({
-			client.newCall(requestlistVariablesByNameAndId).execute().withCloseable { responseVariableList ->
-				handleErrors(responseVariableList)
-				String responseBodyForVariableList = responseVariableList.body().string()
-				logger.debug("variable list : $responseBodyForVariableList")
-				def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
-				if (isProjectRequest) {
-					listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
-				} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
-					listVariables = parsedResultForVariableList.data.globalEnvironmentVariables
-				}
-				return listVariables
-			}
-		}, 'Unknown error in importArtifact Request', 'getVariableEnvironmentFromList Request')
-	}
 	
 	private getJobListByNameAndId() {
 		def listJobs = null

@@ -85,40 +85,6 @@ class SaagieUtils {
 		return buildRequestFromQuery(listProjectsRequest)
 	}
 	
-	Request getGlobalEnvironmentVariables() {
-		logger.debug('Generating globalEnvironmentVariablesQuery') ;
-		
-		def getAllGlobalVariablesQuery = gq('''
-          query globalEnvironmentVariablesQuery {
-           globalEnvironmentVariables {
-            id
-            name
-            scope
-            value
-            description
-            isPassword
-            }
-            }
-        ''')
-		return buildRequestFromQuery(getAllGlobalVariablesQuery)
-	}
-	
-	Request getProjectEnvironmentVariables(String projectId) {
-		
-		logger.debug('Generating getProjectEnvironmentVariables [projectId={}]', projectId)
-		
-		def jsonGenerator = new JsonGenerator.Options()
-				.build()
-		
-		def gqVariables = jsonGenerator.toJson([projectId : projectId])
-		
-		def getAllProjectVariablesQuery = gq('''
-            query environmentVariablesQuery($projectId: UUID!) {  projectEnvironmentVariables(projectId: $projectId) {    id    scope    name    value    description    isPassword    overriddenValues {      id      scope      value      description      isPassword     }   }}
-        ''', gqVariables)
-		return buildRequestFromQuery(getAllProjectVariablesQuery)
-	}
-	
-	
 	Request getProjectJobsRequest() {
 		getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
@@ -247,78 +213,6 @@ class SaagieUtils {
         ''', gqVariables)
 		
 		return buildRequestFromQuery(getProjectInstanceStatus)
-	}
-	
-	Request saveProjectEnvironmentVariable( environmentVariable ) {
-		Project project = configuration.project
-		logger.debug('Generating saveEnvironmentVariable [ProjectId={}]', project.id)
-		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
-		
-		def gqVariables = jsonGenerator.toJson([
-				entityId : project.id,
-				envVar: environmentVariable
-		])
-		
-		def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation($entityId: UUID, $envVar: EnvironmentVariableInput!) {  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {    id   name   __typename  }}
-        ''', gqVariables)
-		
-		return buildRequestFromQuery(getProjectInstanceStatus)
-	}
-	
-	Request saveGlobalEnvironmentVariable( environmentVariable ) {
-		Project project = configuration.project
-		logger.debug('Generating saveEnvironmentVariable [ProjectId={}]', project.id)
-		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
-		
-		def gqVariables = jsonGenerator.toJson([
-				envVar: environmentVariable
-		])
-		
-		def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) { saveEnvironmentVariable(environmentVariable: $envVar) {    id name  __typename  }}
-        ''', gqVariables)
-		
-		return buildRequestFromQuery(getProjectInstanceStatus)
-	}
-	
-	Request getGlobalVariableByNameAndId() {
-		logger.debug('Generating getGlobalVariableByNameAndId')
-		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
-		def getGlobalVariablesByNamesAndId = gq('''
-			query globalEnvironmentVariablesQuery {
-				globalEnvironmentVariables {
-					id    name  scope
-				}
-			}
-		''')
-		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
-	}
-	
-	Request getProjectVariableByNameAndId() {
-		Project project = configuration.project
-		logger.debug('Generating getProjectVariableByNameAndId [ProjectId={}]', project.id)
-		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
-		def getGlobalVariablesByNamesAndId = gq('''
-			query environmentVariablesQuery($projectId: UUID!) {
-			  projectEnvironmentVariables(projectId: $projectId) {
-			    id  name
-			  }
-			}
-		''')
-		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
 	}
 	
 	Request getProjectTechnologiesRequest() {
@@ -718,7 +612,7 @@ class SaagieUtils {
 		}
 	}
 	
-	Request getCreatePipelineRequest( Pipeline pipeline, PipelineVersion pipelineVersion ) {
+	Request getCreatePipelineRequest(Pipeline pipeline, PipelineVersion pipelineVersion ) {
 		Project project = configuration.project
 		
 		logger.debug('Generating getCreatePipelineRequest for project [projectId={}, pipeline={}, pipelineVersion={}]', project.id, pipeline, pipelineVersion)
@@ -1411,7 +1305,7 @@ class SaagieUtils {
 		logger.debug("====== Request ======")
 		logger.debug("${request.method} ${request.url.url().path}")
 		logger.debug("Host: ${request.url.url().host}")
-		request.headers().names().forEach { logger.debug("${it}: ${request.headers().get(it)}") }
+		request.headers().names().each { logger.debug("${it}: ${request.headers().get(it)}") }
 		if (request.body()) {
 			logger.debug("Content-Length: ${request.body().contentLength()}")
 			
