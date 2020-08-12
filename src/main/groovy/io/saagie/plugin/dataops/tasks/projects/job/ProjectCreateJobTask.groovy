@@ -35,6 +35,7 @@ class ProjectCreateJobTask extends DefaultTask {
 
         result = response
         
+        return result
         //TODO find a way to reset the configuration
     }
 }

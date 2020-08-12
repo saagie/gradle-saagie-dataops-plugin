@@ -17,11 +17,13 @@ class ProjectsExportJobV1Task extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
+	def result
+	
 	@TaskAction
 	def exportProjectJob() {
 		saagieClient = new SaagieClient( configuration, taskName )
 		
-		def result = saagieClient.exportArtifactsV1()
+		result = saagieClient.exportArtifactsV1()
 		logger.quiet( result )
 		return result
 	}

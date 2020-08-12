@@ -19,10 +19,12 @@ class ProjectUpgradeJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
 
+    def result
+    
     @TaskAction
     def upgradeProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.upgradeProjectJobWithGraphQL()
+        result = saagieClient.upgradeProjectJobWithGraphQL()
         logger.quiet(result)
         return result
     }
