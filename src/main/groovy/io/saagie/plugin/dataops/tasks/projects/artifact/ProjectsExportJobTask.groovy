@@ -19,7 +19,7 @@ class ProjectsExportJobTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
-	def result
+	String result
 	
 	@TaskAction
 	def exportProjectJob() {
