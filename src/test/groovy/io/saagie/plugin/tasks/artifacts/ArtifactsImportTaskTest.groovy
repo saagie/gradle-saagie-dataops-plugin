@@ -166,6 +166,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 		enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline id 3"},{"id":"id-5","name":"test pipeline id 5"}]}}')
 		enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
 		
+		
 		buildFile << """
             saagie {
                 server {
