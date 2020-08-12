@@ -13,11 +13,15 @@ class ProjectRunJobTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    String result
+    
     @TaskAction
     def runProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.runProjectJob()
+        
+        result = saagieClient.runProjectJob()
+        
         logger.quiet(result)
         return result
     }

@@ -13,11 +13,13 @@ class ProjectStopPipelineInstanceTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    String result
+    
     @TaskAction
     def stopProjectPipelineInstance() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.stopPipelineInstance()
+        result = saagieClient.stopPipelineInstance()
         logger.quiet(result)
         return result
     }

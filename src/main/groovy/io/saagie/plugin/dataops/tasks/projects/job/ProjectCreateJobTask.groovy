@@ -34,7 +34,8 @@ class ProjectCreateJobTask extends DefaultTask {
         logger.quiet(response)
 
         result = response
-
+        
+        return result
         //TODO find a way to reset the configuration
     }
 }

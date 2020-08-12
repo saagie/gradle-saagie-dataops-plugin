@@ -13,11 +13,13 @@ class ProjectRunPipelineTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    String result
+    
     @TaskAction
     def runProjectPipeline() {
         saagieClient = new SaagieClient(configuration, taskName)
-        def result = saagieClient.runProjectPipeline()
+        result = saagieClient.runProjectPipeline()
         logger.quiet(result)
         return result
     }

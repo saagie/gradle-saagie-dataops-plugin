@@ -17,10 +17,12 @@ class GroupListTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
+	def result
+	
 	@TaskAction
 	def listGroups() {
 		saagieClient = new SaagieClient( configuration, taskName )
-		def result = saagieClient.listGroups()
+		result = saagieClient.listGroups()
 		logger.quiet( result )
 		return result
 	}

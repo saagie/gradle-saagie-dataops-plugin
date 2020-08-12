@@ -16,13 +16,15 @@ class ProjectsUpdateTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    String result
+    
     @TaskAction
     def updateProject() {
         Server server = configuration.server
         saagieClient = new SaagieClient(configuration, taskName)
 
-        def result = saagieClient.updateProject()
+        result = saagieClient.updateProject()
         logger.quiet(result)
         return result
     }
