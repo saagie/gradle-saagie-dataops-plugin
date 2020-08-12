@@ -20,6 +20,7 @@ class ProjectsExportJobTask extends DefaultTask {
 	SaagieClient saagieClient
 	
 	def result
+	
 	@TaskAction
 	def exportProjectJob() {
 		saagieClient = new SaagieClient( configuration, taskName )

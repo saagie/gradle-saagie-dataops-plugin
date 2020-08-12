@@ -18,8 +18,8 @@ class ProjectUpgradeJobTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
-    def result
+    
+    String result
     
     @TaskAction
     def upgradeProjectJob() {

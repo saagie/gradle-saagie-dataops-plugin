@@ -24,6 +24,7 @@ class ProjectsImportJobTask extends DefaultTask {
 		saagieClient = new SaagieClient(configuration, taskName)
 		
 		result = saagieClient.importJob()
+		
 		logger.quiet(result)
 		return result
 	}

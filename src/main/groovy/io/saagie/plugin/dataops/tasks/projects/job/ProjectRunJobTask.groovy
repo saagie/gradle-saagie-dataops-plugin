@@ -14,7 +14,8 @@ class ProjectRunJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
-    def result
+    String result
+    
     @TaskAction
     def runProjectJob() {
         saagieClient = new SaagieClient(configuration, taskName)

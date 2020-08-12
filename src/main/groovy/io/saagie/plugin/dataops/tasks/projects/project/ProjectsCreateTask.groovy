@@ -15,12 +15,14 @@ class ProjectsCreateTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    String result
+    
     @TaskAction
     def createProject() {
         saagieClient = new SaagieClient(configuration, taskName)
 
-        def result = saagieClient.createProject()
+        result = saagieClient.createProject()
         logger.quiet(result)
         return result
     }
