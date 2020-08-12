@@ -90,14 +90,14 @@ class SaagieUtils {
 		
 		def getAllGlobalVariablesQuery = gq('''
           query globalEnvironmentVariablesQuery {
-           globalEnvironmentVariables {
-            id
-            name
-            scope
-            value
-            description
-            isPassword
-            }
+	           globalEnvironmentVariables {
+		            id
+		            name
+		            scope
+		            value
+		            description
+		            isPassword
+	            }
             }
         ''')
 		return buildRequestFromQuery(getAllGlobalVariablesQuery)
@@ -308,9 +308,6 @@ class SaagieUtils {
 		Project project = configuration.project
 		logger.debug('Generating getProjectVariableByNameAndId [ProjectId={}]', project.id)
 		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
 		def getGlobalVariablesByNamesAndId = gq('''
 			query environmentVariablesQuery($projectId: UUID!) {
 			  projectEnvironmentVariables(projectId: $projectId) {
@@ -321,13 +318,17 @@ class SaagieUtils {
 		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
 	}
 	
+	static def getJsonGenerator() {
+		return new JsonGenerator.Options()
+				.excludeNulls()
+				.build()
+	}
+	
 	Request getProjectTechnologiesRequest() {
 		Project project = configuration.project
 		logger.debug('generating getProjectTechnologiesRequest [projectId={}]', project.id)
 		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
+		def jsonGenerator = getJsonGenerator()
 		
 		def gqVariables = jsonGenerator.toJson([projectId : project.id])
 		
@@ -402,9 +403,7 @@ class SaagieUtils {
 		Project project = configuration.project
 		logger.debug('generating getPipelineRequest [projectId={}]', project.id)
 		
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
+		def jsonGenerator = getJsonGenerator()
 		
 		def gqVariables = jsonGenerator.toJson([pipelineId : pipelineId])
 		
@@ -516,9 +515,7 @@ class SaagieUtils {
 		Job job = configuration.job
 		Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
 		logger.debug('Generating getProjectUpdateJobRequest [job={}]', mappedJob)
-		def jsonGenerator = new JsonGenerator.Options()
-				.excludeNulls()
-				.build()
+		def jsonGenerator = getJsonGenerator()
 		def gqVariables = jsonGenerator.toJson([
 				job : mappedJob,
 		])

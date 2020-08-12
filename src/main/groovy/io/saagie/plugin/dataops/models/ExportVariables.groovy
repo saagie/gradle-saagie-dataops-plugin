@@ -8,7 +8,7 @@ class ExportVariables  implements IExists{
 	
 	@Override
 	boolean exists() {
-		return variableEnvironmentDTO.exists() || variableEnvironmentDTO.exists()
+		return variableEnvironmentDTO.exists()
 	}
 	
 }

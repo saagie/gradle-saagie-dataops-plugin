@@ -9,7 +9,7 @@ import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.ExportVariables
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobVersion
-import io.saagie.plugin.dataops.models.PipelineVersion
+import io.saagie.plugin.dataops.models.ResponseStatusEnum
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
@@ -29,7 +29,6 @@ import io.saagie.plugin.dataops.utils.directory.ZippingFolder
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.codehaus.groovy.runtime.MethodClosure
 import org.gradle.api.GradleException
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.logging.Logger
@@ -939,8 +938,8 @@ class SaagieClient {
 		}
 		
 		ExportVariables[] exportVariables = []
-		def testCondition = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
-		if (testCondition) {
+		def validateVariableConfigurationParams = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
+		if (validateVariableConfigurationParams) {
 			exportVariables = getListVariablesFromConfig()
 		}
 		
@@ -1469,9 +1468,10 @@ class SaagieClient {
 	ExportVariables[] getListVariablesFromConfig() {
 		logger.info('Starting getting environment variables from configuration for v2 ... ')
 		checkRequiredConfig(
-				(!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()))) ||
-						(configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null)) ||
-						(!configuration.env.include_all_var && (!configuration.env.name || !configuration.env.name.size())))
+				checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() ||
+						checkIfEnvScopeIsProjectButNoProjectIdProvided() ||
+						checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty()
+		)
 		def listVariables = []
 		tryCatchClosure({
 			Request variablesListRequest = null
@@ -1531,8 +1531,29 @@ class SaagieClient {
 			
 			return exportVariables
 			
-		}, 'Unknown error in getListVariablesFromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
+		}, 'Error in getListVariablesFromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
 		
+	}
+	
+	def checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() {
+		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = (!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
+		logger.debug("result for checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject")
+		logger.debug(conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject as String)
+		return conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject
+	}
+	
+	def checkIfEnvScopeIsProjectButNoProjectIdProvided() {
+		def conditionForScopeIsProjectButNoProjectIdProvided = (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null))
+		logger.debug("result for checkIfEnvScopeIsProjectButNoProjectIdProvided")
+		logger.debug(conditionForScopeIsProjectButNoProjectIdProvided as String)
+		return conditionForScopeIsProjectButNoProjectIdProvided
+	}
+	
+	def checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty() {
+		def conditionForOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty = (!configuration.env.include_all_var && (!configuration.env.name || !configuration.env.name.size()))
+		logger.debug("result for checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty")
+		logger.debug(conditionForOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty as String)
+		return conditionForOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty
 	}
 	
 	String updateProject() {
@@ -1741,7 +1762,7 @@ class SaagieClient {
 				)
 			}
 			
-			if (pipelinesConfigFromExportedZip?.pipelines && response.status == 'success') {
+			if (pipelinesConfigFromExportedZip?.pipelines && response.status == ResponseStatusEnum.success.name) {
 				def newlistJobs = getJobListByNameAndId()
 				ImportPipelineService.importAndCreatePipelines(
 						pipelinesConfigFromExportedZip.pipelines,
@@ -1751,8 +1772,7 @@ class SaagieClient {
 				)
 			}
 			
-			if (variablesConfigFromExportedZip?.variables && response.status == 'success') {
-				
+			if (variablesConfigFromExportedZip?.variables && response.status == ResponseStatusEnum.success.name) {
 				
 				
 				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
@@ -1761,7 +1781,7 @@ class SaagieClient {
 						variable.name.equals(it.name) && variable.scope.equals(it.scope)
 					}
 					
-					if(foundVariable) {
+					if (foundVariable) {
 						throw new GradleException("Environmnent varaible name : ${newMappedVariable.name} already existe in the targeted platform")
 					}
 				}

@@ -326,7 +326,7 @@ class FolderGenerator {
 	}
 	
 	Map generateBodyEnvironmentVariable( String name, VariableEnvironmentDetailDTO variableDetail ) {
-		Map variablebDetailObject = [
+		Map variableDetailObject = [
 				scope       : variableDetail.scope,
 				value       : variableDetail.value,
 				description : variableDetail.description,
@@ -334,18 +334,18 @@ class FolderGenerator {
 		]
 		
 		if (name) {
-			variablebDetailObject << [* : [
+			variableDetailObject << [* : [
 					name : name,
 			]]
 		}
 		
 		if (variableDetail.id) {
-			variablebDetailObject << [* : [
+			variableDetailObject << [* : [
 					id : variableDetail.id,
 			]]
 		}
 		
-		return variablebDetailObject
+		return variableDetailObject
 	}
 	
 	ArrayList<Map> generateFromPipelineVersions( versions ) {

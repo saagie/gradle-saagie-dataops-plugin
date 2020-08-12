@@ -1,25 +1,24 @@
 package io.saagie.plugin.dataops.tasks.service
 
-import io.saagie.plugin.dataops.models.ListVariableContainer
-import org.codehaus.groovy.runtime.MethodClosure
+import io.saagie.plugin.dataops.models.VariableListContainer
 
 @Singleton
 class VariableService {
-	ArrayList<ListVariableContainer> listVariableContaines = []
+	ArrayList<VariableListContainer> listVariableContaines = []
 	
 	def getVariableList( variable, projectId, operation ) {
-		def found = listVariableContaines.find {
-			return it.projectId.equals(projectId) && variable.scope.equals(it.scope) && it.listVariableByNameAndScope?.size() > 0
+		def foundVariable = listVariableContaines.find {
+			return it.projectId.equals(projectId) && variable.scope.equals(it.scope) && it.variableListByNameAndScope?.size() > 0
 		}
-		if (found) {
-			return found.listVariableByNameAndScope
+		if (foundVariable) {
+			return foundVariable.variableListByNameAndScope
 		} else {
-			ListVariableContainer listVariableContainer = []
+			VariableListContainer listVariableContainer = []
 			listVariableContainer.projectId = projectId
 			listVariableContainer.scope = variable.scope
-			listVariableContainer.listVariableByNameAndScope = operation(variable)
+			listVariableContainer.variableListByNameAndScope = operation(variable)
 			listVariableContaines.add(listVariableContainer)
-			return listVariableContainer.listVariableByNameAndScope
+			return listVariableContainer.variableListByNameAndScope
 		}
 	}
 }
