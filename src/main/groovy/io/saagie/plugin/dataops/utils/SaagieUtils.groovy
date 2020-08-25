@@ -283,13 +283,7 @@ class SaagieUtils {
 		def jsonGenerator = new JsonGenerator.Options()
 				.excludeNulls()
 				.build()
-		def getGlobalVariablesByNamesAndId = gq('''
-			query globalEnvironmentVariablesQuery {
-				globalEnvironmentVariables {
-					id    name  scope
-				}
-			}
-		''')
+		def getGlobalVariablesByNamesAndId = gq(''' query globalEnvironmentVariablesQuery { globalEnvironmentVariables { id    name  scope } } ''')
 		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
 	}
 	
