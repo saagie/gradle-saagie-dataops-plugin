@@ -88,18 +88,7 @@ class SaagieUtils {
 	Request getGlobalEnvironmentVariables() {
 		logger.debug('Generating globalEnvironmentVariablesQuery') ;
 		
-		def getAllGlobalVariablesQuery = gq('''
-          query globalEnvironmentVariablesQuery {
-	           globalEnvironmentVariables {
-		            id
-		            name
-		            scope
-		            value
-		            description
-		            isPassword
-	            }
-            }
-        ''')
+		def getAllGlobalVariablesQuery = gq(''' query globalEnvironmentVariablesQuery { globalEnvironmentVariables { id name scope value description isPassword } } ''')
 		return buildRequestFromQuery(getAllGlobalVariablesQuery)
 	}
 	
