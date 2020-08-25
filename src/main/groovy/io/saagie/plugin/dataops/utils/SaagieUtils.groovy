@@ -88,18 +88,7 @@ class SaagieUtils {
 	Request getGlobalEnvironmentVariables() {
 		logger.debug('Generating globalEnvironmentVariablesQuery') ;
 		
-		def getAllGlobalVariablesQuery = gq('''
-          query globalEnvironmentVariablesQuery {
-	           globalEnvironmentVariables {
-		            id
-		            name
-		            scope
-		            value
-		            description
-		            isPassword
-	            }
-            }
-        ''')
+		def getAllGlobalVariablesQuery = gq(''' query globalEnvironmentVariablesQuery { globalEnvironmentVariables { id name scope value description isPassword } } ''')
 		return buildRequestFromQuery(getAllGlobalVariablesQuery)
 	}
 	
@@ -294,13 +283,7 @@ class SaagieUtils {
 		def jsonGenerator = new JsonGenerator.Options()
 				.excludeNulls()
 				.build()
-		def getGlobalVariablesByNamesAndId = gq('''
-			query globalEnvironmentVariablesQuery {
-				globalEnvironmentVariables {
-					id    name  scope
-				}
-			}
-		''')
+		def getGlobalVariablesByNamesAndId = gq(''' query globalEnvironmentVariablesQuery { globalEnvironmentVariables { id    name  scope } } ''')
 		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
 	}
 	
