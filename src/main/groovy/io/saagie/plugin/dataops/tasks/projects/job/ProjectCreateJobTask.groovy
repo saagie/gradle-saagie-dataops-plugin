@@ -17,10 +17,11 @@ class ProjectCreateJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
 
-    String result
+    def result
 
     @TaskAction
     def createProjectJob() {
+        
         Server server = configuration.server
         saagieClient = new SaagieClient(configuration, taskName)
 
@@ -33,7 +34,7 @@ class ProjectCreateJobTask extends DefaultTask {
         }
         logger.quiet(response)
 
-        result = response
+        result = saagieClient.slurper.parseText(response)
         
         return result
         //TODO find a way to reset the configuration

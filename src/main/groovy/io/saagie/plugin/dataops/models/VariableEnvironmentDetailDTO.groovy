@@ -7,11 +7,11 @@ class VariableEnvironmentDetailDTO implements IExists {
 	String description
 	boolean isPassword
 	
-	def setVariableDetailValuesFromData( variableEnvV2Data ) {
+	def setVariableDetailValuesFromData( variableEnvV2Data, isV1 ) {
 		
 		scope = variableEnvV2Data.scope
 		
-		if (variableEnvV2Data?.id) {
+		if (variableEnvV2Data?.id && !isV1) {
 			id = variableEnvV2Data.id
 		}
 		

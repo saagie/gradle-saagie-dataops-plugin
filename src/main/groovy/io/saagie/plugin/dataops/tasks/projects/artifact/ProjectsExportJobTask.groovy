@@ -6,7 +6,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.api.tasks.TaskOutputs
 
 class ProjectsExportJobTask extends DefaultTask {
 	
@@ -19,14 +18,16 @@ class ProjectsExportJobTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
-	String result
+	def result
 	
 	@TaskAction
 	def exportProjectJob() {
-		saagieClient = new SaagieClient( configuration, taskName )
 		
-		result = saagieClient.exportArtifacts()
-		logger.quiet( result )
+		saagieClient = new SaagieClient(configuration, taskName)
+		def response = saagieClient.exportArtifactsV2()
+		logger.quiet(response)
+		result = saagieClient.slurper.parseText(response)
+		
 		return result
 	}
 	

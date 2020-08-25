@@ -17,13 +17,16 @@ class ProjectStopJobInstanceTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
-	String result
+	def result
 	
 	@TaskAction
 	def stopProjectJobInstance() {
-		saagieClient = new SaagieClient( configuration, taskName )
-		result = saagieClient.stopJobInstance()
-		logger.quiet( result )
+		
+		saagieClient = new SaagieClient(configuration, taskName)
+		def response = saagieClient.stopJobInstance()
+		logger.quiet(response)
+		result = saagieClient.slurper.parseText(response)
+		
 		return result
 	}
 }

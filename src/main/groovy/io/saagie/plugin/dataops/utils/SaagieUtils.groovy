@@ -1219,6 +1219,20 @@ class SaagieUtils {
 	}
 	
 	
+	Request getAllVariablesFromV1() {
+		Server server = configuration.server
+		logger.debug('Generating request in order to get all environment variables from V1')
+		
+		Request newRequest = new Request.Builder()
+				.url("${server.url}/manager/api/v1/platform/${server.environment}/envvars/")
+				.get()
+				.build()
+		
+		debugRequest(newRequest)
+		return newRequest
+	}
+	
+	
 	Request getJobVersionDetailRequest() {
 		Project project = configuration.project
 		Job job = configuration.job
