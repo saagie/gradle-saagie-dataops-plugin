@@ -5,5 +5,5 @@ import io.saagie.plugin.dataops.models.VariableEnvironmentDetailDTO
 
 interface VariableEnvironmentDTOInterface extends IExists {
 	VariableEnvironmentDetailDTO variableDetail = new VariableEnvironmentDetailDTO();
-	setVariableDetailValuesFromData(variableEnvV2Data);
+	setVariableDetailValuesFromData(variableEnvData);
 }

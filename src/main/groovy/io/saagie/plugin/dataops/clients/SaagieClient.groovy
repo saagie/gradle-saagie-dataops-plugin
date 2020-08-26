@@ -14,6 +14,7 @@ import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.VariableEnvironmentV1DTO
+import io.saagie.plugin.dataops.models.VariableEnvironmentV2DTO
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
@@ -1527,7 +1528,7 @@ class SaagieClient {
 			
 			listVariables.forEach {
 				ExportVariables newExportVariable = new ExportVariables()
-				newExportVariable.variableEnvironmentDTO = new VariableEnvironmentV1DTO()
+				newExportVariable.variableEnvironmentDTO = new VariableEnvironmentV2DTO()
 				newExportVariable.variableEnvironmentDTO.setVariableDetailValuesFromData(it)
 				exportVariables.add(newExportVariable)
 			}
@@ -1542,7 +1543,35 @@ class SaagieClient {
 		logger.info('Starting getting environment variables from configuration for v1... ')
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid())
 		def listVariables = []
-		listVariables = getAllVariablesFromV1()
+		
+		tryCatchClosure({
+			
+			listVariables = getAllVariablesFromV1()
+			if (listVariables.size().equals(0)) {
+				return null
+			}
+			
+			if (!configuration.env.include_all_var) {
+				configuration.env.name.forEach {
+					def foundName = listVariables.find { var -> var.name?.equals(it) }
+					if (!foundName) {
+						throw new GradleException("Didn't find variable name: ${it} in the required environment variables list in V1")
+					}
+				}
+			}
+			def exportVariablesV1 = []
+			
+			listVariables.forEach {
+				ExportVariables newExportVariable = new ExportVariables()
+				newExportVariable.variableEnvironmentDTO = new VariableEnvironmentV1DTO()
+				newExportVariable.variableEnvironmentDTO.setVariableDetailValuesFromData(it)
+				exportVariablesV1.add(newExportVariable)
+			}
+			
+			return exportVariablesV1
+		}, 'Error in getListVariablesV2FromConfig', 'getListVariablesV1FromConfig') as ExportVariables[]
+		
+		
 	}
 	
 	def checkIfEnvDefinedNamesIsValidFromConfiguration() {
