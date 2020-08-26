@@ -482,14 +482,7 @@ class SaagieUtils {
 		def nullFile = '},"file":null}'
 		def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
 		
-		def createProjectJob = gq('''
-            mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) {
-                createJob(job: $job, jobVersion: $jobVersion, file: $file) {
-                    id
-                    name
-                }
-            }
-        ''', gqVariablesWithNullFile)
+		def createProjectJob = gq(''' mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) { createJob(job: $job, jobVersion: $jobVersion, file: $file) { id name } } ''', gqVariablesWithNullFile)
 		
 		return buildMultipartRequestFromQuery(createProjectJob, job, jobVersion)
 	}
@@ -523,13 +516,7 @@ class SaagieUtils {
 	}
 	
 	Request getProjectUpdateJobRequestFormat( String gqVariables ) {
-		def updateProjectJob = gq('''
-            mutation editJobMutation($job: JobEditionInput!) {
-                editJob(job: $job) {
-                    id
-                }
-            }
-        ''', gqVariables)
+		def updateProjectJob = gq(''' mutation editJobMutation($job: JobEditionInput!) { editJob(job: $job) { id } } ''', gqVariables)
 		
 		
 		return buildRequestFromQuery(updateProjectJob)
@@ -550,13 +537,7 @@ class SaagieUtils {
 				jobVersion : jobVersion.toMap()
 		])
 		
-		def updateProjectJob = gq('''
-            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
-                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
-                    number
-                }
-            }
-        ''', gqVariables)
+		def updateProjectJob = gq(''' mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) { addJobVersion(jobId: $jobId, jobVersion: $jobVersion) { number } } ''', gqVariables)
 		
 		return buildRequestFromQuery(updateProjectJob)
 	}
@@ -591,13 +572,7 @@ class SaagieUtils {
 		def nullFile = '},"file":null}'
 		def gqVariablesWithNullFile = "${gqVariables.reverse().drop(2).reverse()}${nullFile}"
 		
-		def updateProjectJob = gq('''
-            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!, $file: Upload) {
-                addJobVersion(jobId: $jobId, jobVersion: $jobVersion, file: $file) {
-                    number
-                }
-            }
-        ''', gqVariablesWithNullFile)
+		def updateProjectJob = gq(''' mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!, $file: Upload) { addJobVersion(jobId: $jobId, jobVersion: $jobVersion, file: $file) { number } } ''', gqVariablesWithNullFile)
 		
 		return buildMultipartRequestFromQuery(updateProjectJob, job, jobVersion)
 	}
@@ -617,13 +592,7 @@ class SaagieUtils {
 				jobVersion : jobVersion.toMap()
 		])
 		
-		def updateProjectJob = gq('''
-            mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) {
-                addJobVersion(jobId: $jobId, jobVersion: $jobVersion) {
-                    number
-                }
-            }
-        ''', gqVariables)
+		def updateProjectJob = gq(''' mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!) { addJobVersion(jobId: $jobId, jobVersion: $jobVersion) { number } } ''', gqVariables)
 		
 		return buildRequestFromQuery(updateProjectJob)
 	}
@@ -677,14 +646,7 @@ class SaagieUtils {
 		
 		def gqVariables = jsonGenerator.toJson([jobId : job.id])
 		
-		def runProjectJobRequest = gq('''
-            mutation editJobMutation($jobId: UUID!) {
-                runJob(jobId: $jobId) {
-                    id
-                    status
-                }
-            }
-        ''', gqVariables)
+		def runProjectJobRequest = gq(''' mutation editJobMutation($jobId: UUID!) { runJob(jobId: $jobId) { id status } } ''', gqVariables)
 		
 		return buildRequestFromQuery(runProjectJobRequest)
 	}
@@ -718,13 +680,7 @@ class SaagieUtils {
 				pipeline : graphqlPipelineVar
 		])
 		
-		def runProjectJobRequest = gq('''
-            mutation createPipelineMutation($pipeline: PipelineInput!) {
-                createPipeline(pipeline: $pipeline) {
-                    id
-                }
-            }
-        ''', gqVariables)
+		def runProjectJobRequest = gq(''' mutation createPipelineMutation($pipeline: PipelineInput!) { createPipeline(pipeline: $pipeline) { id } } ''', gqVariables)
 		
 		return buildRequestFromQuery(runProjectJobRequest)
 	}
@@ -739,13 +695,7 @@ class SaagieUtils {
 		
 		def gqVariables = jsonGenerator.toJson([jobId : jobInstance.id])
 		
-		def getJobInstanceStatus = gq('''
-            query getJobInstanceStatus($jobId: UUID!) {
-                jobInstance(id: $jobId) {
-                    status
-                }
-            }
-        ''', gqVariables)
+		def getJobInstanceStatus = gq(''' query getJobInstanceStatus($jobId: UUID!) { jobInstance(id: $jobId) { status } } ''', gqVariables)
 		return buildRequestFromQuery(getJobInstanceStatus)
 	}
 	
@@ -764,13 +714,7 @@ class SaagieUtils {
 		
 		def gqVariables = jsonGenerator.toJson([id : id])
 		
-		def getPipelineInstanceStatus = gq('''
-            query getPipelineInstanceStatus($id: UUID!) {
-                pipelineInstance(id: $id) {
-                    status
-                }
-            }
-        ''', gqVariables)
+		def getPipelineInstanceStatus = gq(''' query getPipelineInstanceStatus($id: UUID!) { pipelineInstance(id: $id) { status } } ''', gqVariables)
 		
 		return buildRequestFromQuery(getPipelineInstanceStatus)
 	}
@@ -785,13 +729,7 @@ class SaagieUtils {
 		
 		def gqVariables = jsonGenerator.toJson([pipeline : pipeline.toMap()])
 		
-		def editPipeline = gq('''
-            mutation editPipelineMutation($pipeline: PipelineEditionInput!) {
-                editPipeline(pipeline: $pipeline) {
-                    id
-                }
-            }
-        ''', gqVariables)
+		def editPipeline = gq(''' mutation editPipelineMutation($pipeline: PipelineEditionInput!) { editPipeline(pipeline: $pipeline) { id } } ''', gqVariables)
 		
 		return buildRequestFromQuery(editPipeline)
 	}
@@ -1076,7 +1014,7 @@ class SaagieUtils {
 	}
 	
 	Request getListAllTechnologiesRequest() {
-		logger.debug('Generating getListAllTechnologiesRequest')
+		logger.debug('Generating getListAllTechnologiesRequest ... ')
 		
 		def listAllPipelineRequest = gq('''
             query getAllTechnologies {
