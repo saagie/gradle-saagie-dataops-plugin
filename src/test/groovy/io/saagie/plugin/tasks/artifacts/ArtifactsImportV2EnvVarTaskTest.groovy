@@ -3,15 +3,15 @@ package io.saagie.plugin.tasks.artifacts
 import io.saagie.plugin.DataOpsGradleTaskSpecification
 import io.saagie.plugin.dataops.DataOpsModule
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.testkit.runner.UnexpectedBuildFailure
 import spock.lang.Shared
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
-
 class ArtifactsImportV2EnvVarTaskTest extends DataOpsGradleTaskSpecification {
-	@Shared String taskName = DataOpsModule.PROJECTS_IMPORT_JOB
-	@Shared ClassLoader classLoader = getClass().getClassLoader()
-	@Shared String exportVariableWithoutJobAndPipeline = './exportVariableWithoutJobAndPipeline.zip'
+	@Shared
+	String taskName = DataOpsModule.PROJECTS_IMPORT_ARTIFACTS_JOB
+	@Shared
+	ClassLoader classLoader = getClass().getClassLoader()
+	@Shared
+	String exportVariableWithoutJobAndPipeline = './exportVariableWithoutJobAndPipeline.zip'
 	
 	def "the task should import environment variable on the platform"() {
 		given:

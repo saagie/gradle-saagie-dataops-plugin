@@ -25,8 +25,6 @@ class ProjectsImportJobTask extends DefaultTask {
 		saagieClient = new SaagieClient(configuration, taskName)
 		def response = saagieClient.importJob()
 		logger.quiet(response)
-		result = saagieClient.slurper.parseText(response)
-		
-		return result
+		return response
 	}
 }

@@ -1145,7 +1145,7 @@ class SaagieUtils {
 		logger.debug('Generating request in order to get all environment variables from V1')
 		
 		Request newRequest = new Request.Builder()
-				.url("${server.url}/manager/api/v1/platform/${server.environment}/envvars/")
+				.url("${server.url}/manager/api/v1/platform/${server.environment}/envvars")
 				.get()
 				.build()
 		

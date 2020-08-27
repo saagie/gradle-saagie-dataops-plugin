@@ -18,7 +18,9 @@ class ImportVariableService {
 			VariableMapper newMappedVariable = new VariableMapper()
 			newMappedVariable.name = newVariableConfig.name
 			newMappedVariable.scope = newVariableConfig.scope
-			newMappedVariable.id = newVariableConfig.id
+			if(newVariableConfig.id && newVariableConfig.id.matches("[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")) {
+				newMappedVariable.id = newVariableConfig.id
+			}
 			newMappedVariable.value = newVariableConfig.value
 			newMappedVariable.description = newVariableConfig.description
 			newMappedVariable.isPassword = newVariableConfig.isPassword
