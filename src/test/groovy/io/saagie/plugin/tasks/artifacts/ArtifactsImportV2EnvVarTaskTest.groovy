@@ -19,7 +19,7 @@ class ArtifactsImportV2EnvVarTaskTest extends DataOpsGradleTaskSpecification {
 		File exportedConfig = new File(resource.getFile())
 		enqueueRequest('{"data":{"projectEnvironmentVariables":[{"id":"variable-id-1","scope":"GLOBAL","name":"testUX2","value":"lala1","description":"lala1","isPassword":false,"overriddenValues":[]},{"id":"variable-id-2","scope":"GLOBAL","name":"sjones3423","value":null,"description":"description","isPassword":true,"overriddenValues":[]},{"id":"variable-id-3","scope":"GLOBAL","name":"sjones","value":null,"description":"description","isPassword":true,"overriddenValues":[]},{"id":"variable-id-4","scope":"PROJECT","name":"globalvar","value":"pro","description":"pro","isPassword":false,"overriddenValues":[{"id":"variable-id-5","scope":"GLOBAL","value":"GlobalEnvVAr","description":"global variable","isPassword":false}]}]}}')
 		enqueueRequest('{"data":{"saveEnvironmentVariable":{"id":"variable-1","name":"GLOBAL_AMINE","__typename":"EnvironmentVariable"}}}')
-		enqueueRequest('{"data":{"saveEnvironmentVariable":{"id":"variable-2","name":"globalvar","__typename":"EnvironmentVariable"}}}')
+		enqueueRequest('{"data":{"saveEnvironmentVariable":{"id":"variable-2","name":"testUX2","__typename":"EnvironmentVariable"}}}')
 		buildFile << """
             saagie {
                 server {
@@ -44,6 +44,6 @@ class ArtifactsImportV2EnvVarTaskTest extends DataOpsGradleTaskSpecification {
 		
 		then:
 		notThrown(Exception)
-		result.output.contains('{status=success, job=[], pipeline=[], variable=[{id=variable-1, name=GLOBAL_AMINE}, {id=variable-2, name=globalvar}]}')
+		result.output.contains('{status=success, job=[], pipeline=[], variable=[{id=variable-1, name=GLOBAL_AMINE}, {id=variable-2, name=testUX2}]}')
 	}
 }

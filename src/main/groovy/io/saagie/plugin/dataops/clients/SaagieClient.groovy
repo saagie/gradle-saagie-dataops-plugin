@@ -1533,7 +1533,7 @@ class SaagieClient {
 		
 	}
 	
-	Object[] getListOfVariablesFromRequest(Request variablesListRequest) {
+	def getListOfVariablesFromRequest(Request variablesListRequest) {
 		def listVariables = []
 		client.newCall(variablesListRequest).execute().withCloseable { responseVariableList ->
 			handleErrors(responseVariableList)
