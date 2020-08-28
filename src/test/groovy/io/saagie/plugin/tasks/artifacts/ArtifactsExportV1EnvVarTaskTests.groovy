@@ -13,39 +13,6 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 class ArtifactsExportV1EnvVarTaskTests extends DataOpsGradleTaskSpecification {
 	@Shared String taskName = DataOpsModule.PROJECTS_EXPORT_ARTIFACTS_V1
 	
-	def "the task export jobs"() {
-		given:
-		buildFile << """
-           saagie {
-                server {
-                    url = "https://saagie-workspace.prod.saagie.io/"
-                    login ="mohamed.amin.ziraoui"
-                    password = ")(*&^QWErty"
-                    environment = 4
-                    jwt = true
-                    acceptSelfSigned = true
-                }
-    
-                env {
-                   include_all_var = false
-                   scope = 'project'
-                   name=['MONGO_IP', 'MONGO_PORT']
-                }
-                
-                exportArtifacts {
-                  export_file = "/home/amine/Desktop/test_gradle/export_project_v2_var.zip"
-                  overwrite=true
-                  temporary_directory='/home/amine/Desktop/test_gradle/tmp'
-                }
-           }
-        """
-		when:
-		BuildResult result = gradle(taskName, "-d")
-		then:
-		notThrown(Exception)
-		assert true == true
-	}
-	
 	def "the task should export v1 all environments variables when include_all_var is true  with project scope"() {
 		given:
 		
