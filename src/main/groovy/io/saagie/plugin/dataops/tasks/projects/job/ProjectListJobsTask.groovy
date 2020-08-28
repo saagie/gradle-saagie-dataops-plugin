@@ -14,16 +14,13 @@ class ProjectListJobsTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
-    def result
+    String result
     
     @TaskAction
     def getProjectJobs() {
-        
         saagieClient = new SaagieClient(configuration, taskName)
-        def response = saagieClient.getProjectJobs()
-        logger.quiet(response)
-        result = saagieClient.slurper.parseText(response)
-        
+        result = saagieClient.getProjectJobs()
+        logger.quiet(result)
         return result
     }
 }

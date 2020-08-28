@@ -23,12 +23,9 @@ class ProjectUpgradeJobTask extends DefaultTask {
     
     @TaskAction
     def upgradeProjectJob() {
-        
         saagieClient = new SaagieClient(configuration, taskName)
-        def response = saagieClient.upgradeProjectJobWithGraphQL()
-        logger.quiet(response)
-        result = saagieClient.slurper.parseText(response)
-        
+        result = saagieClient.upgradeProjectJobWithGraphQL()
+        logger.quiet(result)
         return result
     }
 }

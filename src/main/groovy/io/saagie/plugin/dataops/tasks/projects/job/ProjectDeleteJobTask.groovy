@@ -14,16 +14,13 @@ class ProjectDeleteJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
-    def result
+    String result
     
     @TaskAction
     def deleteProjectJob() {
-        
         saagieClient = new SaagieClient(configuration, taskName)
-        def response = saagieClient.deleteProjectJob()
-        logger.quiet(response)
-        result = saagieClient.slurper.parseText(response)
-        
+        result = saagieClient.deleteProjectJob()
+        logger.quiet(result)
         return result
     }
 }
