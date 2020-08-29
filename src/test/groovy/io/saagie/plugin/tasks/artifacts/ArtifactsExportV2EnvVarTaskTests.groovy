@@ -8,7 +8,7 @@ import spock.lang.Title
 
 @Title('ArtifactsExportV2EnvVarTaskTests task tests')
 class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
-	@Shared String taskName = DataOpsModule.PROJECTS_EXPORT_JOB
+	@Shared String taskName = DataOpsModule.PROJECTS_EXPORT_ARTIFACTS
 	
 	def "the task should export environments variables of scope global"() {
 		given:
@@ -80,7 +80,6 @@ class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
                   scope = 'project'
                   include_all_var = false
                   name = ['globalvar']
-					
 					
                 }
 

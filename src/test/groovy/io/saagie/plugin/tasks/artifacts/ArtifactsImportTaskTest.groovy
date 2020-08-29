@@ -11,7 +11,7 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsImportJob task tests')
 class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = DataOpsModule.PROJECTS_IMPORT_JOB
+    @Shared String taskName = DataOpsModule.PROJECTS_IMPORT_ARTIFACTS_JOB
     @Shared ClassLoader classLoader = getClass().getClassLoader()
     @Shared String exportJobZipFilename = './exportedJob.zip'
     @Shared String exportPipelineWithoutJobZipFilename = './exportedPipelineWithoutJob.zip'

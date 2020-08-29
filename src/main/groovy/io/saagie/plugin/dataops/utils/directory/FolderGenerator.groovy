@@ -292,37 +292,36 @@ class FolderGenerator {
 		}
 	}
 	
-	void generateFolderForVariable( ExportVariables exportVariables ) {
+	void generateFolderForVariable( ExportVariables exportVariable ) {
 		
-		def variableId = exportVariables.variableEnvironmentDTO.variableDetail.id
+		def variableId = exportVariable.variableEnvironmentDTO.name
 		def urlVariableIdFolder = "${inputDire}${sl}${name}${sl}Variable${sl}${variableId}"
 		def folder = new File(urlVariableIdFolder) ;
 		
 		
-		if (exportVariables.exists()) {
-			def createFolderForVariable = folder.mkdirs()
-			if (createFolderForVariable) {
-				
-				Map variablebDetailObject = generateBodyEnvironmentVariable(exportVariables.variableEnvironmentDTO.name, exportVariables.variableEnvironmentDTO.variableDetail)
-				
-				if (
-				exportVariables.variableEnvironmentDTO?.overridenValues && exportVariables?.variableEnvironmentDTO?.overridenValues.size() > 0) {
-					ArrayList<Map> overridenValues = []
-					exportVariables.variableEnvironmentDTO.overridenValues.forEach { it ->
-						overridenValues.add(generateBodyEnvironmentVariable(null, it))
-					}
-					variablebDetailObject << [* : [
-							overridenValues : overridenValues
-					]]
+		def createFolderForVariable = folder.mkdirs()
+		if (createFolderForVariable) {
+			
+			Map variablebDetailObject = generateBodyEnvironmentVariable(exportVariable.variableEnvironmentDTO.name, exportVariable.variableEnvironmentDTO.variableDetail)
+			
+			if (
+			exportVariable.variableEnvironmentDTO?.hasProperty('overridenValues') && exportVariable?.variableEnvironmentDTO?.overridenValues.size() > 0) {
+				ArrayList<Map> overridenValues = []
+				exportVariable.variableEnvironmentDTO.overridenValues.forEach { it ->
+					overridenValues.add(generateBodyEnvironmentVariable(null, it))
 				}
-				
-				def builder = new JsonBuilder(variablebDetailObject).toPrettyString()
-				File variableFile = new File("${urlVariableIdFolder}${sl}variable.json")
-				variableFile.write(builder)
-			} else {
-				throw new GradleException("Cannot create directories for the variable")
+				variablebDetailObject << [* : [
+						overridenValues : overridenValues
+				]]
 			}
+			
+			def builder = new JsonBuilder(variablebDetailObject).toPrettyString()
+			File variableFile = new File("${urlVariableIdFolder}${sl}variable.json")
+			variableFile.write(builder)
+		} else {
+			throw new GradleException("Cannot create directories for the variable")
 		}
+		
 	}
 	
 	Map generateBodyEnvironmentVariable( String name, VariableEnvironmentDetailDTO variableDetail ) {

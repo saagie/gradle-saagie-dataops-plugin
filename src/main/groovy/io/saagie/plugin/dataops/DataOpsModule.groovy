@@ -51,9 +51,9 @@ class DataOpsModule {
 	final static String GROUP_LIST_TASK = 'groupList'
 	final static String PROJECTS_CREATE_TASK = 'projectsCreate'
 	final static String PROJECTS_UPDATE = 'projectsUpdate'
-	final static String PROJECTS_EXPORT_JOB = 'projectsExport'
-	final static String PROJECTS_EXPORT_JOB_V1 = 'projectsExportV1'
-	final static String PROJECTS_IMPORT_JOB = 'projectsImport'
+	final static String PROJECTS_EXPORT_ARTIFACTS = 'projectsExport'
+	final static String PROJECTS_EXPORT_ARTIFACTS_V1 = 'projectsExportV1'
+	final static String PROJECTS_IMPORT_ARTIFACTS_JOB = 'projectsImport'
 	
 	final static String TASK_GROUP = 'Saagie'
 	
@@ -123,18 +123,18 @@ class DataOpsModule {
 			taskName = PROJECT_DELETE_TASK
 		}
 		
-		project.task( PROJECTS_EXPORT_JOB, type : ProjectsExportJobTask ) {
+		project.task( PROJECTS_EXPORT_ARTIFACTS, type : ProjectsExportJobTask ) {
 			group = TASK_GROUP
 			description = 'Export a list of jobs or pipelines for a project to a zip extension'
 			configuration = project.saagie
-			taskName = PROJECTS_EXPORT_JOB
+			taskName = PROJECTS_EXPORT_ARTIFACTS
 		}
 		
-		project.task( PROJECTS_EXPORT_JOB_V1, type : ProjectsExportJobV1Task ) {
+		project.task( PROJECTS_EXPORT_ARTIFACTS_V1, type : ProjectsExportJobV1Task ) {
 			group = TASK_GROUP
 			description = 'Export a list of jobs or pipelines from Manager to a zip format to be imported into V2( projects)'
 			configuration = project.saagie
-			taskName = PROJECTS_EXPORT_JOB_V1
+			taskName = PROJECTS_EXPORT_ARTIFACTS_V1
 		}
 		
 		project.task( PROJECTS_GET_PIPELINE_INSTANCE_STATUS, type : ProjectGetPipelineInstanceStatusTask ) {
@@ -228,11 +228,11 @@ class DataOpsModule {
 			taskName = PROJECTS_UPDATE
 		}
 		
-		project.task( PROJECTS_IMPORT_JOB, type : ProjectsImportJobTask ) {
+		project.task( PROJECTS_IMPORT_ARTIFACTS_JOB, type : ProjectsImportJobTask ) {
 			group = TASK_GROUP
 			description = 'Import a List of jobs or pipelines using the artifacts from a zip location'
 			configuration = project.saagie
-			taskName = PROJECTS_IMPORT_JOB
+			taskName = PROJECTS_IMPORT_ARTIFACTS_JOB
 		}
 	}
 }
