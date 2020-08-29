@@ -9,7 +9,7 @@ import spock.lang.Shared
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 class ArtifactsImportV1Test extends DataOpsGradleTaskSpecification {
-	@Shared String taskName = DataOpsModule.PROJECTS_IMPORT_JOB
+	@Shared String taskName = DataOpsModule.PROJECTS_IMPORT_ARTIFACTS_JOB
 	@Shared ClassLoader classLoader = getClass().getClassLoader()
 	@Shared String exportedPipelineWithoutJobForV1 = './exportedPipelineWithoutJobForV1.zip'
 	

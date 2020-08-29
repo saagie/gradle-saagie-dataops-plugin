@@ -13,6 +13,8 @@ import io.saagie.plugin.dataops.models.ResponseStatusEnum
 import io.saagie.plugin.dataops.models.Server
 import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
+import io.saagie.plugin.dataops.models.VariableEnvironmentV1DTO
+import io.saagie.plugin.dataops.models.VariableEnvironmentV2DTO
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
@@ -51,7 +53,7 @@ class SaagieClient {
 	
 	OkHttpClient client
 	
-	JsonSlurper slurper = new JsonSlurper()
+	static JsonSlurper slurper = new JsonSlurper()
 	
 	ValidatorFactory factory = Validation.buildDefaultValidatorFactory()
 	
@@ -916,12 +918,12 @@ class SaagieClient {
 			exportJobs = getListJobAndJobVersionsFromConfigV1(listJobsByNameAndIdFromV1)
 		}
 		
-		ExportVariables[] exportVariables = []
+		ExportVariables[] exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 		
 		return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, true)
 	}
 	
-	String exportArtifacts() {
+	String exportArtifactsV2() {
 		logger.debug('Starting artifacts Job task')
 		checkRequiredConfig(!configuration?.project?.id ||
 				!configuration?.exportArtifacts?.export_file
@@ -938,14 +940,22 @@ class SaagieClient {
 		}
 		
 		ExportVariables[] exportVariables = []
-		def validateVariableConfigurationParams = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
-		if (validateVariableConfigurationParams) {
-			exportVariables = getListVariablesFromConfig()
+		// TODO: Check conditions order
+		if(configuration.env.scope) {
+			exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 		}
 		
 		return export(exportPipelines, exportJobs, exportVariables)
 	}
 	
+	def getVariableListIfConfigIsDefined(getVariableListingClosure ) {
+		ExportVariables[] exportVariables = []
+		def validateVariableConfigurationParams  = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
+		if (validateVariableConfigurationParams) {
+			exportVariables = getVariableListingClosure()
+		}
+		return exportVariables
+	}
 	
 	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, isV1 = false ) {
 		
@@ -981,6 +991,7 @@ class SaagieClient {
 			zippingFolder.generateZip(tempJobDirectory)
 			
 			logger.debug("path after: {}, ", exportContainer.exportConfigPath)
+			
 			return JsonOutput.toJson([
 					status     : "success",
 					exportfile : exportContainer.exportConfigPath
@@ -1465,14 +1476,10 @@ class SaagieClient {
 		
 	}
 	
-	ExportVariables[] getListVariablesFromConfig() {
+	ExportVariables[] getListVariablesV2FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v2 ... ')
-		checkRequiredConfig(
-				checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() ||
-						checkIfEnvScopeIsProjectButNoProjectIdProvided() ||
-						checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty()
-		)
-		def listVariables = []
+		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid())
+		
 		tryCatchClosure({
 			Request variablesListRequest = null
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name())) {
@@ -1480,17 +1487,7 @@ class SaagieClient {
 			} else {
 				variablesListRequest = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
 			}
-			client.newCall(variablesListRequest).execute().withCloseable { responseVariableList ->
-				handleErrors(responseVariableList)
-				String responseBodyForVariableList = responseVariableList.body().string()
-				logger.debug("variable list :", responseBodyForVariableList)
-				def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
-				if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && parsedResultForVariableList.data?.globalEnvironmentVariables) {
-					listVariables = parsedResultForVariableList.data.globalEnvironmentVariables
-				} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
-					listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
-				}
-			}
+			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
 			if (listVariables.size().equals(0)) {
 				return null
 			}
@@ -1503,7 +1500,7 @@ class SaagieClient {
 				}
 			}
 			
-			if (!configuration.env.include_all_var && configuration.env.name && configuration.env.name.size() > 0) {
+			if (checkIfEnvDefinedNamesIsValidFromConfiguration()) {
 				listVariables = listVariables.findAll {
 					configuration.env.name.contains(it.name)
 				}.collect {
@@ -1524,17 +1521,101 @@ class SaagieClient {
 			def exportVariables = []
 			
 			listVariables.forEach {
-				ExportVariables newExportVariable = []
+				ExportVariables newExportVariable = new ExportVariables()
+				newExportVariable.variableEnvironmentDTO = new VariableEnvironmentV2DTO()
 				newExportVariable.variableEnvironmentDTO.setVariableDetailValuesFromData(it)
 				exportVariables.add(newExportVariable)
 			}
 			
 			return exportVariables
 			
-		}, 'Error in getListVariablesFromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
+		}, 'Error in getListVariablesV2FromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
 		
 	}
 	
+	def getListOfVariablesFromRequest(Request variablesListRequest) {
+		def listVariables = []
+		client.newCall(variablesListRequest).execute().withCloseable { responseVariableList ->
+			handleErrors(responseVariableList)
+			String responseBodyForVariableList = responseVariableList.body().string()
+			logger.debug("variable list : {}", responseBodyForVariableList)
+			def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
+			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && parsedResultForVariableList.data?.globalEnvironmentVariables) {
+				listVariables = parsedResultForVariableList.data.globalEnvironmentVariables
+			} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
+				listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
+			}
+			return listVariables;
+		}
+	}
+	ExportVariables[] getListVariablesV1FromConfig() {
+		logger.info('Starting getting environment variables from configuration for v1... ')
+		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
+		def listVariables = []
+		
+		tryCatchClosure({
+			
+			listVariables = getAllVariablesFromV1()
+			if (listVariables.size().equals(0)) {
+				return null
+			}
+			
+			if (!configuration.env.include_all_var && configuration.env.name) {
+				configuration.env.name.forEach {
+					def foundName = listVariables.find { var -> var.name?.equals(it) }
+					if (!foundName) {
+						throw new GradleException("Didn't find variable name: ${it} in the required environment variables list in V1")
+					}
+				}
+				listVariables = listVariables.findAll {
+					configuration.env.name.contains(it.name)
+				}.collect {
+					it
+				}
+			}
+			
+			def exportVariablesV1 = []
+			
+			listVariables.collect { element ->
+				element.scope = configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) ? EnvVarScopeTypeEnum.project.name().toUpperCase() : EnvVarScopeTypeEnum.global.name().toUpperCase()
+			}
+			
+			listVariables.forEach {
+				ExportVariables newExportVariable = new ExportVariables()
+				newExportVariable.variableEnvironmentDTO = new VariableEnvironmentV1DTO()
+				newExportVariable.variableEnvironmentDTO.setVariableDetailValuesFromData(it)
+				exportVariablesV1.add(newExportVariable)
+			}
+			
+			return exportVariablesV1
+		}, 'Error in getListVariablesV2FromConfig', 'getListVariablesV1FromConfig') as ExportVariables[]
+		
+		
+	}
+	
+	def checkIfEnvDefinedNamesIsValidFromConfiguration() {
+		return !configuration.env.include_all_var && configuration.env.name && configuration.env.name.size() > 0
+	}
+	
+	def getAllVariablesFromV1() {
+		checkRequiredConfig( !this.configuration.server.url || !this.configuration.server.environment)
+		tryCatchClosure({
+			def variablesV1ListRequest = saagieUtils.getAllVariablesFromV1()
+			getV1Client().newCall(variablesV1ListRequest).execute().withCloseable { responseVariableList ->
+				handleErrors(responseVariableList)
+				String responseBodyForVariableList = responseVariableList.body().string()
+				logger.debug("variable list : {} ", responseBodyForVariableList)
+				return slurper.parseText(responseBodyForVariableList)
+			}
+		}, 'Error in getListVariablesV1FromConfig', 'getAllVariablesFromV1 Request')
+		
+	}
+	
+	def checkConfigurationForVariableEnvironmentIsValid(boolean isV1 = false) {
+		return checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() ||
+				checkIfEnvScopeIsProjectButNoProjectIdProvided(isV1) ||
+				checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty()
+	}
 	def checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() {
 		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = (!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
 		logger.debug("result for checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject")
@@ -1542,8 +1623,8 @@ class SaagieClient {
 		return conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject
 	}
 	
-	def checkIfEnvScopeIsProjectButNoProjectIdProvided() {
-		def conditionForScopeIsProjectButNoProjectIdProvided = (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null))
+	def checkIfEnvScopeIsProjectButNoProjectIdProvided(boolean isV1) {
+		def conditionForScopeIsProjectButNoProjectIdProvided = (!isV1 && configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null))
 		logger.debug("result for checkIfEnvScopeIsProjectButNoProjectIdProvided")
 		logger.debug(conditionForScopeIsProjectButNoProjectIdProvided as String)
 		return conditionForScopeIsProjectButNoProjectIdProvided
@@ -1774,15 +1855,17 @@ class SaagieClient {
 			
 			if (variablesConfigFromExportedZip?.variables && response.status == ResponseStatusEnum.success.name) {
 				
-				
 				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
 					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
-					def foundVariable = listVariablesByNameAndId.find {
-						variable.name.equals(it.name) && variable.scope.equals(it.scope)
+					def foundVariable = listVariablesByNameAndId.first().find { it ->
+						def nameIsEqual = variable.configOverride.name.equals(it.name);
+						def idIsSetOrIdDifferent = ( !variable.configOverride.id || variable.configOverride.id != it.id );
+						def variableScopeIsTheSame = variable.configOverride.scope.equals(it.scope)
+						return nameIsEqual && idIsSetOrIdDifferent && variableScopeIsTheSame
 					}
 					
 					if (foundVariable) {
-						throw new GradleException("Environmnent varaible name : ${newMappedVariable.name} already existe in the targeted platform")
+						throw new GradleException("Environmnent variable name : ${variable.configOverride.name} already exist in the targeted platform")
 					}
 				}
 				
@@ -1805,16 +1888,17 @@ class SaagieClient {
 		}
 	}
 	
-	private getVariableEnvironmentFromList( newMappedVariable ) {
+	Object[] getVariableEnvironmentFromList( newMappedVariable ) {
 		Request requestlistVariablesByNameAndId = null
-		def listVariables = null
+		
 		def isProjectRequest = newMappedVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
 		if (isProjectRequest) {
-			requestlistVariablesByNameAndId = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
+			requestlistVariablesByNameAndId = saagieUtils.getProjectVariableByNameAndId()
 		} else {
 			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndId()
 		}
 		tryCatchClosure({
+			def listVariables = null
 			client.newCall(requestlistVariablesByNameAndId).execute().withCloseable { responseVariableList ->
 				handleErrors(responseVariableList)
 				String responseBodyForVariableList = responseVariableList.body().string()
@@ -1822,7 +1906,7 @@ class SaagieClient {
 				def parsedResultForVariableList = slurper.parseText(responseBodyForVariableList)
 				if (isProjectRequest) {
 					listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
-				} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
+				} else if (parsedResultForVariableList.data?.globalEnvironmentVariables) {
 					listVariables = parsedResultForVariableList.data.globalEnvironmentVariables
 				}
 				return listVariables
