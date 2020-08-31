@@ -290,8 +290,11 @@ class SaagieUtils {
 	Request getProjectVariableByNameAndId() {
 		Project project = configuration.project
 		logger.debug('Generating getProjectVariableByNameAndId [ProjectId={}]', project.id)
+		def jsonGenerator = getJsonGenerator()
 		
-		def getGlobalVariablesByNamesAndId = gq(''' query environmentVariablesQuery($projectId: UUID!) { projectEnvironmentVariables(projectId: $projectId) { id  name } } ''')
+		def gqVariables = jsonGenerator.toJson([projectId : project.id])
+		
+		def getGlobalVariablesByNamesAndId = gq(''' query environmentVariablesQuery($projectId: UUID!) { projectEnvironmentVariables(projectId: $projectId) { id  name } } ''', gqVariables)
 		return buildRequestFromQuery(getGlobalVariablesByNamesAndId)
 	}
 	
