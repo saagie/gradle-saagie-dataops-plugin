@@ -1620,7 +1620,7 @@ class SaagieClient {
 	}
 	
 	def checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() {
-		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = ( (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
+		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = ( !configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
 		logger.debug("result for checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject")
 		logger.debug(conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject as String)
 		return conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject
