@@ -14,6 +14,7 @@ class ProjectStopPipelineInstanceTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
+    @Internal
     String result
     
     @TaskAction

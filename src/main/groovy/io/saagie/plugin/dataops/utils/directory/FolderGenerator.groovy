@@ -393,7 +393,7 @@ class FolderGenerator {
 	
 	void generateFolderFromParams() {
 		if (!exportJobList.length && !exportPipelineList.length && !exportVariableList.length) {
-			throw new GradleException("jobs, pipelines and variables to be exported can t be empty at the same time")
+			throw new GradleException("jobs, pipelines and variables to be exported cannot be empty at the same time, and cannot generate zip file")
 		}
 		exportJobList.each { exportJob ->
 			generateFolderForJob(exportJob)

@@ -17,6 +17,7 @@ class ProjectsUpdateTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
+    @Internal
     String result
     
     @TaskAction
