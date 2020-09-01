@@ -16,7 +16,7 @@ class ImportVariableService {
 			def newVariableConfig = [
 					* : variableValue
 			]
-			if (checkIfScopeIsValid(globalConfig.propertyOverride?.scope)) {
+			if (globalConfig.propertyOverride != null && checkIfScopeIsValid(globalConfig.propertyOverride.scope)) {
 				newVariableConfig << [* : [
 						scope : globalConfig.propertyOverride?.scope
 				]] ;
@@ -35,7 +35,7 @@ class ImportVariableService {
 		}
 	}
 	
-	def checkIfScopeIsValid( String scope ) {
+	static boolean checkIfScopeIsValid( String scope ) {
 		return (scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase()) || scope.equals(EnvVarScopeTypeEnum.global.name().toUpperCase()))
 	}
 }

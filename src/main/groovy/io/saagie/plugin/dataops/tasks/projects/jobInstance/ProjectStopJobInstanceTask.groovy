@@ -17,7 +17,7 @@ class ProjectStopJobInstanceTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
-	@Input
+	@Internal
 	String result
 	
 	@TaskAction

@@ -1874,6 +1874,7 @@ class SaagieClient {
 				
 				ImportVariableService.importAndCreateVariables(
 						variablesConfigFromExportedZip.variables,
+						configuration,
 						processVariableToImport
 				)
 			}

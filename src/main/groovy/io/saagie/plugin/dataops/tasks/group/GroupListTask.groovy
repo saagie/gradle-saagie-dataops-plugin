@@ -17,7 +17,7 @@ class GroupListTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
-	@Input
+	@Internal
 	def result
 	
 	@TaskAction
