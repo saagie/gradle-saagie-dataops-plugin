@@ -18,7 +18,7 @@ class ImportVariableService {
 			]
 			if (globalConfig.propertyOverride != null && checkIfScopeIsValid(globalConfig.propertyOverride.scope)) {
 				newVariableConfig << [* : [
-						scope : globalConfig.propertyOverride?.scope
+						scope : globalConfig.propertyOverride?.scope?.toUpperCase()
 				]] ;
 			}
 			VariableMapper newMappedVariable = new VariableMapper()
@@ -36,7 +36,7 @@ class ImportVariableService {
 	}
 	
 	static boolean checkIfScopeIsValid( String scope ) {
-		return (scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase()) || scope.equals(EnvVarScopeTypeEnum.global.name().toUpperCase()))
+		return (scope.equals(EnvVarScopeTypeEnum.project.name()) || scope.equals(EnvVarScopeTypeEnum.global.name()))
 	}
 }
 
