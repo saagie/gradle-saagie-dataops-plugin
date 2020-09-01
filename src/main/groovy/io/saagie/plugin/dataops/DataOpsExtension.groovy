@@ -1,18 +1,18 @@
 package io.saagie.plugin.dataops
 
 import groovy.transform.TypeChecked
+import io.saagie.plugin.dataops.models.ArtifactPropertyOverride
 import io.saagie.plugin.dataops.models.EnvVariable
 import io.saagie.plugin.dataops.models.Export
 import io.saagie.plugin.dataops.models.ImportJob
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
-import io.saagie.plugin.dataops.models.JobOverride
 import io.saagie.plugin.dataops.models.JobVersion
 import io.saagie.plugin.dataops.models.PipelineInstance
 import io.saagie.plugin.dataops.models.Pipeline
-import io.saagie.plugin.dataops.models.PipelineOverride
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
+import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.Server
 import okio.Pipe
 
@@ -40,9 +40,11 @@ class DataOpsExtension {
 	
 	ImportJob importArtifacts = new ImportJob()
 	
-	JobOverride jobOverride = new JobOverride()
+	ArtifactPropertyOverride jobOverride = new ArtifactPropertyOverride()
 	
-	PipelineOverride pipelineOverride = new PipelineOverride()
+	ArtifactPropertyOverride pipelineOverride = new ArtifactPropertyOverride()
+	
+	PropertyOverride propertyOverride = new PropertyOverride()
 	
 	Export exportArtifacts = new Export()
 	
@@ -52,6 +54,11 @@ class DataOpsExtension {
 	Object server( Closure closure ) {
 		server = new Server()
 		server.with( closure )
+	}
+	
+	Object propertyOverride( Closure closure ) {
+		propertyOverride = new PropertyOverride()
+		propertyOverride.with( closure )
 	}
 	
 	Object project( Closure closure ) {
@@ -100,12 +107,12 @@ class DataOpsExtension {
 	}
 	
 	Object jobOverride( Closure closure ) {
-		jobOverride = new JobOverride()
+		jobOverride = new ArtifactPropertyOverride()
 		jobOverride.with( closure )
 	}
 	
 	Object pipelineOverride( Closure closure ) {
-		pipelineOverride = new PipelineOverride()
+		pipelineOverride = new ArtifactPropertyOverride()
 		pipelineOverride.with( closure )
 	}
 	

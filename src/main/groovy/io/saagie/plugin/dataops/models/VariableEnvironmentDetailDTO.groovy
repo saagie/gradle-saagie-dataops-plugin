@@ -9,7 +9,11 @@ class VariableEnvironmentDetailDTO implements IExists {
 	
 	def setVariableDetailValuesFromData( variableEnvV2Data, isV1 = false ) {
 		
-		scope = variableEnvV2Data.scope
+		if(isV1) {
+			scope = 'PROJECT'
+		} else {
+			scope = variableEnvV2Data.scope
+		}
 		
 		if (variableEnvV2Data?.id && !isV1 ) {
 			id = variableEnvV2Data.id

@@ -2,7 +2,7 @@ package io.saagie.plugin.dataops.tasks.service.importTask
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.PipelineVersion
-import io.saagie.plugin.dataops.models.PropertyOverride
+import io.saagie.plugin.dataops.models.ArtifactPropertyOverride
 import io.saagie.plugin.dataops.models.PipelineMapper
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import org.gradle.api.GradleException
@@ -18,7 +18,7 @@ class ImportPipelineService {
 			Map pipelineConfigOverride = pipeline.value.configOverride
 			// delete next line
 			def versions = null
-			def pipelineOverride = SaagieUtils.extractProperties(globalConfig.pipelineOverride as PropertyOverride)
+			def pipelineOverride = SaagieUtils.extractProperties(globalConfig.pipelineOverride as ArtifactPropertyOverride)
 			def newPipelineConfigWithOverride = [
 					* : pipelineConfigOverride.pipeline
 			]

@@ -13,7 +13,8 @@ class ProjectListTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    @Internal
     String result
 
     @TaskAction

@@ -941,16 +941,16 @@ class SaagieClient {
 		
 		ExportVariables[] exportVariables = []
 		// TODO: Check conditions order
-		if(configuration.env.scope) {
+		if (configuration.env.scope) {
 			exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 		}
 		
 		return export(exportPipelines, exportJobs, exportVariables)
 	}
 	
-	def getVariableListIfConfigIsDefined(getVariableListingClosure ) {
+	def getVariableListIfConfigIsDefined( getVariableListingClosure ) {
 		ExportVariables[] exportVariables = []
-		def validateVariableConfigurationParams  = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
+		def validateVariableConfigurationParams = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
 		if (validateVariableConfigurationParams) {
 			exportVariables = getVariableListingClosure()
 		}
@@ -1032,7 +1032,6 @@ class SaagieClient {
 		
 		if (!customDirectoryExist) {
 			tempJobDirectory = File.createTempDir("artifacts-${uuid.toString()}", ".tmp")
-			System.out.println("Directory created successfully")
 		}
 		
 		if (tempJobDirectory.equals("/tmp")) {
@@ -1489,6 +1488,7 @@ class SaagieClient {
 			}
 			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
 			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope {}", configuration.env.scope)
 				return null
 			}
 			
@@ -1533,7 +1533,7 @@ class SaagieClient {
 		
 	}
 	
-	def getListOfVariablesFromRequest(Request variablesListRequest) {
+	def getListOfVariablesFromRequest( Request variablesListRequest ) {
 		def listVariables = []
 		client.newCall(variablesListRequest).execute().withCloseable { responseVariableList ->
 			handleErrors(responseVariableList)
@@ -1545,11 +1545,13 @@ class SaagieClient {
 			} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
 				listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
 			}
-			return listVariables;
+			return listVariables
 		}
 	}
+	
 	ExportVariables[] getListVariablesV1FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v1... ')
+		configuration.env.scope = EnvVarScopeTypeEnum.project.name()
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
 		def listVariables = []
 		
@@ -1557,6 +1559,7 @@ class SaagieClient {
 			
 			listVariables = getAllVariablesFromV1()
 			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope {}", configuration.env.scope)
 				return null
 			}
 			
@@ -1598,7 +1601,7 @@ class SaagieClient {
 	}
 	
 	def getAllVariablesFromV1() {
-		checkRequiredConfig( !this.configuration.server.url || !this.configuration.server.environment)
+		checkRequiredConfig(!this.configuration.server.url || !this.configuration.server.environment)
 		tryCatchClosure({
 			def variablesV1ListRequest = saagieUtils.getAllVariablesFromV1()
 			getV1Client().newCall(variablesV1ListRequest).execute().withCloseable { responseVariableList ->
@@ -1611,11 +1614,12 @@ class SaagieClient {
 		
 	}
 	
-	def checkConfigurationForVariableEnvironmentIsValid(boolean isV1 = false) {
+	def checkConfigurationForVariableEnvironmentIsValid( boolean isV1 = false ) {
 		return checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() ||
 				checkIfEnvScopeIsProjectButNoProjectIdProvided(isV1) ||
 				checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty()
 	}
+	
 	def checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() {
 		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = (!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
 		logger.debug("result for checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject")
@@ -1623,7 +1627,7 @@ class SaagieClient {
 		return conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject
 	}
 	
-	def checkIfEnvScopeIsProjectButNoProjectIdProvided(boolean isV1) {
+	def checkIfEnvScopeIsProjectButNoProjectIdProvided( boolean isV1 ) {
 		def conditionForScopeIsProjectButNoProjectIdProvided = (!isV1 && configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name()) && configuration.project.id.equals(null))
 		logger.debug("result for checkIfEnvScopeIsProjectButNoProjectIdProvided")
 		logger.debug(conditionForScopeIsProjectButNoProjectIdProvided as String)
@@ -1661,8 +1665,8 @@ class SaagieClient {
 		}, 'Unknown error in the Task: projectsUpdate', 'Function: updateProject')
 	}
 	
-	String importJob() {
-		logger.info('Starting importJob task')
+	String importArtifacts() {
+		logger.info('Starting importArtifacts task')
 		
 		checkRequiredConfig(
 				!configuration?.project?.id ||
@@ -1691,9 +1695,12 @@ class SaagieClient {
 				logger.error('An error occurred when unzipping the artifacts export file.')
 				throw new GradleException(e.message)
 			}
-			
-			def exportedJobZipNameWithoutExt = exportedJob.name.replaceFirst(~/\.[^\.]+$/, '')
-			def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${exportedJobZipNameWithoutExt}")
+			File tempFolderContain = new File(tempFolder.absolutePath).listFiles().head()
+			if (tempFolderContain == null) {
+				throw new GradleException("Somthing went wrong when trying to access unzipped folder")
+			}
+			String nameFileFromExportedUrl = saagieUtils.getFileNameFromUrl(tempFolderContain.absolutePath)
+			def exportedArtifactsPathRoot = new File("${tempFolder.absolutePath}/${nameFileFromExportedUrl}")
 			def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
 			def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
 			def variablesConfigFromExportedZip = SaagieClientUtils.extractVariableConfigAndPackageFromExportedVariable(exportedArtifactsPathRoot)
@@ -1858,8 +1865,8 @@ class SaagieClient {
 				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
 					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
 					def foundVariable = listVariablesByNameAndId.first().find { it ->
-						def nameIsEqual = variable.configOverride.name.equals(it.name);
-						def idIsSetOrIdDifferent = ( !variable.configOverride.id || variable.configOverride.id != it.id );
+						def nameIsEqual = variable.configOverride.name.equals(it.name) ;
+						def idIsSetOrIdDifferent = (!variable.configOverride.id || variable.configOverride.id != it.id) ;
 						def variableScopeIsTheSame = variable.configOverride.scope.equals(it.scope)
 						return nameIsEqual && idIsSetOrIdDifferent && variableScopeIsTheSame
 					}
@@ -1871,6 +1878,7 @@ class SaagieClient {
 				
 				ImportVariableService.importAndCreateVariables(
 						variablesConfigFromExportedZip.variables,
+						configuration,
 						processVariableToImport
 				)
 			}
@@ -1893,9 +1901,9 @@ class SaagieClient {
 		
 		def isProjectRequest = newMappedVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
 		if (isProjectRequest) {
-			requestlistVariablesByNameAndId = saagieUtils.getProjectVariableByNameAndId()
+			requestlistVariablesByNameAndId = saagieUtils.getProjectVariableByNameAndIdAndScope()
 		} else {
-			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndId()
+			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndIdAndScope()
 		}
 		tryCatchClosure({
 			def listVariables = null
