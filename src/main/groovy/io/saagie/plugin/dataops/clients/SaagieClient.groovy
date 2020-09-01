@@ -1545,7 +1545,7 @@ class SaagieClient {
 			} else if (parsedResultForVariableList.data?.projectEnvironmentVariables) {
 				listVariables = parsedResultForVariableList.data.projectEnvironmentVariables
 			}
-			return listVariables ;
+			return listVariables
 		}
 	}
 	
