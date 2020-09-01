@@ -14,6 +14,7 @@ class ProjectDeleteJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
+    @Input
     String result
     
     @TaskAction

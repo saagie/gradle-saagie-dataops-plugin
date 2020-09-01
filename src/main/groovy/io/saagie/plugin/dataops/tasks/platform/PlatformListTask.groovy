@@ -17,6 +17,7 @@ class PlatformListTask extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
+	@Input
 	def result
 	
 	@TaskAction

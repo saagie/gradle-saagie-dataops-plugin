@@ -16,7 +16,8 @@ class ProjectCreateJobTask extends DefaultTask {
     @Input String taskName
 
     @Internal SaagieClient saagieClient
-
+    
+    @Input
     String result
 
     @TaskAction

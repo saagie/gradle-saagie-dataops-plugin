@@ -1032,7 +1032,6 @@ class SaagieClient {
 		
 		if (!customDirectoryExist) {
 			tempJobDirectory = File.createTempDir("artifacts-${uuid.toString()}", ".tmp")
-			System.out.println("Directory created successfully")
 		}
 		
 		if (tempJobDirectory.equals("/tmp")) {
@@ -1489,7 +1488,8 @@ class SaagieClient {
 			}
 			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
 			if (listVariables.size().equals(0)) {
-				return null
+				logger.warn("statement that No variables found")
+				return
 			}
 			
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())) {
@@ -1550,6 +1550,7 @@ class SaagieClient {
 	}
 	ExportVariables[] getListVariablesV1FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v1... ')
+		configuration.env.scope = EnvVarScopeTypeEnum.project.name()
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
 		def listVariables = []
 		
@@ -1557,6 +1558,7 @@ class SaagieClient {
 			
 			listVariables = getAllVariablesFromV1()
 			if (listVariables.size().equals(0)) {
+				logger.warn("statement that No variables found")
 				return null
 			}
 			
@@ -1616,8 +1618,9 @@ class SaagieClient {
 				checkIfEnvScopeIsProjectButNoProjectIdProvided(isV1) ||
 				checkIfOptionIncludeAllVarIsNotSetAndEnvNameAreEmpty()
 	}
+	
 	def checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject() {
-		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = (!configuration.env.scope || (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
+		def conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject = ( (!configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name()) && !configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())))
 		logger.debug("result for checkIfEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject")
 		logger.debug(conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject as String)
 		return conditionForEnvHaveNotScopeOrScopeDifferentFromGlobalAndProject
@@ -1661,8 +1664,8 @@ class SaagieClient {
 		}, 'Unknown error in the Task: projectsUpdate', 'Function: updateProject')
 	}
 	
-	String importJob() {
-		logger.info('Starting importJob task')
+	String importArtifacts() {
+		logger.info('Starting importArtifacts task')
 		
 		checkRequiredConfig(
 				!configuration?.project?.id ||
@@ -1893,9 +1896,9 @@ class SaagieClient {
 		
 		def isProjectRequest = newMappedVariable.scope.equals(EnvVarScopeTypeEnum.project.name().toUpperCase())
 		if (isProjectRequest) {
-			requestlistVariablesByNameAndId = saagieUtils.getProjectVariableByNameAndId()
+			requestlistVariablesByNameAndId = saagieUtils.getProjectVariableByNameAndIdAndScope()
 		} else {
-			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndId()
+			requestlistVariablesByNameAndId = saagieUtils.getGlobalVariableByNameAndIdAndScope()
 		}
 		tryCatchClosure({
 			def listVariables = null

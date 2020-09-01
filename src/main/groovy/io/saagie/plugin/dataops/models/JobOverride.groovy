@@ -5,7 +5,7 @@ package io.saagie.plugin.dataops.models
  * This provides a flexible option to set environment specific values.
  * The values thats currently supported are isScheduled, cronScheduling, alerting.
  */
-class JobOverride extends PropertyOverride{
+class JobOverride extends ArtifactPropertyOverride{
 
 
 }

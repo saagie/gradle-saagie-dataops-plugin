@@ -13,6 +13,7 @@ import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineOverride
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
+import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.Server
 import okio.Pipe
 
@@ -44,6 +45,8 @@ class DataOpsExtension {
 	
 	PipelineOverride pipelineOverride = new PipelineOverride()
 	
+	PropertyOverride propertyOverride = new PropertyOverride()
+	
 	Export exportArtifacts = new Export()
 	
 	EnvVariable env = new EnvVariable()
@@ -52,6 +55,11 @@ class DataOpsExtension {
 	Object server( Closure closure ) {
 		server = new Server()
 		server.with( closure )
+	}
+	
+	Object propertyOverride( Closure closure ) {
+		propertyOverride = new PropertyOverride()
+		propertyOverride.with( closure )
 	}
 	
 	Object project( Closure closure ) {

@@ -17,6 +17,7 @@ class ProjectsExportJobV1Task extends DefaultTask {
 	@Internal
 	SaagieClient saagieClient
 	
+	@Input
 	String result
 	
 	@TaskAction

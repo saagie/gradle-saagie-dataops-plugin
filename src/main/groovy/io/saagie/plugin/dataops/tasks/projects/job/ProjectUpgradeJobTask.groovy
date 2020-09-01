@@ -19,6 +19,7 @@ class ProjectUpgradeJobTask extends DefaultTask {
 
     @Internal SaagieClient saagieClient
     
+    @Input
     String result
     
     @TaskAction
