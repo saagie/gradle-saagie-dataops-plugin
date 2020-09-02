@@ -1551,7 +1551,6 @@ class SaagieClient {
 	
 	ExportVariables[] getListVariablesV1FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v1... ')
-		configuration.env.scope = EnvVarScopeTypeEnum.project.name()
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
 		def listVariables = []
 		

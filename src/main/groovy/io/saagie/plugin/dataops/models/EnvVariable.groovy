@@ -2,7 +2,7 @@ package io.saagie.plugin.dataops.models
 
 class EnvVariable {
 	
-	String scope
+	String scope = EnvVarScopeTypeEnum.project.name()
 	
 	ArrayList<String> name
 	
