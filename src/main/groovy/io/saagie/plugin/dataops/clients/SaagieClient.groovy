@@ -1861,20 +1861,6 @@ class SaagieClient {
 			
 			if (variablesConfigFromExportedZip?.variables && response.status == ResponseStatusEnum.success.name) {
 				
-				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
-					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
-					def foundVariable = listVariablesByNameAndId.first().find { it ->
-						def nameIsEqual = variable.configOverride.name.equals(it.name) ;
-						def idIsSetOrIdDifferent = (!variable.configOverride.id || variable.configOverride.id != it.id) ;
-						def variableScopeIsTheSame = variable.configOverride.scope.equals(it.scope)
-						return nameIsEqual && idIsSetOrIdDifferent && variableScopeIsTheSame
-					}
-					
-					if (foundVariable) {
-						throw new GradleException("Environmnent variable name : ${variable.configOverride.name} already exist in the targeted platform")
-					}
-				}
-				
 				ImportVariableService.importAndCreateVariables(
 						variablesConfigFromExportedZip.variables,
 						configuration,
