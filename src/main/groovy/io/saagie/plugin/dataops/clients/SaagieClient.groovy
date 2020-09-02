@@ -1488,7 +1488,7 @@ class SaagieClient {
 			}
 			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
 			if (listVariables.size().equals(0)) {
-				logger.debug("WARNING: No environment variable found on the targeted platform with scope {}", configuration.env.scope)
+				println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
 				return null
 			}
 			
@@ -1551,7 +1551,6 @@ class SaagieClient {
 	
 	ExportVariables[] getListVariablesV1FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v1... ')
-		configuration.env.scope = EnvVarScopeTypeEnum.project.name()
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
 		def listVariables = []
 		
@@ -1559,7 +1558,7 @@ class SaagieClient {
 			
 			listVariables = getAllVariablesFromV1()
 			if (listVariables.size().equals(0)) {
-				logger.debug("WARNING: No environment variable found on the targeted platform with scope {}", configuration.env.scope)
+				println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
 				return null
 			}
 			
