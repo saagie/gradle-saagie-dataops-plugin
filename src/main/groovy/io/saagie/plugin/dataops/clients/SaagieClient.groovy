@@ -1204,7 +1204,7 @@ class SaagieClient {
 		def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2Id)
 		def technologyV2Version = null
 		if (resultTechnologiesVersions) {
-			technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1)
+			technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1, resultTechnologiesVersions)
 		}
 		
 		return technologyV2Version
@@ -1487,10 +1487,6 @@ class SaagieClient {
 				variablesListRequest = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
 			}
 			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
-			if (listVariables.size().equals(0)) {
-				println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
-				return null
-			}
 			
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())) {
 				listVariables = listVariables.findAll {
@@ -1498,6 +1494,11 @@ class SaagieClient {
 				}.collect {
 					it
 				}
+			}
+			
+			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
+				return null
 			}
 			
 			if (checkIfEnvDefinedNamesIsValidFromConfiguration()) {
@@ -1557,10 +1558,6 @@ class SaagieClient {
 		tryCatchClosure({
 			
 			listVariables = getAllVariablesFromV1()
-			if (listVariables.size().equals(0)) {
-				println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
-				return null
-			}
 			
 			if (!configuration.env.include_all_var && configuration.env.name) {
 				configuration.env.name.forEach {
@@ -1574,6 +1571,11 @@ class SaagieClient {
 				}.collect {
 					it
 				}
+			}
+			
+			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
+				return null
 			}
 			
 			def exportVariablesV1 = []
@@ -1860,20 +1862,6 @@ class SaagieClient {
 			}
 			
 			if (variablesConfigFromExportedZip?.variables && response.status == ResponseStatusEnum.success.name) {
-				
-				variablesConfigFromExportedZip?.variables?.values()?.forEach { variable ->
-					def listVariablesByNameAndId = VariableService.instance.getVariableList(variable.configOverride, configuration.project.id, this.&getVariableEnvironmentFromList)
-					def foundVariable = listVariablesByNameAndId.first().find { it ->
-						def nameIsEqual = variable.configOverride.name.equals(it.name) ;
-						def idIsSetOrIdDifferent = (!variable.configOverride.id || variable.configOverride.id != it.id) ;
-						def variableScopeIsTheSame = variable.configOverride.scope.equals(it.scope)
-						return nameIsEqual && idIsSetOrIdDifferent && variableScopeIsTheSame
-					}
-					
-					if (foundVariable) {
-						throw new GradleException("Environmnent variable name : ${variable.configOverride.name} already exist in the targeted platform")
-					}
-				}
 				
 				ImportVariableService.importAndCreateVariables(
 						variablesConfigFromExportedZip.variables,
