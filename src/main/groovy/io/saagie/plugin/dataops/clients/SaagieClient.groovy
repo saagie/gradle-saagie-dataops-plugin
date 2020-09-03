@@ -1498,7 +1498,7 @@ class SaagieClient {
 			
 			if (listVariables.size().equals(0)) {
 				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
-				return null
+				return []
 			}
 			
 			if (checkIfEnvDefinedNamesIsValidFromConfiguration()) {
@@ -1575,7 +1575,7 @@ class SaagieClient {
 			
 			if (listVariables.size().equals(0)) {
 				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
-				return null
+				return []
 			}
 			
 			def exportVariablesV1 = []
