@@ -182,7 +182,7 @@ class TechnologyService {
 		}
 		def numberVersionExtraTechnologyV2 = getMostReleventV2VersionByV1Version(extraTechnologyV2["versions"], null, extraVersionNumberV1)
 		if (!numberVersionExtraTechnologyV2) {
-			throwAndLogError("Couldn t get number version for extra technology")
+			throwAndLogError("Couldn't get number version for extra technology")
 		}
 		return [language : extraTechnologyV2.label, version : numberVersionExtraTechnologyV2]
 	}
