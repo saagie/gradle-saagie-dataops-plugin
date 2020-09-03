@@ -1487,10 +1487,6 @@ class SaagieClient {
 				variablesListRequest = saagieUtils.getProjectEnvironmentVariables(configuration.project.id)
 			}
 			def listVariables = getListOfVariablesFromRequest(variablesListRequest)
-			if (listVariables.size().equals(0)) {
-				system.out.println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
-				return null
-			}
 			
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.project.name())) {
 				listVariables = listVariables.findAll {
@@ -1498,6 +1494,11 @@ class SaagieClient {
 				}.collect {
 					it
 				}
+			}
+			
+			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
+				return null
 			}
 			
 			if (checkIfEnvDefinedNamesIsValidFromConfiguration()) {
@@ -1557,10 +1558,6 @@ class SaagieClient {
 		tryCatchClosure({
 			
 			listVariables = getAllVariablesFromV1()
-			if (listVariables.size().equals(0)) {
-				system.out.println "WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}"
-				return null
-			}
 			
 			if (!configuration.env.include_all_var && configuration.env.name) {
 				configuration.env.name.forEach {
@@ -1574,6 +1571,11 @@ class SaagieClient {
 				}.collect {
 					it
 				}
+			}
+			
+			if (listVariables.size().equals(0)) {
+				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
+				return null
 			}
 			
 			def exportVariablesV1 = []

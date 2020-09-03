@@ -34,7 +34,9 @@ class TechnologyService {
 	def getTechnologies() {
 		checkReady()
 		Request technologiesCall = technologiesRequest()
+		
 		if (!technologies) {
+			
 			client.newCall(technologiesCall).execute().withCloseable { response ->
 				handleErrors(response)
 				String responseBody = response.body().string()
@@ -52,7 +54,9 @@ class TechnologyService {
 	def getTechnologyVersions( String technologyId ) {
 		checkReady()
 		if (!technologiesVersions || !technologiesVersions[technologyId]) {
+			
 			Request technologiesVersionRequestCall = technologiesVersionsRequest(technologyId)
+			
 			client.newCall(technologiesVersionRequestCall).execute().withCloseable { response ->
 				handleErrors(response)
 				String responseBody = response.body().string()
@@ -119,16 +123,21 @@ class TechnologyService {
 	}
 	
 	def getMostRelevantTechnologyVersion( String technologyId, String versionV1, Map extraTechnologyV1, resultTechnologiesVersions ) {
+		
 		if (!technologiesVersions) {
 			getTechnologiesVersions()
 		}
-		checkTechnologyVersionsReady()
 		
+		checkTechnologyVersionsReady()
 		def versionV2 = null
+		
 		if (!versionV1) {
+			
 			if (resultTechnologiesVersions != null && resultTechnologiesVersions.first() && resultTechnologiesVersions.first().technologyLabel == "Generic") {
+				
 				versionV2 = resultTechnologiesVersions.first()
 				return [version2 : versionV2, extraTechnology : null]
+				
 			} else {
 				def convertedIntegerList = technologiesVersions[technologyId].collect { version ->
 					return convertToNumber(version.versionLabel)
@@ -145,7 +154,7 @@ class TechnologyService {
 		
 		if (versionV1) {
 			def upperCaseVersion2 = versionV1.toUpperCase()
-			versionV2 = getTechnologyVersionUntilFind(technologyId, 'versionLabel', upperCaseVersion2)
+			versionV2 = getMostReleventTechnologyVersion(technologyId, 'versionLabel', upperCaseVersion2)
 		}
 		
 		if (!versionV2 && technologiesVersions[technologyId].size() > 0) {
@@ -167,26 +176,26 @@ class TechnologyService {
 	
 	def getExtraTechnologiesLabelAndNumber( extraTechnologiesListV2, extraVersionLabelV1, extraVersionNumberV1 ) {
 		
-		def extraTechnologyV2 = getExtraTechnologyVersionUntilFind(extraTechnologiesListV2, extraVersionLabelV1)
+		def extraTechnologyV2 = getMostReleventExtraTechologyVersion(extraTechnologiesListV2, extraVersionLabelV1)
 		if (!extraTechnologyV2 || !extraTechnologyV2["versions"]) {
 			throwAndLogError("Cant't map extra technologies versions")
 		}
-		def numberVersionExtraTechnologyV2 = getUntilFind(extraTechnologyV2["versions"], null, extraVersionNumberV1)
+		def numberVersionExtraTechnologyV2 = getMostReleventV2VersionByV1Version(extraTechnologyV2["versions"], null, extraVersionNumberV1)
 		if (!numberVersionExtraTechnologyV2) {
 			throwAndLogError("Couldn t get number version for extra technology")
 		}
 		return [language : extraTechnologyV2.label, version : numberVersionExtraTechnologyV2]
 	}
 	
-	def getExtraTechnologyVersionUntilFind( listTechnologyExtraV2, upperCaseVersionV1 ) {
-		return getUntilFind(listTechnologyExtraV2, 'label', upperCaseVersionV1)
+	def getMostReleventExtraTechologyVersion( listTechnologyExtraV2, upperCaseVersionV1 ) {
+		return getMostReleventV2VersionByV1Version(listTechnologyExtraV2, 'label', upperCaseVersionV1)
 	}
 	
-	def getTechnologyVersionUntilFind( technologyId, accessVersionProperty, upperCaseVersionV1 ) {
-		return getUntilFind(technologiesVersions[technologyId], accessVersionProperty, upperCaseVersionV1)
+	def getMostReleventTechnologyVersion( technologyId, accessVersionProperty, upperCaseVersionV1 ) {
+		return getMostReleventV2VersionByV1Version(technologiesVersions[technologyId], accessVersionProperty, upperCaseVersionV1)
 	}
 	
-	def getUntilFind( listVersionElements, accessVersionProperty, upperCaseVersionV1 ) {
+	def getMostReleventV2VersionByV1Version( listVersionElements, accessVersionProperty, upperCaseVersionV1 ) {
 		def stringVersionV1 = upperCaseVersionV1.toString().toUpperCase() as String
 		if (!SaagieUtils.isCollectionOrArray(listVersionElements)) {
 			return null
@@ -206,7 +215,7 @@ class TechnologyService {
 			if (stringVersionV1.toString().lastIndexOf(".") > 0) {
 				def reducedUpperCaseVersionV1 = stringVersionV1.substring(0, stringVersionV1.lastIndexOf("."))
 				if (reducedUpperCaseVersionV1 != stringVersionV1) {
-					return getUntilFind(listVersionElements, accessVersionProperty, reducedUpperCaseVersionV1)
+					return getMostReleventV2VersionByV1Version(listVersionElements, accessVersionProperty, reducedUpperCaseVersionV1)
 				} else if (listVersionElements.size() > 0) {
 					return listVersionElements[0]
 				}
