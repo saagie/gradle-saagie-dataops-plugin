@@ -113,7 +113,9 @@ class TechnologyService {
 			getTechnologies()
 		}
 		checkTechnologiesReady()
-		technologies.find { it.label.toUpperCase().equals(name.toUpperCase()) }
+		technologies.find {
+			it.label.toUpperCase().equals(name.toUpperCase())
+		}
 	}
 	
 	def getMostRelevantTechnologyVersion( String technologyId, String versionV1, Map extraTechnologyV1, resultTechnologiesVersions ) {
