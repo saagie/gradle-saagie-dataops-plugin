@@ -1204,7 +1204,7 @@ class SaagieClient {
 		def resultTechnologiesVersions = TechnologyService.instance.getTechnologyVersions(technologyV2Id)
 		def technologyV2Version = null
 		if (resultTechnologiesVersions) {
-			technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1)
+			technologyV2Version = TechnologyService.instance.getMostRelevantTechnologyVersion(technologyV2Id, versionV1, extraTechV1, resultTechnologiesVersions)
 		}
 		
 		return technologyV2Version

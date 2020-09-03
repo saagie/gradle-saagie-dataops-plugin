@@ -50,5 +50,4 @@ class ArtifactsExportV1TaskTests extends DataOpsGradleTaskSpecification {
         result.output.contains(computedValue)
         tempJobDirectory.deleteDir()
     }
-
 }
