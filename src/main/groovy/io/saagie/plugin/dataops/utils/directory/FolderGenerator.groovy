@@ -391,8 +391,12 @@ class FolderGenerator {
 		return pipelineVersionDetailJson
 	}
 	
-	void generateFolderFromParams() {
-		if (!exportJobList.length && !exportPipelineList.length && !exportVariableList.length) {
+	void generateFolderFromParams( variablesExportedIsEmpty ) {
+		if (variablesExportedIsEmpty && checkExistenceOfJobsPipelinesAndVariables()) {
+			throw new GradleException("Cannot generate zip file")
+		}
+		
+		if (checkExistenceOfJobsPipelinesAndVariables()) {
 			throw new GradleException("jobs, pipelines and variables to be exported cannot be empty at the same time, and cannot generate zip file")
 		}
 		exportJobList.each { exportJob ->
@@ -407,6 +411,9 @@ class FolderGenerator {
 		}
 	}
 	
+	boolean checkExistenceOfJobsPipelinesAndVariables() {
+		return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length
+	}
 	static extractNameFileFromUrl( String url ) {
 		return url.substring(url.lastIndexOf('/') + 1, url.length())
 	}
@@ -419,8 +426,7 @@ class FolderGenerator {
 	}
 	
 	static extractUrlWithoutFileName( String urlString ) {
-		return urlString.replace(extractNameFileFromUrl(urlString), "") ;
-		
+		return urlString.replace(extractNameFileFromUrl(urlString), "")
 	}
 }
 

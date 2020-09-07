@@ -918,9 +918,11 @@ class SaagieClient {
 			exportJobs = getListJobAndJobVersionsFromConfigV1(listJobsByNameAndIdFromV1)
 		}
 		
-		ExportVariables[] exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
+		boolean variablesExportedIsEmpty = false
+		ExportVariables[] exportVariables
+		( exportVariables, variablesExportedIsEmpty ) = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 		
-		return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, true)
+		return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
 	}
 	
 	String exportArtifactsV2() {
@@ -940,24 +942,25 @@ class SaagieClient {
 		}
 		
 		ExportVariables[] exportVariables = []
-		// TODO: Check conditions order
+		boolean variablesExportedIsEmpty = false
 		if (configuration.env.scope) {
-			exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
+			( exportVariables, variablesExportedIsEmpty ) = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 		}
 		
-		return export(exportPipelines, exportJobs, exportVariables)
+		return export(exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty)
 	}
 	
 	def getVariableListIfConfigIsDefined( getVariableListingClosure ) {
-		ExportVariables[] exportVariables = []
+		def exportVariables = []
+		boolean variablesExportedIsEmpty = false
 		def validateVariableConfigurationParams = configuration.env.include_all_var || (configuration.env.name && configuration.env.name.size())
 		if (validateVariableConfigurationParams) {
-			exportVariables = getVariableListingClosure()
+			( exportVariables, variablesExportedIsEmpty ) = getVariableListingClosure()
 		}
-		return exportVariables
+		return [exportVariables, variablesExportedIsEmpty]
 	}
 	
-	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, isV1 = false ) {
+	String export( ExportPipeline[] exportPipelines, ExportJobs[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, boolean variablesExportedIsEmpty, isV1 = false ) {
 		
 		ExportContainer exportContainer = [configuration]
 		boolean customDirectoryExist = false
@@ -986,7 +989,7 @@ class SaagieClient {
 			folder.exportPipelineList = exportPipelines
 			folder.exportVariableList = exportVariables
 			folder.jobList = listJobs
-			folder.generateFolderFromParams()
+			folder.generateFolderFromParams(variablesExportedIsEmpty)
 			ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryExist]
 			zippingFolder.generateZip(tempJobDirectory)
 			
@@ -1475,10 +1478,10 @@ class SaagieClient {
 		
 	}
 	
-	ExportVariables[] getListVariablesV2FromConfig() {
+	def getListVariablesV2FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v2 ... ')
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid())
-		
+		boolean variablesExportedIsEmpty = false
 		tryCatchClosure({
 			Request variablesListRequest = null
 			if (configuration.env.scope.equals(EnvVarScopeTypeEnum.global.name())) {
@@ -1497,8 +1500,10 @@ class SaagieClient {
 			}
 			
 			if (listVariables.size().equals(0)) {
+				def exportVariables1 = []
 				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
-				return []
+				variablesExportedIsEmpty = true
+				return [exportVariables1, variablesExportedIsEmpty]
 			}
 			
 			if (checkIfEnvDefinedNamesIsValidFromConfiguration()) {
@@ -1528,9 +1533,9 @@ class SaagieClient {
 				exportVariables.add(newExportVariable)
 			}
 			
-			return exportVariables
+			return [exportVariables, variablesExportedIsEmpty]
 			
-		}, 'Error in getListVariablesV2FromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request') as ExportVariables[]
+		}, 'Error in getListVariablesV2FromConfig', 'getGlobalEnvironmentVariables | getProjectEnvironmentVariables Request')
 		
 	}
 	
@@ -1550,9 +1555,10 @@ class SaagieClient {
 		}
 	}
 	
-	ExportVariables[] getListVariablesV1FromConfig() {
+	def getListVariablesV1FromConfig() {
 		logger.info('Starting getting environment variables from configuration for v1... ')
 		checkRequiredConfig(checkConfigurationForVariableEnvironmentIsValid(true))
+		boolean variablesExportedIsEmpty = false
 		def listVariables = []
 		
 		tryCatchClosure({
@@ -1575,7 +1581,8 @@ class SaagieClient {
 			
 			if (listVariables.size().equals(0)) {
 				logger.warn("WARNING: No environment variable found on the targeted platform with scope ${configuration.env.scope}")
-				return []
+				variablesExportedIsEmpty = true
+				return [[], variablesExportedIsEmpty]
 			}
 			
 			def exportVariablesV1 = []
@@ -1591,8 +1598,8 @@ class SaagieClient {
 				exportVariablesV1.add(newExportVariable)
 			}
 			
-			return exportVariablesV1
-		}, 'Error in getListVariablesV2FromConfig', 'getListVariablesV1FromConfig') as ExportVariables[]
+			return [exportVariablesV1, variablesExportedIsEmpty]
+		}, 'Error in getListVariablesV2FromConfig', 'getListVariablesV1FromConfig')
 		
 		
 	}
