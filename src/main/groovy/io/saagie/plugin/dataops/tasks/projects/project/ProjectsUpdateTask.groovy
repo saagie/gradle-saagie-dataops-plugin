@@ -11,25 +11,25 @@ import org.gradle.api.tasks.TaskAction
 
 @TypeChecked
 class ProjectsUpdateTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def updateProject() {
-        Server server = configuration.server
-        saagieClient = new SaagieClient(configuration, taskName)
-
-        result = saagieClient.updateProject()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def updateProject() {
+		Server server = configuration.server
+		saagieClient = new SaagieClient(configuration, taskName)
+		
+		result = saagieClient.updateProject()
+		logger.quiet(result)
+		return result
+	}
 }

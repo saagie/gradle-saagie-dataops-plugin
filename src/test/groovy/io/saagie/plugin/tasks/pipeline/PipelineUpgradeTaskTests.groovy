@@ -12,22 +12,22 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsUpdatePipeline task tests")
 class PipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared
-    String taskName = PROJECTS_UPGRADE_PIPELINE_TASK
-
-    def "projectsUpdatePipeline should update pipeline infos"() {
-        given:
-        def mockedPipelineUpdateResponse = new MockResponse()
-        mockedPipelineUpdateResponse.responseCode = 200
-        mockedPipelineUpdateResponse.body = '''{"data":{"editPipeline":{"id":"pipeline-id"}}}'''
-        mockWebServer.enqueue(mockedPipelineUpdateResponse)
-
-        def mockedPipelineVersionUpdateResponse = new MockResponse()
-        mockedPipelineVersionUpdateResponse.responseCode = 200
-        mockedPipelineVersionUpdateResponse.body = '''{"data":{"addPipelineVersion":{"number":"pipeline-version-number"}}}'''
-        mockWebServer.enqueue(mockedPipelineVersionUpdateResponse)
-
-        buildFile << '''
+	@Shared
+	String taskName = PROJECTS_UPGRADE_PIPELINE_TASK
+	
+	def "projectsUpdatePipeline should update pipeline infos"() {
+		given:
+		def mockedPipelineUpdateResponse = new MockResponse()
+		mockedPipelineUpdateResponse.responseCode = 200
+		mockedPipelineUpdateResponse.body = '''{"data":{"editPipeline":{"id":"pipeline-id"}}}'''
+		mockWebServer.enqueue(mockedPipelineUpdateResponse)
+		
+		def mockedPipelineVersionUpdateResponse = new MockResponse()
+		mockedPipelineVersionUpdateResponse.responseCode = 200
+		mockedPipelineVersionUpdateResponse.body = '''{"data":{"addPipelineVersion":{"number":"pipeline-version-number"}}}'''
+		mockWebServer.enqueue(mockedPipelineVersionUpdateResponse)
+		
+		buildFile << '''
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -52,19 +52,19 @@ class PipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         '''
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{"status":"success"}')
-    }
-
-    def "projectsUpgradePipeline should fail if no pipeline id is provided"() {
-        given:
-
-        buildFile << '''
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		result.output.contains('{"status":"success"}')
+	}
+	
+	def "projectsUpgradePipeline should fail if no pipeline id is provided"() {
+		given:
+		
+		buildFile << '''
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -83,14 +83,14 @@ class PipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         '''
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure exception = thrown()
-        result == null
-        exception.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        exception.getBuildResult().task(':projectsUpgradePipeline').outcome == FAILED
-    }
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure exception = thrown()
+		result == null
+		exception.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+		exception.getBuildResult().task(':projectsUpgradePipeline').outcome == FAILED
+	}
 }

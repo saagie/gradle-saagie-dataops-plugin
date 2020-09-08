@@ -8,23 +8,23 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectListTechnologiesTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def getProjectTechnologies() {
-        saagieClient = new SaagieClient(configuration, taskName)
-        result = saagieClient.getProjectTechnologies()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def getProjectTechnologies() {
+		saagieClient = new SaagieClient(configuration, taskName)
+		result = saagieClient.getProjectTechnologies()
+		logger.quiet(result)
+		return result
+	}
 }

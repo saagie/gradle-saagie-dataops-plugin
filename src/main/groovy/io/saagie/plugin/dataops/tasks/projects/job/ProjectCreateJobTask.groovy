@@ -11,35 +11,35 @@ import org.gradle.api.tasks.TaskAction
 
 @TypeChecked
 class ProjectCreateJobTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def createProjectJob() {
-        Server server = configuration.server
-        saagieClient = new SaagieClient(configuration, taskName)
-
-        def response
-        if (server.useLegacy) {
-            logger.info("Using deprecated version of projectsCreateJob")
-            response = saagieClient.createProjectJob(configuration.job, configuration.jobVersion)
-        } else {
-            response = saagieClient.createProjectJobWithFile(configuration.job, configuration.jobVersion)
-        }
-        logger.quiet(response)
-
-        result = response
-
-        return result
-        //TODO find a way to reset the configuration
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def createProjectJob() {
+		Server server = configuration.server
+		saagieClient = new SaagieClient(configuration, taskName)
+		
+		def response
+		if (server.useLegacy) {
+			logger.info("Using deprecated version of projectsCreateJob")
+			response = saagieClient.createProjectJob(configuration.job, configuration.jobVersion)
+		} else {
+			response = saagieClient.createProjectJobWithFile(configuration.job, configuration.jobVersion)
+		}
+		logger.quiet(response)
+		
+		result = response
+		
+		return result
+		//TODO find a way to reset the configuration
+	}
 }

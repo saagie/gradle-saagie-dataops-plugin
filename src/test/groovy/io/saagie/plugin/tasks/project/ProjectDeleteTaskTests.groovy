@@ -12,15 +12,15 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsDelete task tests")
 class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
-
-    @Shared
-    String taskName = PROJECT_DELETE_TASK
-
-    def "projectsDelete should fail if project id doesn't exists"() {
-        given:
-        enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
-
-        buildFile << """
+	
+	@Shared
+	String taskName = PROJECT_DELETE_TASK
+	
+	def "projectsDelete should fail if project id doesn't exists"() {
+		given:
+		enqueueRequest('''{"errors":[{"message":"Unexpected error"}],"data":null}''')
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -34,23 +34,23 @@ class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains('Something went wrong when deleting project: {"errors":[{"message":"Unexpected error"}],"data":null}')
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
-
-    def "projectsDelete should delete a project the archive status"() {
-        given:
-
-        enqueueRequest('''{"data":{"archiveProject": true}}''')
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains('Something went wrong when deleting project: {"errors":[{"message":"Unexpected error"}],"data":null}')
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
+	
+	def "projectsDelete should delete a project the archive status"() {
+		given:
+		
+		enqueueRequest('''{"data":{"archiveProject": true}}''')
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -64,13 +64,13 @@ class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        !result.output.contains('"data"')
-        result.output.contains('{"status":"success"}')
-    }
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		!result.output.contains('"data"')
+		result.output.contains('{"status":"success"}')
+	}
 }

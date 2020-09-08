@@ -8,23 +8,23 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectDeleteJobTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def deleteProjectJob() {
-        saagieClient = new SaagieClient(configuration, taskName)
-        result = saagieClient.deleteProjectJob()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def deleteProjectJob() {
+		saagieClient = new SaagieClient(configuration, taskName)
+		result = saagieClient.deleteProjectJob()
+		logger.quiet(result)
+		return result
+	}
 }

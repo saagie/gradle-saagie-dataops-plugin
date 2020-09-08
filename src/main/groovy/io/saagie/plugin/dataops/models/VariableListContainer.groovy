@@ -1,7 +1,7 @@
 package io.saagie.plugin.dataops.models
 
 class VariableListContainer {
-    String projectId
-    String scope
-    ArrayList variableListByNameAndScope = new ArrayList()
+	String projectId
+	String scope
+	ArrayList variableListByNameAndScope = new ArrayList()
 }

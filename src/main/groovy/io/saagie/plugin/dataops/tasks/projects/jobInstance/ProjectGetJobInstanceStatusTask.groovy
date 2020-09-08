@@ -8,23 +8,23 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectGetJobInstanceStatusTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def getJobInstanceStatus() {
-        saagieClient = new SaagieClient(configuration, taskName)
-        result = saagieClient.getJobInstanceStatus()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def getJobInstanceStatus() {
+		saagieClient = new SaagieClient(configuration, taskName)
+		result = saagieClient.getJobInstanceStatus()
+		logger.quiet(result)
+		return result
+	}
 }

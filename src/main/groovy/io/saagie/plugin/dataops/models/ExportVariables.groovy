@@ -5,11 +5,11 @@ import io.saagie.plugin.dataops.models.interfaces.VariableEnvironmentDTOInterfac
 
 @TypeChecked
 class ExportVariables implements IExists {
-    VariableEnvironmentDTOInterface variableEnvironmentDTO
-
-    @Override
-    boolean exists() {
-        return variableEnvironmentDTO.exists()
-    }
-
+	VariableEnvironmentDTOInterface variableEnvironmentDTO
+	
+	@Override
+	boolean exists() {
+		return variableEnvironmentDTO.exists()
+	}
+	
 }

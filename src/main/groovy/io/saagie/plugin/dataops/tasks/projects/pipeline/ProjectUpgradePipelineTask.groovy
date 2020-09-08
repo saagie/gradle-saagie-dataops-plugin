@@ -8,23 +8,23 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectUpgradePipelineTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def updateProjectPipeline() {
-        saagieClient = new SaagieClient(configuration, taskName)
-        result = saagieClient.updateProjectPipeline()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def updateProjectPipeline() {
+		saagieClient = new SaagieClient(configuration, taskName)
+		result = saagieClient.updateProjectPipeline()
+		logger.quiet(result)
+		return result
+	}
 }

@@ -12,16 +12,16 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsRunPipelineInstance task tests')
 class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared
-    String taskName = PROJECTS_RUN_PIPELINE_TASK
-
-    def "projectsRunPipelineInstance should run a pipeline instance"() {
-        given:
-        enqueueRequest('{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}')
-        enqueueRequest('{"data":{"pipelineInstance":{"status":"RUNNING"}}}')
-
-
-        buildFile << """
+	@Shared
+	String taskName = PROJECTS_RUN_PIPELINE_TASK
+	
+	def "projectsRunPipelineInstance should run a pipeline instance"() {
+		given:
+		enqueueRequest('{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}')
+		enqueueRequest('{"data":{"pipelineInstance":{"status":"RUNNING"}}}')
+		
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -35,19 +35,19 @@ class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        !result.output.contains('{"data"')
-        result.output.contains('{"runPipeline":{"id":"pipeline-instance-id","status":"RUNNING"}}')
-    }
-
-    def "projectsRunPipelineInstance should fail if pipeline id is missing"() {
-        given:
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		notThrown(Exception)
+		!result.output.contains('{"data"')
+		result.output.contains('{"runPipeline":{"id":"pipeline-instance-id","status":"RUNNING"}}')
+	}
+	
+	def "projectsRunPipelineInstance should fail if pipeline id is missing"() {
+		given:
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -57,25 +57,25 @@ class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
-
-    def "projectsStopPipelineInstance should fail if pipeline id do not exists"() {
-        given:
-        def mockedCreatePipelineResponse = new MockResponse()
-        mockedCreatePipelineResponse.responseCode = 200
-        mockedCreatePipelineResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
-        mockWebServer.enqueue(mockedCreatePipelineResponse)
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
+	
+	def "projectsStopPipelineInstance should fail if pipeline id do not exists"() {
+		given:
+		def mockedCreatePipelineResponse = new MockResponse()
+		mockedCreatePipelineResponse.responseCode = 200
+		mockedCreatePipelineResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+		mockWebServer.enqueue(mockedCreatePipelineResponse)
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -90,14 +90,14 @@ class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
 
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains('{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains('{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
 }

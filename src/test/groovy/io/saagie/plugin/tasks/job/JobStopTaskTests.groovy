@@ -12,17 +12,17 @@ import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_JOB_INSTANCE_
 
 @Title('projectsStopJobInstance task tests')
 class JobStopTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared
-    String taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
-
-    def "projectsStopJobInstance should stop a job"() {
-        given:
-        def mockedStopJobResponse = new MockResponse()
-        mockedStopJobResponse.responseCode = 200
-        mockedStopJobResponse.body = '''{"data":{"stopJobInstance":{"id":"stopped-job-id"}}}'''
-        mockWebServer.enqueue(mockedStopJobResponse)
-
-        buildFile << """
+	@Shared
+	String taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
+	
+	def "projectsStopJobInstance should stop a job"() {
+		given:
+		def mockedStopJobResponse = new MockResponse()
+		mockedStopJobResponse.responseCode = 200
+		mockedStopJobResponse.body = '''{"data":{"stopJobInstance":{"id":"stopped-job-id"}}}'''
+		mockWebServer.enqueue(mockedStopJobResponse)
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -36,17 +36,17 @@ class JobStopTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        result.output.contains('{"status":"success"}')
-    }
-
-    def "projectsStopJobInstance should fail if job instance id is missing"() {
-        given:
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		result.output.contains('{"status":"success"}')
+	}
+	
+	def "projectsStopJobInstance should fail if job instance id is missing"() {
+		given:
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -56,25 +56,25 @@ class JobStopTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
-
-    def "projectsStopJobInstance should fail if job instance doesn't exists"() {
-        given:
-        def mockedRunJobResponse = new MockResponse()
-        mockedRunJobResponse.responseCode = 200
-        mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
-        mockWebServer.enqueue(mockedRunJobResponse)
-
-        buildFile << """
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains("Missing params in plugin configuration: https://github.com/saagie/gradle-saagie-dataops-plugin/wiki/${taskName}")
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
+	
+	def "projectsStopJobInstance should fail if job instance doesn't exists"() {
+		given:
+		def mockedRunJobResponse = new MockResponse()
+		mockedRunJobResponse.responseCode = 200
+		mockedRunJobResponse.body = '''{"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}'''
+		mockWebServer.enqueue(mockedRunJobResponse)
+		
+		buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -88,14 +88,14 @@ class JobStopTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        UnexpectedBuildFailure e = thrown()
-        result == null
-        e.message.contains('Something went wrong when stopping the job instance: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
-        e.getBuildResult().task(":${taskName}").outcome == FAILED
-    }
+		
+		when:
+		BuildResult result = gradle(taskName)
+		
+		then:
+		UnexpectedBuildFailure e = thrown()
+		result == null
+		e.message.contains('Something went wrong when stopping the job instance: {"data":null,"errors":[{"message":"Unexpected error","extensions":null,"path":null}]}')
+		e.getBuildResult().task(":${taskName}").outcome == FAILED
+	}
 }

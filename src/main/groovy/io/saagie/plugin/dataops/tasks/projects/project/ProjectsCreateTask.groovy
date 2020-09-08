@@ -10,24 +10,24 @@ import org.gradle.api.tasks.TaskAction
 
 @TypeChecked
 class ProjectsCreateTask extends DefaultTask {
-    @Input
-    DataOpsExtension configuration
-
-    @Input
-    String taskName
-
-    @Internal
-    SaagieClient saagieClient
-
-    @Internal
-    String result
-
-    @TaskAction
-    def createProject() {
-        saagieClient = new SaagieClient(configuration, taskName)
-
-        result = saagieClient.createProject()
-        logger.quiet(result)
-        return result
-    }
+	@Input
+	DataOpsExtension configuration
+	
+	@Input
+	String taskName
+	
+	@Internal
+	SaagieClient saagieClient
+	
+	@Internal
+	String result
+	
+	@TaskAction
+	def createProject() {
+		saagieClient = new SaagieClient(configuration, taskName)
+		
+		result = saagieClient.createProject()
+		logger.quiet(result)
+		return result
+	}
 }
