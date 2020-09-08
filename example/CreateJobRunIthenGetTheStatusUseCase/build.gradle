@@ -4,104 +4,104 @@ import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectGetJobInstanceSta
 import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectGetPipelineInstanceStatusTask
 import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectRunJobTask
 import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectRunPipelineTask
-import groovy.json.JsonSlurper ;
+import groovy.json.JsonSlurper;
 
 plugins {
-	id 'groovy'
-	id 'io.saagie.gradle-saagie-dataops-plugin' version '2.1.0'
+    id 'groovy'
+    id 'io.saagie.gradle-saagie-dataops-plugin' version '2.1.0'
 }
 
 
-task projectCreateJob1(type : ProjectCreateJobTask) { // <====== Create the first job
-	configuration = saagie {}
-	doFirst {
-		projectCreateJob.configuration = saagie {
-			server {
-				url = saagieurl
-				login = saagieuserid
-				password = saagiepassword
-				environment = saagieplatformid
-				jwt = true
-			}
-			
-			project {
-				id = saagieProject
-			}
-			
-			job {
-				name = "My custom job"
-				category = "Extraction"
-				technology = "technologyId"
-			}
-			
-			jobVersion {
-				runtimeVersion = "3.6"
-				commandLine = "python {file} arg1 arg2"
-				releaseNote = "First job version"
-				packageInfo {
-					name = "demo.sh" // <==== we need to add this file as the same root as the project
-				}
-			}
-		}
-	}
-	taskName = 'projectCreateJob1'
-	group = 'Saagie'
-	description = 'create job on saagie platform'
+task projectCreateJob1(type: ProjectCreateJobTask) { // <====== Create the first job
+    configuration = saagie {}
+    doFirst {
+        projectCreateJob.configuration = saagie {
+            server {
+                url = saagieurl
+                login = saagieuserid
+                password = saagiepassword
+                environment = saagieplatformid
+                jwt = true
+            }
+
+            project {
+                id = saagieProject
+            }
+
+            job {
+                name = "My custom job"
+                category = "Extraction"
+                technology = "technologyId"
+            }
+
+            jobVersion {
+                runtimeVersion = "3.6"
+                commandLine = "python {file} arg1 arg2"
+                releaseNote = "First job version"
+                packageInfo {
+                    name = "demo.sh" // <==== we need to add this file as the same root as the project
+                }
+            }
+        }
+    }
+    taskName = 'projectCreateJob1'
+    group = 'Saagie'
+    description = 'create job on saagie platform'
 }
 
 
-task projectsRunJob1(type : ProjectRunJobTask) { // <====== Create the second job
-	dependsOn(['projectCreateJob1'])
-	configuration = saagie {}
-	doFirst {
-		projectExportJob2.configuration = saagie {
-			server {
-				url = saagieurl
-				login = saagieuserid
-				password = saagiepassword
-				environment = saagieplatformid
-				jwt = true
-				acceptSelfSigned = true
-			}
-			
-			project {
-				id = saagieProject
-			}
-			
-			job {
-				id = projectCreateJob.result.id
-			}
-		}
-	}
-	
-	taskName = 'projectsRunJob1'
-	group = 'Saagie'
-	description = 'Run job on saagie platform'
+task projectsRunJob1(type: ProjectRunJobTask) { // <====== Create the second job
+    dependsOn(['projectCreateJob1'])
+    configuration = saagie {}
+    doFirst {
+        projectExportJob2.configuration = saagie {
+            server {
+                url = saagieurl
+                login = saagieuserid
+                password = saagiepassword
+                environment = saagieplatformid
+                jwt = true
+                acceptSelfSigned = true
+            }
+
+            project {
+                id = saagieProject
+            }
+
+            job {
+                id = projectCreateJob.result.id
+            }
+        }
+    }
+
+    taskName = 'projectsRunJob1'
+    group = 'Saagie'
+    description = 'Run job on saagie platform'
 }
 
 task projectProjectGetJobInstance1( // <======== Create pipeline, see that we use the gradle dependOn
-		type : ProjectGetJobInstanceStatusTask) {
-	dependsOn(['projectsRunJob1'])
-	configuration = saagie {
-		server {
-			url = saagieUrl
-			login = saagieuserid
-			password = saagiepassword
-			environment = saagieplatformid
-			jwt = true
-		}
-	}
-	doFirst {
-		projectImportJob1.configuration = saagie {
-			project {
-				id = saagieProject
-			}
-			
-			jobinstance {
-				id = projectRunJob.result.runJob.id
-			}
-		}
-	}
-	description = 'get job instance from project'
-	taskName = 'projectProjectGetJobInstance1'
+    type: ProjectGetJobInstanceStatusTask) {
+    dependsOn(['projectsRunJob1'])
+    configuration = saagie {
+        server {
+            url = saagieUrl
+            login = saagieuserid
+            password = saagiepassword
+            environment = saagieplatformid
+            jwt = true
+        }
+    }
+    doFirst {
+        projectImportJob1.configuration = saagie {
+            project {
+                id = saagieProject
+            }
+
+            jobinstance {
+                id = projectRunJob.result.runJob.id
+            }
+        }
+    }
+    description = 'get job instance from project'
+    taskName = 'projectProjectGetJobInstance1'
 }

@@ -10,17 +10,17 @@ import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_GET_JOB_INSTANCE_S
 
 @Title('projectsGetJobInstanceStatus task tests')
 class JobGetInstanceStatusTaskTests extends DataOpsGradleTaskSpecification {
-	@Shared
-	String taskName = PROJECTS_GET_JOB_INSTANCE_STATUS ;
-	
-	def "projectsGetJobInstanceStatus should return the status of the jobInstance"() {
-		given:
-		def mockedRunJobResponse = new MockResponse()
-		mockedRunJobResponse.responseCode = 200
-		mockedRunJobResponse.body = '''{"data":{"jobInstance":{"status":"SUCCEEDED"}}}'''
-		mockWebServer.enqueue(mockedRunJobResponse)
-		
-		buildFile << """
+    @Shared
+    String taskName = PROJECTS_GET_JOB_INSTANCE_STATUS;
+
+    def "projectsGetJobInstanceStatus should return the status of the jobInstance"() {
+        given:
+        def mockedRunJobResponse = new MockResponse()
+        mockedRunJobResponse.responseCode = 200
+        mockedRunJobResponse.body = '''{"data":{"jobInstance":{"status":"SUCCEEDED"}}}'''
+        mockWebServer.enqueue(mockedRunJobResponse)
+
+        buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -34,19 +34,19 @@ class JobGetInstanceStatusTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-		
-		when:
-		BuildResult result = gradle(taskName)
-		
-		then:
-		!result.output.contains('"data"')
-		result.output.contains('"status"')
-	}
-	
-	def "projectsGetJobInstanceStatus should fail if no jobInstance id was provided"() {
-		given:
-		
-		buildFile << """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        !result.output.contains('"data"')
+        result.output.contains('"status"')
+    }
+
+    def "projectsGetJobInstanceStatus should fail if no jobInstance id was provided"() {
+        given:
+
+        buildFile << """
             saagie {
                 server {
                     url = 'http://localhost:9000'
@@ -56,13 +56,13 @@ class JobGetInstanceStatusTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
         """
-		
-		when:
-		BuildResult result = gradle(taskName)
-		
-		then:
-		thrown(Exception)
-		result == null
-	}
-	
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        thrown(Exception)
+        result == null
+    }
+
 }
