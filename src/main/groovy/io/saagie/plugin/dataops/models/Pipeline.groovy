@@ -24,11 +24,11 @@ class Pipeline implements IMapable {
             cronScheduling: cronScheduling
         ]
         if (name) {
-           pipelineMap.put('name', name)
+            pipelineMap.put('name', name)
         }
 
-        if(alerting && alerting.emails){
-            pipelineMap << [alerting:alerting.toMap()]
+        if (alerting && alerting.emails) {
+            pipelineMap << [alerting: alerting.toMap()]
         }
         return pipelineMap
     }

@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsListJobs task tests')
 class JobListTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_LIST_JOBS_TASK
+    @Shared
+    String taskName = PROJECTS_LIST_JOBS_TASK
 
     def "projectsListJobs task should list jobs on a project"() {
         given:

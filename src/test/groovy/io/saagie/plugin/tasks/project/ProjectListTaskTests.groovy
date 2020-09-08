@@ -86,7 +86,7 @@ class ProjectListTaskTests extends DataOpsGradleTaskSpecification {
         mockWebServer.enqueue(mockedResponse)
 
         when:
-        BuildResult result = gradle (taskName, '-d')
+        BuildResult result = gradle(taskName, '-d')
 
         then:
         !result.getOutput().contains('"data"')

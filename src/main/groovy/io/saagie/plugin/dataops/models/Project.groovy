@@ -18,12 +18,12 @@ class Project implements IMapable {
     Map toMap() {
         if (id) {
             return [
-                id         : id,
-                name       : name,
-                creator    : creator,
-                description: description,
-                jobsCount  : jobsCount,
-                status     : status,
+                id                    : id,
+                name                  : name,
+                creator               : creator,
+                description           : description,
+                jobsCount             : jobsCount,
+                status                : status,
                 technologiesByCategory: technologyByCategory ? (
                     technologyByCategory.collect({
                         TechnologyByCategory tech = new TechnologyByCategory()
@@ -31,7 +31,7 @@ class Project implements IMapable {
                         return tech.toMap()
                     })
                 ) : null,
-                authorizedGroups: authorizedGroups.collect({
+                authorizedGroups      : authorizedGroups.collect({
                     SecurityGroup securityGroup = new SecurityGroup()
                     securityGroup.with(it)
                     return securityGroup.toMap()
@@ -39,8 +39,8 @@ class Project implements IMapable {
             ]
         } else if (!id && name) {
             return [
-                name: name,
-                description: description,
+                name                  : name,
+                description           : description,
                 technologiesByCategory: technologyByCategory ? (
                     technologyByCategory.collect({
                         TechnologyByCategory tech = new TechnologyByCategory()
@@ -48,7 +48,7 @@ class Project implements IMapable {
                         return tech.toMap()
                     })
                 ) : null,
-                authorizedGroups: authorizedGroups.collect({
+                authorizedGroups      : authorizedGroups.collect({
                     SecurityGroup securityGroup = new SecurityGroup()
                     securityGroup.with(it)
                     return securityGroup.toMap()

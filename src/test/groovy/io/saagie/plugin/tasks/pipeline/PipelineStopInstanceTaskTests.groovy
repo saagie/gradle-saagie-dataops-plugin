@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsStopPipelineInstance task tests')
 class PipelineStopInstanceTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_STOP_PIPELINE_INSTANCE_TASK
+    @Shared
+    String taskName = PROJECTS_STOP_PIPELINE_INSTANCE_TASK
 
     def "projectsStopPipelineInstance should stop a pipeline instance"() {
         given:

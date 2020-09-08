@@ -10,9 +10,12 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.*
 
 class SaagieClientTest extends Specification {
-    @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared DataOpsExtension configuration
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+    @Shared
+    MockWebServer mockWebServer = new MockWebServer()
+    @Shared
+    DataOpsExtension configuration
+    @Rule
+    TemporaryFolder testProjectDir = new TemporaryFolder()
     File tempFile
 
     SaagieClient client

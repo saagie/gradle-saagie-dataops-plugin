@@ -8,7 +8,7 @@ class TechnologyByCategory implements IMapable, IExists {
     Map toMap() {
         if (!exists()) return null
         return [
-            jobCategory: category,
+            jobCategory : category,
             technologies: technologyid.collect({ [id: it] }),
         ]
     }

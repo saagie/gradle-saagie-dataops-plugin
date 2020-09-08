@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsGetPipelineInstanceStatus task tests')
 class PipelineGetInstanceStatusTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_GET_PIPELINE_INSTANCE_STATUS
+    @Shared
+    String taskName = PROJECTS_GET_PIPELINE_INSTANCE_STATUS
 
     def "projectsGetPipelineInstanceStatus should return the status of the pipelineInstance"() {
         given:

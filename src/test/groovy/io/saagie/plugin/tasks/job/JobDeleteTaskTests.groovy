@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsDeleteJob task tests')
 class JobDeleteTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_DELETE_JOB_TASK
+    @Shared
+    String taskName = PROJECTS_DELETE_JOB_TASK
 
     def "projectsDeleteJob should delete a job and return the delete status"() {
         given:

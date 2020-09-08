@@ -13,7 +13,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 @Title("projectsDelete task tests")
 class ProjectDeleteTaskTests extends DataOpsGradleTaskSpecification {
 
-    @Shared String taskName = PROJECT_DELETE_TASK
+    @Shared
+    String taskName = PROJECT_DELETE_TASK
 
     def "projectsDelete should fail if project id doesn't exists"() {
         given:

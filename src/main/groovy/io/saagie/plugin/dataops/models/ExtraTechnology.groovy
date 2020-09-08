@@ -4,7 +4,7 @@ import groovy.transform.TypeChecked
 import org.jetbrains.annotations.NotNull
 
 @TypeChecked
-class ExtraTechnology implements IMapable, IExists{
+class ExtraTechnology implements IMapable, IExists {
     String language
     String version
 

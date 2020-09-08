@@ -16,7 +16,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsCreatePipeline task tests')
 class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_CREATE_PIPELINE_TASK
+    @Shared
+    String taskName = PROJECTS_CREATE_PIPELINE_TASK
 
     def "projectsCreatePipelineJob should create a new pipeline"() {
         given:
@@ -179,7 +180,7 @@ class PipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
             pipeline {
                 name = 'Pipeline name'
                 alerting {
-                    emails=['email@email.com']
+                    emails = ['email@email.com']
                     logins = ['login']
                     statusList = ['FAILED']
                 }

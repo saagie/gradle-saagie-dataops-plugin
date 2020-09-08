@@ -19,9 +19,9 @@ class ArtifactPropertyOverride implements IExists, IMapable {
     Map toMap() {
         if (!exists()) return [:]
         return [
-            isScheduled: isScheduled,
+            isScheduled   : isScheduled,
             cronScheduling: cronScheduling,
-            alerting: alerting.toMap(),
+            alerting      : alerting.toMap(),
         ]
     }
 }

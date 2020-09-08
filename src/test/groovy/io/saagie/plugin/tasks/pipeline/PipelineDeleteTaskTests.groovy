@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsDeletePipeline task tests')
 class PipelineDeleteTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_DELETE_PIPELINE_TASK
+    @Shared
+    String taskName = PROJECTS_DELETE_PIPELINE_TASK
 
     def "projectsDeletePipeline should delete a pipeline the deletion status"() {
         given:
