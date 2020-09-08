@@ -13,6 +13,7 @@ class Project implements IMapable {
 
     List<Closure<TechnologyByCategory>> technologyByCategory = []
     List<Closure<SecurityGroup>> authorizedGroups = []
+    boolean include_all_artifacts = false
 
     @Override
     Map toMap() {

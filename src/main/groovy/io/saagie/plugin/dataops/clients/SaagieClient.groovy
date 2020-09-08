@@ -18,7 +18,6 @@ import io.saagie.plugin.dataops.models.VariableEnvironmentV2DTO
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
-import io.saagie.plugin.dataops.tasks.service.VariableService
 import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
@@ -813,7 +812,7 @@ class SaagieClient {
         logger.info('Starting projectsListAllPipelines task')
         checkRequiredConfig(!configuration?.project?.id)
 
-        Request platformListRequest = saagieUtils.getListAllPipelinesRequest()
+        Request platformListRequest = saagieUtils.getAllProjectPipelinesRequest()
         tryCatchClosure({
             client.newCall(platformListRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -929,22 +928,11 @@ class SaagieClient {
             !configuration?.exportArtifacts?.export_file
         )
 
-        ExportPipeline[] exportPipelines = []
-        if (configuration.pipeline.ids) {
-            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+        if (configuration.project.include_all_artifacts) {
+            (exportPipelines, exportJobs, exportVariables) = exportAllArtifactsFromProject()
+        } else {
+            (exportPipelines, exportJobs, exportVariables) = exportArtifactFormProjectConfiguration()
         }
-
-        ExportJobs[] exportJobs = []
-        if (configuration.job.ids) {
-            exportJobs = getListJobAndJobVersionsFromConfig()
-        }
-
-        ExportVariables[] exportVariables = []
-        // TODO: Check conditions order
-        if (configuration.env.scope) {
-            exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
-        }
-
         return export(exportPipelines, exportJobs, exportVariables)
     }
 
@@ -1995,4 +1983,126 @@ class SaagieClient {
             throw exception
         }
     }
+
+
+    def exportArtifactFormProjectConfiguration() {
+        ExportPipeline[] exportPipelines = []
+        if (configuration.pipeline.ids) {
+            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+        }
+
+        ExportJobs[] exportJobs = []
+        if (configuration.job.ids) {
+            exportJobs = getListJobAndJobVersionsFromConfig()
+        }
+
+        ExportVariables[] exportVariables = []
+        // TODO: Check conditions order
+        if (configuration.env.scope) {
+            exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
+        }
+
+        return [exportPipelines, exportJobs, exportVariables]
+    }
+
+    def exportAllArtifactsFromProject() {
+
+        ExportPipeline[] exportPipelines = getAllProjectPipelinesFromProject()
+
+        ExportJobs[] exportJobs = getAllProjectJobsFromProject()
+
+
+        //we will export only the environment variable with scop project
+        configuration.env.scope = EnvVarScopeTypeEnum.project.name()
+        configuration.env.include_all_var = true
+        ExportVariables[] exportVariables = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
+
+        return [exportPipelines, exportJobs, exportVariables]
+
+    }
+
+    ExportPipeline[] getAllProjectPipelinesFromProject() {
+        return mapPipelineListForProjectResultFromApiToExportPipeline(this.&getListOfAllProjectPipelines)
+    }
+
+    private getListOfAllProjectPipelines() {
+        def listPipelines = null
+        tryCatchClosure({
+            Request pipelineListRequest = saagieUtils.getAllProjectPipelinesRequest()
+            // the job do
+            client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
+                handleErrors(responsePipelineList)
+                String responseBodyForPipelineList = responsePipelineList.body().string()
+                def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
+                if (parsedResultForPipelineList.data?.pipelines) {
+                    listPipelines = parsedResultForPipelineList.data.pipelines
+                }
+                return listPipelines
+            }
+        }, 'Unknown error in getListOfAllProjectPipelines', 'getAllProjectPipelines Request')
+    }
+
+    private ExportPipeline[] mapPipelineListForProjectResultFromApiToExportPipeline(pipelineList) {
+        ExportPipeline exportPipeline = new ExportPipeline()
+
+        def arrayPipelines = []
+
+        pipelineList.each { pipeline ->
+            exportPipeline.setPipelineFromApiResult(pipeline)
+            if (pipeline.versions && !pipeline.versions.isEmpty()) {
+                pipeline.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                pipeline.versions.each {
+                    if (it.isCurrent) {
+                        exportPipeline.setPipelineVersionFromApiResult(it)
+                    }
+                }
+            }
+            return arrayPipelines.add(exportPipeline)
+        }
+        return arrayPipelines as ExportPipeline[]
+    }
+
+
+    ExportJobs[] getAllProjectJobsFromProject() {
+        return mapJobListForProjectResultFromApiToExportJobs(this.&getListOfAllProjectJobs)
+    }
+
+    private getListOfAllProjectJobs() {
+        def listJobs = null
+        tryCatchClosure({
+            Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
+            // the job do
+            client.newCall(projectJobsRequest).execute().withCloseable { responseJobList ->
+                handleErrors(responseJobList)
+                String responseBodyForJobList = responseJobList.body().string()
+                def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
+                if (parsedResultForJobList.data?.jobs) {
+                    listJobs = parsedResultForJobList.data.pipelines
+                }
+                return listJobs
+            }
+        }, 'Unknown error in getListOfAllProjectJobs', 'getProjectJobs Request')
+
+    }
+
+    private ExportJobs[] mapJobListForProjectResultFromApiToExportJobs(jobList) {
+        ExportJobs exportJobs = new ExportJobs()
+
+        def arrayJobs = []
+
+        jobList.each { jobResult ->
+            exportJobs.setJobFromApiResult(jobResult)
+            if (jobResult.versions && !jobResult.versions.isEmpty()) {
+                jobResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                jobResult.versions.each {
+                    if (it.isCurrent) {
+                        exportJobs.setJobVersionFromApiResult(it)
+                    }
+                }
+            }
+            return arrayJobs.add(exportJobs)
+        }
+        return arrayJobs as ExportJobs[]
+    }
+
 }
