@@ -977,7 +977,7 @@ class SaagieUtils {
 
     Request getAllProjectPipelinesRequest() {
         Project project = configuration.project
-        logger.debug('Generating getListAllPipelinesRequest for project [id={}]', project.id)
+        logger.debug('Generating getAllProjectPipelinesRequest for project [id={}]', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
