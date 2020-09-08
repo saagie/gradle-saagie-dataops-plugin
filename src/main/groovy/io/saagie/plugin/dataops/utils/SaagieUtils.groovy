@@ -108,7 +108,7 @@ class SaagieUtils {
     }
 
 
-    Request getProjectJobsRequest() {
+    Request getAllProjectJobsRequest() {
         getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
@@ -118,6 +118,19 @@ class SaagieUtils {
                     countJobInstance
                     versions {
                         number
+                        releaseNote
+                        runtimeVersion
+                        packageInfo {
+                            downloadUrl
+                        }
+                        dockerInfo {
+                            image
+                            dockerCredentialsId
+                        }
+                        commandLine
+                        isCurrent
+                        isMajor
+                        creator
                     }
                     category
                     technology {
@@ -962,9 +975,9 @@ class SaagieUtils {
         return newRequest
     }
 
-    Request getListAllPipelinesRequest() {
+    Request getAllProjectPipelinesRequest() {
         Project project = configuration.project
-        logger.debug('Generating getListAllPipelinesRequest for project [id={}]', project.id)
+        logger.debug('Generating getAllProjectPipelinesRequest for project [id={}]', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
