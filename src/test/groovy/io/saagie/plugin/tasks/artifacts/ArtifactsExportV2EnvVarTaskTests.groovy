@@ -100,5 +100,4 @@ class ArtifactsExportV2EnvVarTaskTests extends DataOpsGradleTaskSpecification {
 		assert new File("${tempJobDirectory.getAbsolutePath()}/testvariable1.zip").exists()
 		result.output.contains(computedValue)
 	}
-	
 }
