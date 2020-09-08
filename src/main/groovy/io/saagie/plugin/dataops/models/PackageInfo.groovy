@@ -11,8 +11,8 @@ class PackageInfo implements IMapable, IExists {
     Map toMap() {
         if (exists()) {
             return [
-                name: name,
-                downloadUrl: downloadUrl ]
+                    name       : name,
+                    downloadUrl: downloadUrl]
         }
         return null
     }

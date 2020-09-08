@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsUpgradeJob task tests')
 class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_UPGRADE_JOB_TASK
+    @Shared
+    String taskName = PROJECTS_UPGRADE_JOB_TASK
 
     def "projectsUpgradeJob should update the specified job with only job config"() {
         given:
@@ -163,7 +164,8 @@ class JobUpgradeTaskTests extends DataOpsGradleTaskSpecification {
             }
         """
 
-        when: "gradle ${taskName}"
+        when:
+        "gradle ${taskName}"
         BuildResult result = gradle(taskName)
 
         then: "Expect an error to be thrown, and a link to the corresponding task doc"

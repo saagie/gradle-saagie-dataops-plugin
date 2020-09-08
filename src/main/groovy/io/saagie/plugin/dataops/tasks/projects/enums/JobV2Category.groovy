@@ -15,14 +15,14 @@ enum JobV2Category {
         value
     }
 
-    String getName(){
+    String getName() {
         name
     }
 
     static def getPerValue(Integer value) {
         def test = null;
         values().each {
-            if(it.value == value) {
+            if (it.value == value) {
                 test = it.name
             }
         }

@@ -19,14 +19,14 @@ class Alerting implements IMapable {
 
         if (emails && (!logins || logins.empty)) {
             return [
-                emails    : emails,
-                statusList: statusList
+                    emails    : emails,
+                    statusList: statusList
             ]
         }
 
         return [
-            logins    : logins,
-            statusList: statusList
+                logins    : logins,
+                statusList: statusList
         ]
     }
 }

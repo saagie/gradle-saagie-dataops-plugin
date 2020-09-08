@@ -22,28 +22,28 @@ class Job implements IMapable {
     Map toMap() {
         if (technology) {
             return [
-                name          : name,
-                id            : id,
-                projectId     : projectId,
-                description   : description,
-                category      : category,
-                technology    : [id: technology],
-                cronScheduling: cronScheduling,
-                isScheduled   : isScheduled,
-                isStreaming   : isStreaming,
-                alerting      : alerting.toMap(),
+                    name          : name,
+                    id            : id,
+                    projectId     : projectId,
+                    description   : description,
+                    category      : category,
+                    technology    : [id: technology],
+                    cronScheduling: cronScheduling,
+                    isScheduled   : isScheduled,
+                    isStreaming   : isStreaming,
+                    alerting      : alerting.toMap(),
             ]
         } else {
             return [
-                name          : name,
-                id            : id,
-                projectId     : projectId,
-                description   : description,
-                category      : category,
-                cronScheduling: cronScheduling,
-                isScheduled   : isScheduled,
-                isStreaming   : isStreaming,
-                alerting      : alerting.toMap(),
+                    name          : name,
+                    id            : id,
+                    projectId     : projectId,
+                    description   : description,
+                    category      : category,
+                    cronScheduling: cronScheduling,
+                    isScheduled   : isScheduled,
+                    isStreaming   : isStreaming,
+                    alerting      : alerting.toMap(),
             ]
         }
     }

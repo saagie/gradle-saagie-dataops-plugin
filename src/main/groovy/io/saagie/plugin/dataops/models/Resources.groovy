@@ -11,9 +11,9 @@ class Resources implements IMapable, IExists {
     Map toMap() {
         if (exists()) {
             return [
-                cpu   : cpu,
-                disk  : disk,
-                memory: memory,
+                    cpu   : cpu,
+                    disk  : disk,
+                    memory: memory,
             ]
         }
         return null

@@ -20,9 +20,12 @@ import java.nio.ByteBuffer
  * Your test class must extend this class
  */
 class DataOpsGradleTaskSpecification extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
-    @Shared MockWebServer mockWebServer = new MockWebServer()
-    @Shared String mockServerUrl = "http://localhost:9000"
+    @Rule
+    TemporaryFolder testProjectDir = new TemporaryFolder()
+    @Shared
+    MockWebServer mockWebServer = new MockWebServer()
+    @Shared
+    String mockServerUrl = "http://localhost:9000"
 
     File buildFile
     File jobFile
@@ -49,10 +52,10 @@ class DataOpsGradleTaskSpecification extends Specification {
     BuildResult gradle(boolean isSuccessExpected, String[] arguments = ['tasks']) {
         arguments += '--stacktrace'
         def runner = GradleRunner.create()
-            .withArguments(arguments)
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withDebug(true)
+                .withArguments(arguments)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withDebug(true)
 
         return isSuccessExpected ? runner.build() : runner.buildAndFail();
     }

@@ -11,12 +11,15 @@ import org.gradle.api.tasks.TaskAction
 
 @TypeChecked
 class ProjectCreateJobTask extends DefaultTask {
-    @Input DataOpsExtension configuration
+    @Input
+    DataOpsExtension configuration
 
-    @Input String taskName
+    @Input
+    String taskName
 
-    @Internal SaagieClient saagieClient
-    
+    @Internal
+    SaagieClient saagieClient
+
     @Internal
     String result
 
@@ -35,7 +38,7 @@ class ProjectCreateJobTask extends DefaultTask {
         logger.quiet(response)
 
         result = response
-        
+
         return result
         //TODO find a way to reset the configuration
     }

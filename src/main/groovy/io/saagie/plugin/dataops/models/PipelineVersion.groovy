@@ -8,8 +8,8 @@ class PipelineVersion implements IMapable {
     Map toMap() {
         if (releaseNote && !jobs.empty) {
             return [
-                releaseNote: releaseNote,
-                jobs       : jobs
+                    releaseNote: releaseNote,
+                    jobs       : jobs
             ]
         }
         return null

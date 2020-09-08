@@ -9,8 +9,8 @@ class SecurityGroup implements IMapable, IExists {
     Map toMap() {
         if (!exists()) return null
         return [
-            name: id,
-            role: role
+                name: id,
+                role: role
         ]
     }
 

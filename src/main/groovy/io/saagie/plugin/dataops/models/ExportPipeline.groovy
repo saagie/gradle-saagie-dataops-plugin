@@ -3,11 +3,12 @@ package io.saagie.plugin.dataops.models
 import groovy.transform.TypeChecked
 
 @TypeChecked
-class ExportPipeline implements IExists{
+class ExportPipeline implements IExists {
 
     PipelineDTO pipelineDTO = new PipelineDTO()
-    PipelineVersionDTO pipelineVersionDTO  = new PipelineVersionDTO()
+    PipelineVersionDTO pipelineVersionDTO = new PipelineVersionDTO()
     ArrayList<PipelineVersionDTO> versions = new ArrayList<PipelineVersionDTO>()
+
     @Override
     boolean exists() {
         return pipelineDTO.exists() || pipelineVersionDTO.exists()
@@ -29,7 +30,7 @@ class ExportPipeline implements IExists{
         pipelineVersionDTO.setPipelineVersionFromApiResult(version)
     }
 
-    void addPipelineVersionDtoToVersions( jobs, String releaseNote, String number = null) {
+    void addPipelineVersionDtoToVersions(jobs, String releaseNote, String number = null) {
         PipelineVersionDTO pipelineVersionDTO = new PipelineVersionDTO()
         pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
         versions.add(0, pipelineVersionDTO)

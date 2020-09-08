@@ -10,7 +10,8 @@ import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_LIST_TECHNOLOGIES_
 
 @Title("projectsListTechnologies task tests")
 class TechnologyTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_LIST_TECHNOLOGIES_TASK
+    @Shared
+    String taskName = PROJECTS_LIST_TECHNOLOGIES_TASK
 
     def "projectsListTechnologies task should list technologies of a project"() {
         given:

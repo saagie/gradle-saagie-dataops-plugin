@@ -15,7 +15,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('platformList task tests')
 class PlatformListTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PLATFORM_LIST_TASK
+    @Shared
+    String taskName = PLATFORM_LIST_TASK
 
     def "platformList task should list platforms"() {
         given:

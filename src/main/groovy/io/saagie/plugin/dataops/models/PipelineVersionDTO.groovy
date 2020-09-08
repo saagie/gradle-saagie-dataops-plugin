@@ -3,14 +3,14 @@ package io.saagie.plugin.dataops.models
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import org.jetbrains.annotations.NotNull
 
-class PipelineVersionDTO  implements IExists, Comparable{
+class PipelineVersionDTO implements IExists, Comparable {
     String releaseNote
     String number
-    def jobs =[]
+    def jobs = []
 
     @Override
     boolean exists() {
-        return releaseNote ||  ( jobs && jobs.length )
+        return releaseNote || (jobs && jobs.length)
     }
 
     void setPipelineVersionFromApiResult(pipelineVersionDetailResult) {
@@ -20,15 +20,15 @@ class PipelineVersionDTO  implements IExists, Comparable{
     void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number) {
         this.releaseNote = releaseNote
         this.jobs = jobs
-        if(number) {
+        if (number) {
             this.number = number
         }
     }
 
-    def initPipelineVersionWithCommunFields (pipelineVersionDetailResult) {
+    def initPipelineVersionWithCommunFields(pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
-        jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id]}
-        if(number) {
+        jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id] }
+        if (number) {
             this.number = number
         }
     }

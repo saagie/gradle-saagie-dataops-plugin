@@ -11,7 +11,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsList task tests")
 class ProjectCreateTask extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_CREATE_TASK
+    @Shared
+    String taskName = PROJECTS_CREATE_TASK
 
     def "the task should create a new project with only required params"() {
         given:

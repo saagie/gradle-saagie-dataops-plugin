@@ -11,7 +11,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsCreateJob task tests')
 class JobCreateTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = 'projectsCreateJob'
+    @Shared
+    String taskName = 'projectsCreateJob'
 
     def "projectsCreateJob should fail if the file to upload doesn't exists"() {
         given:

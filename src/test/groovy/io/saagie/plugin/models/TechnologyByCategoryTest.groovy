@@ -44,7 +44,7 @@ class TechnologyByCategoryTest extends Specification {
         TechnologyByCategory technologyByCategory = new TechnologyByCategory()
         technologyByCategory.category = "job-category"
         technologyByCategory.technologyid = [
-            "techno1", "techno2"
+                "techno1", "techno2"
         ]
 
         when:

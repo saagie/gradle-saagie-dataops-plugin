@@ -14,11 +14,11 @@ class ExposedPort implements IMapable, IExists {
     Map toMap() {
         if (!exists()) return null
         return [
-            name                    : name,
-            port                    : port,
-            isRewriteUrl            : isRewriteUrl,
-            basePathVariableName    : basePathVariableName,
-            isAuthenticationRequired: isAuthenticationRequired,
+                name                    : name,
+                port                    : port,
+                isRewriteUrl            : isRewriteUrl,
+                basePathVariableName    : basePathVariableName,
+                isAuthenticationRequired: isAuthenticationRequired,
         ]
     }
 

@@ -24,24 +24,24 @@ class ImportJobService {
             File jobPackageFile = job.value.package
             def versions = null
             def newJobConfigWithOverride = [
-                * : jobConfigOverride.job
+                    *: jobConfigOverride.job
             ]
 
-            if(globalConfig.jobOverride) {
-                if(globalConfig.jobOverride?.isScheduled) {
-                    newJobConfigWithOverride << [ *: [
-                        isScheduled : globalConfig.jobOverride?.isScheduled
+            if (globalConfig.jobOverride) {
+                if (globalConfig.jobOverride?.isScheduled) {
+                    newJobConfigWithOverride << [*: [
+                            isScheduled: globalConfig.jobOverride?.isScheduled
                     ]];
                 }
 
-                if(globalConfig.jobOverride?.cronScheduling) {
-                    newJobConfigWithOverride << [ *: [
-                        cronScheduling : globalConfig.jobOverride?.cronScheduling
+                if (globalConfig.jobOverride?.cronScheduling) {
+                    newJobConfigWithOverride << [*: [
+                            cronScheduling: globalConfig.jobOverride?.cronScheduling
                     ]];
                 }
 
-                if(globalConfig.jobOverride.alerting?.emails){
-                    newJobConfigWithOverride << [*:[alerting : globalConfig.jobOverride?.alerting]]
+                if (globalConfig.jobOverride.alerting?.emails) {
+                    newJobConfigWithOverride << [*: [alerting: globalConfig.jobOverride?.alerting]]
                 }
             }
 
@@ -52,12 +52,12 @@ class ImportJobService {
                 name = newJobConfigWithOverride.name
                 technology = newJobConfigWithOverride.technology
                 cronScheduling = newJobConfigWithOverride.cronScheduling
-                isScheduled =  newJobConfigWithOverride.isScheduled
+                isScheduled = newJobConfigWithOverride.isScheduled
                 category = newJobConfigWithOverride.category
                 description = newJobConfigWithOverride.description
             }
 
-            if(newJobConfigWithOverride.alerting?.emails) {
+            if (newJobConfigWithOverride.alerting?.emails) {
                 newMappedJobData.job.alerting {
                     emails = newJobConfigWithOverride.alerting?.emails
                     statusList = newJobConfigWithOverride.alerting?.statusList
@@ -74,26 +74,26 @@ class ImportJobService {
                     dockerCredentialsId = jobConfigOverride.jobVersion.dockerInfo?.dockerCredentialsId
                 }
             }
-    
-            if(jobPackageFile && jobPackageFile.absolutePath) {
+
+            if (jobPackageFile && jobPackageFile.absolutePath) {
                 newMappedJobData.jobVersion?.packageInfo {
-                    name =  jobPackageFile.absolutePath
+                    name = jobPackageFile.absolutePath
                 }
             }
-            
-            if(jobConfigOverride.jobVersion?.extraTechnology?.language ) {
+
+            if (jobConfigOverride.jobVersion?.extraTechnology?.language) {
                 newMappedJobData.jobVersion?.extraTechnology {
                     language = jobConfigOverride.jobVersion?.extraTechnology?.language
                     version = jobConfigOverride.jobVersion?.extraTechnology?.version
                 }
             }
-            
-            if(jobConfigOverride.versions && jobConfigOverride.versions.size() > 0) {
+
+            if (jobConfigOverride.versions && jobConfigOverride.versions.size() > 0) {
                 versions = jobConfigOverride.versions
             }
 
 
-            if(newJobConfigWithOverride.jobVersion?.packageInfo) {
+            if (newJobConfigWithOverride.jobVersion?.packageInfo) {
                 newMappedJobData.jobVersion?.packageInfo {
                     downloadUrl = newJobConfigWithOverride.jobVersion?.packageInfo?.downloadUrl
                 }
@@ -103,7 +103,7 @@ class ImportJobService {
         }
 
     }
-    
+
     static convertFromMapToJsonVersion(jobVersionMap) {
         JobVersion jobVersion = []
         jobVersion.with {
@@ -115,20 +115,20 @@ class ImportJobService {
                 dockerCredentialsId = jobVersionMap.dockerInfo?.dockerCredentialsId
             }
         }
-    
-        if(jobVersionMap?.packageInfo?.name) {
+
+        if (jobVersionMap?.packageInfo?.name) {
             jobVersion.packageInfo {
-                name =  jobVersionMap.packageInfo.name
+                name = jobVersionMap.packageInfo.name
             }
         }
-        
-        if(jobVersionMap?.extraTechnology?.language ) {
+
+        if (jobVersionMap?.extraTechnology?.language) {
             jobVersion.extraTechnology {
                 language = jobVersionMap?.extraTechnology?.language
                 version = jobVersionMap?.extraTechnology?.version
             }
         }
-        
+
         return jobVersion
     }
 

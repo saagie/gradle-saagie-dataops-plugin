@@ -12,7 +12,8 @@ import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_STOP_JOB_INSTANCE_
 
 @Title('projectsStopJobInstance task tests')
 class JobStopTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
+    @Shared
+    String taskName = PROJECTS_STOP_JOB_INSTANCE_TASK
 
     def "projectsStopJobInstance should stop a job"() {
         given:
