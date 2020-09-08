@@ -143,7 +143,7 @@ class SaagieClient {
 
         logger.debug('Using config [project={}]', configuration.project)
 
-        Request projectJobsRequest = saagieUtils.getAllProjectJobsRequest()
+        Request projectJobsRequest = saagieUtils.getProjectJobsRequest()
         tryCatchClosure({
             client.newCall(projectJobsRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -812,7 +812,7 @@ class SaagieClient {
         logger.info('Starting projectsListAllPipelines task')
         checkRequiredConfig(!configuration?.project?.id)
 
-        Request platformListRequest = saagieUtils.getListAllPipelinesRequest()
+        Request platformListRequest = saagieUtils.getAllProjectPipelinesRequest()
         tryCatchClosure({
             client.newCall(platformListRequest).execute().withCloseable { response ->
                 handleErrors(response)
@@ -944,6 +944,7 @@ class SaagieClient {
         }
 
         return export(exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty)
+
     }
 
     def getVariableListIfConfigIsDefined(getVariableListingClosure) {
