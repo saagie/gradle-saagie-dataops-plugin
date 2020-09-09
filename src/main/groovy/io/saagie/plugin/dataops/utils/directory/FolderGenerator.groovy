@@ -1,7 +1,7 @@
 package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.ExportJobs
+import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.ExportVariables
@@ -14,7 +14,7 @@ import org.gradle.api.GradleException
 
 class FolderGenerator {
 
-    ExportJobs[] exportJobList = []
+    ExportJob[] exportJobList = []
     ExportPipeline[] exportPipelineList = []
     ExportVariables[] exportVariableList = []
     def inputDire
@@ -42,7 +42,7 @@ class FolderGenerator {
     }
 
 
-    void generateFolderForJob(ExportJobs exportJob) {
+    void generateFolderForJob(ExportJob exportJob) {
         def jobId = exportJob.jobDTO.id
         def urlJobIdFolder = "${inputDire}${sl}${name}${sl}Job${sl}${jobId}"
         def folder = new File(urlJobIdFolder);
