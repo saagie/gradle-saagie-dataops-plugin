@@ -991,7 +991,6 @@ class SaagieClient {
             zippingFolder.generateZip(tempJobDirectory)
 
             logger.debug("path after: {}, ", exportContainer.exportConfigPath)
-
             return JsonOutput.toJson([
                 status    : "success",
                 exportfile: exportContainer.exportConfigPath
@@ -1963,6 +1962,8 @@ class SaagieClient {
             client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
                 handleErrors(responsePipelineList)
                 String responseBodyForPipelineList = responsePipelineList.body().string()
+                logger.debug("pipelines with name and id : ")
+                logger.debug(responseBodyForPipelineList)
                 def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
                 if (parsedResultForPipelineList.data?.pipelines) {
                     listPipelines = parsedResultForPipelineList.data.pipelines
@@ -2074,6 +2075,8 @@ class SaagieClient {
             client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
                 handleErrors(responsePipelineList)
                 String responseBodyForPipelineList = responsePipelineList.body().string()
+                logger.debug("pipelines with full details : ")
+                logger.debug(responseBodyForPipelineList)
                 def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
                 if (parsedResultForPipelineList.data?.pipelines) {
                     listPipelines = parsedResultForPipelineList.data.pipelines
@@ -2124,6 +2127,8 @@ class SaagieClient {
             client.newCall(projectJobsRequest).execute().withCloseable { responseJobList ->
                 handleErrors(responseJobList)
                 String responseBodyForJobList = responseJobList.body().string()
+                logger.debug("jobs with full details : ")
+                logger.debug(responseBodyForJobList)
                 def parsedResultForJobList = slurper.parseText(responseBodyForJobList)
                 if (parsedResultForJobList.data?.jobs) {
                     listJobs = parsedResultForJobList.data.jobs

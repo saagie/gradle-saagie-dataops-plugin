@@ -274,4 +274,52 @@ class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
         tempJobDirectory.deleteDir()
         tempJobFile.delete()
     }
+
+    def "projectsExportJob should export job, job version, pipeLines, pipeline versions and environment variables"() {
+        given:
+        File tempJobDirectory = File.createTempDir("project", ".tmp")
+        File tempJobFile = File.createTempFile("package", ".tmp")
+        enqueueRequest("""{"data":{"pipelines":[{"id":"pipeline-1","name":"pipeline-1","description":"pipeline-1","versions":[{"number":1,"creationDate":"2019-11-06T07:49:27.235Z","releaseNote":null,"jobs":[{"id":"job-1"},{"id":"job-3"}],"isCurrent":true,"isMajor":false,"creator":"youen.chene"}],"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null},{"id":"pipeline-2","name":"pipeline-2","description":"pipeline-2","versions":[{"number":1,"creationDate":"2019-11-06T07:49:27.235Z","releaseNote":null,"jobs":[{"id":"job-4"},{"id":"job-5"}],"isCurrent":true,"isMajor":false,"creator":"youen.chene"}],"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null}]}}""")
+        enqueueRequest("""{"data":{"jobs":[{"id":"job-2","name":"Test Job to archive2","description":"Description","countJobInstance":5,"versions":[{"number":2,"creationDate":"2019-11-05T17:14:08.635Z","releaseNote":"Fixed release","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/projects/api/platform/4/project/project-id/job/job-id/version/1/artifact/renan-file.py"},"dockerInfo":null,"commandLine":"python {file} arg1 arg2","isCurrent":true,"isMajor":false,"creator":"admin.user"},{"number":1,"creationDate":"2019-11-05T17:14:08.635Z","releaseNote":"Fixed release 2","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/projects/api/platform/4/project/project-id/job/job-id/version/1/artifact/renan-file.py"},"dockerInfo":null,"commandLine":"python {file} arg1 arg2","isCurrent":true,"isMajor":false,"creator":"admin.user"}],"category":"Extraction","technology":{"id":"technology-id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-11-05T17:14:08.635Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":false}, {"id":"job-1","name":"Test Job to archive2","description":"Description","countJobInstance":5,"versions":[{"number":1,"creationDate":"2019-11-05T17:14:08.635Z","releaseNote":"Fixed release","runtimeVersion":"3.6","packageInfo":{"downloadUrl":"/projects/api/platform/4/project/project-id/job/job-id/version/1/artifact/renan-file.py"},"dockerInfo":null,"commandLine":"python {file} arg1 arg2","isCurrent":true,"isMajor":false,"creator":"admin.user"}],"category":"Extraction","technology":{"id":"technology-id","label":"Python","isAvailable":true},"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null,"isStreaming":false,"creationDate":"2019-11-05T17:14:08.635Z","migrationStatus":null,"migrationProjectId":null,"isDeletable":false}]}}""")
+        enqueueRequest("{\"data\":{\"projectEnvironmentVariables\":[{\"id\":\"project-environment-1-id\",\"scope\":\"GLOBAL\",\"name\":\"testUX2\",\"value\":\"lala1\",\"description\":\"lala1\",\"isPassword\":false,\"overriddenValues\":[]},{\"id\":\"project-environment-2-id\",\"scope\":\"GLOBAL\",\"name\":\"sjones\",\"value\":null,\"description\":\"description\",\"isPassword\":true,\"overriddenValues\":[]},{\"id\":\"project-environment-3-id\",\"scope\":\"PROJECT\",\"name\":\"globalvar\",\"value\":\"pro\",\"description\":\"pro\",\"isPassword\":false,\"overriddenValues\":[{\"id\":\"project-environment-4-id\",\"scope\":\"GLOBAL\",\"value\":\"GlobalEnvVAr\",\"description\":\"global variable\",\"isPassword\":false}]},{\"id\":\"project-environment-5-id\",\"scope\":\"GLOBAL\",\"name\":\"bbbb\",\"value\":\"bbbbb\",\"description\":\"\",\"isPassword\":false,\"overriddenValues\":[]},{\"id\":\"project-environment-6-id\",\"scope\":\"GLOBAL\",\"name\":\"WEBHDFS_URL\",\"value\":null,\"description\":\"\",\"isPassword\":true,\"overriddenValues\":[]}]}}")
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+        enqueueRequestFile(tempJobFile)
+        enqueueRequestFile(tempJobFile)
+        enqueueRequestFile(tempJobFile)
+        enqueueRequestFile(tempJobFile)
+        enqueueRequestFile(tempJobFile)
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                    include_all_artifacts = true
+                }
+
+                exportArtifacts {
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
+
+        then:
+        notThrown(Exception)
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
+        result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
+    }
 }
