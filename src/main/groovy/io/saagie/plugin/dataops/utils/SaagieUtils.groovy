@@ -127,6 +127,10 @@ class SaagieUtils {
                             image
                             dockerCredentialsId
                         }
+                        extraTechnology {
+                           language
+                           version
+                        }
                         commandLine
                         isCurrent
                         isMajor
@@ -474,6 +478,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
+            .excludeFieldsByName('packageInfo')
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -486,7 +491,7 @@ class SaagieUtils {
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
-        jobVersion.packageInfo.name = file.absolutePath
+//        jobVersion.packageInfo.name = file.absolutePath
 
         // Needed because we can't exlude a field from the excludeNull() rule of the JsonGenerator
         def nullFile = '},"file":null}'
@@ -494,7 +499,7 @@ class SaagieUtils {
 
         def createProjectJob = gq(''' mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) { createJob(job: $job, jobVersion: $jobVersion, file: $file) { id name } } ''', gqVariablesWithNullFile)
 
-        return buildMultipartRequestFromQuery(createProjectJob, job, jobVersion)
+        return buildMultipartRequestFromQuery(createProjectJob, file,  job, jobVersion)
     }
 
     Request getProjectUpdateJobRequest() {
@@ -569,6 +574,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
+            .excludeFieldsByName('packageInfo')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -584,7 +590,7 @@ class SaagieUtils {
 
         def updateProjectJob = gq(''' mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!, $file: Upload) { addJobVersion(jobId: $jobId, jobVersion: $jobVersion, file: $file) { number } } ''', gqVariablesWithNullFile)
 
-        return buildMultipartRequestFromQuery(updateProjectJob, job, jobVersion)
+        return buildMultipartRequestFromQuery(updateProjectJob, file, job, jobVersion)
     }
 
     Request getAddJobVersionRequestWithoutFile(Job job, JobVersion jobVersion) {
@@ -909,9 +915,8 @@ class SaagieUtils {
         }
     }
 
-    private Request buildMultipartRequestFromQuery(String query, Job job, JobVersion jobVersion) {
+    private Request buildMultipartRequestFromQuery(String query, File file, Job job, JobVersion jobVersion) {
         logger.debug('Generating multipart request from query="{}"', query)
-        def file = new File(jobVersion.packageInfo.name)
         def fileName = file.name
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
@@ -1100,6 +1105,10 @@ class SaagieUtils {
                         dockerInfo {
                             image
                             dockerCredentialsId
+                        }
+                        extraTechnology {
+                           language
+                           version
                         }
                         commandLine
                         isCurrent

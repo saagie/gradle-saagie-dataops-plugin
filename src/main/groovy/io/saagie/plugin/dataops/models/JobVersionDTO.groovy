@@ -39,6 +39,10 @@ class JobVersionDTO implements IExists, Comparable {
             number = version.number
         }
 
+        if (version.extraTechnology) {
+            extraTechnology = version.extraTechnology
+        }
+
         if (version.packageInfo?.downloadUrl) {
             packageInfo.name = version.packageInfo?.downloadUrl
         }

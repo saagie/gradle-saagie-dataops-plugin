@@ -1762,6 +1762,11 @@ class SaagieClient {
                     addJobVersion(jobToImport, jobVersionToImport)
 
                 } else {
+                    if (versions) {
+                        versions.sort { a, b ->
+                            return a.number?.toInteger() <=> b.number?.toInteger()
+                        }
+                    }
                     versions = versions as Queue
                     if (versions && versions.size() >= 1) {
                         def firstVersionInV1Format = versions.poll()
@@ -1822,6 +1827,9 @@ class SaagieClient {
                     updatePipelineVersion(pipelineToImport, pipelineVersionToImport)
                 } else {
                     if (versions && versions.size() >= 1) {
+                        versions.sort { a, b ->
+                            return a.number?.toInteger() <=> b.number?.toInteger()
+                        }
                         versions = versions as Queue
                         def firstVersionInV1Format = versions.poll()
                         PipelineVersion firstVersion = ImportPipelineService.convertFromMapToJsonVersion(firstVersionInV1Format, newlistJobs)
@@ -2103,7 +2111,7 @@ class SaagieClient {
                     }
                 }
 
-                if (pipeline.versions) {
+                if (pipeline?.versions && pipeline?.versions.size() > 1) {
                     pipeline.versions.each {
                         exportPipeline.addPipelineVersionFromV2ApiResult(it)
                     }
@@ -2160,7 +2168,7 @@ class SaagieClient {
                     }
                 }
 
-                if (jobResult.versions) {
+                if (jobResult?.versions && jobResult?.versions.size() > 1) {
                     jobResult.versions.each {
                         exportJob.addJobVersionFromV2ApiResult(it)
                     }

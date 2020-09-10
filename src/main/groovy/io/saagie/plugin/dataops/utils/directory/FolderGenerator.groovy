@@ -205,18 +205,6 @@ class FolderGenerator {
         }
 
         if (
-        jobVersionDTO.packageInfo &&
-            jobVersionDTO.packageInfo.name && jobVersionDTO.number || downloadUrl
-        ) {
-            jobVersionDetailJsonObject << [*: [
-                packageInfo: [
-                    downloadUrl: downloadUrl,
-                    name       : jobVersionDTO.packageInfo.name,
-                ]
-            ]]
-        }
-
-        if (
         jobVersionDTO.extraTechnology &&
             jobVersionDTO.extraTechnology.language
         ) {
