@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsUpdatePipeline task tests")
 class PipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_UPGRADE_PIPELINE_TASK
+    @Shared
+    String taskName = PROJECTS_UPGRADE_PIPELINE_TASK
 
     def "projectsUpdatePipeline should update pipeline infos"() {
         given:

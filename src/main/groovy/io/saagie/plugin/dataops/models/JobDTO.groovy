@@ -3,7 +3,7 @@ package io.saagie.plugin.dataops.models
 import io.saagie.plugin.dataops.tasks.service.CategoryService
 import org.gradle.api.GradleException
 
-class JobDTO implements IExists{
+class JobDTO implements IExists {
     String name
     String id
     String description
@@ -11,10 +11,10 @@ class JobDTO implements IExists{
     String technology
     Boolean isScheduled
     String cronScheduling
-    AlertingDTO alerting= new AlertingDTO()
+    AlertingDTO alerting = new AlertingDTO()
 
     Object alerting(Closure closure) {
-            alerting.with(closure)
+        alerting.with(closure)
     }
 
     @Override
@@ -29,22 +29,22 @@ class JobDTO implements IExists{
     }
 
     void setJobFromApiResult(jobDetailResult) {
-            name = jobDetailResult.name //
-            id = jobDetailResult.id
-            description = jobDetailResult.description //
-            category = jobDetailResult.category //
-            technology = jobDetailResult.technology.id
-            isScheduled = jobDetailResult.isScheduled
-            cronScheduling = jobDetailResult.cronScheduling
-            alerting = jobDetailResult.alerting
-            if(jobDetailResult?.extraTechnology) {
-                extraTechnology = jobDetailResult.extraTechnology
-            }
+        name = jobDetailResult.name //
+        id = jobDetailResult.id
+        description = jobDetailResult.description //
+        category = jobDetailResult.category //
+        technology = jobDetailResult.technology.id
+        isScheduled = jobDetailResult.isScheduled
+        cronScheduling = jobDetailResult.cronScheduling
+        alerting = jobDetailResult.alerting
+        if (jobDetailResult?.extraTechnology) {
+            extraTechnology = jobDetailResult.extraTechnology
+        }
     }
 
     void setJobFromV1ApiResult(jobV1DetailResult, technology, cronScheduling) {
 
-        if(!technology.id){
+        if (!technology.id) {
             throw GradleException("Technology can t be null when mapped from v1")
         }
 
@@ -54,7 +54,7 @@ class JobDTO implements IExists{
         category = CategoryService.instance.getCategoryByV1CategoryAndTechnology(jobV1DetailResult.category, technology.label)
         isScheduled = !jobV1DetailResult.manual
 
-        if(isScheduled) {
+        if (isScheduled) {
             this.cronScheduling = cronScheduling
         }
 

@@ -4,8 +4,10 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 class SaagieClientUtilsTest extends Specification {
-    @Shared ClassLoader classLoader = getClass().getClassLoader()
-    @Shared String exportJobZipFilename = 'exportedJob.zip'
+    @Shared
+    ClassLoader classLoader = getClass().getClassLoader()
+    @Shared
+    String exportJobZipFilename = 'exportedJob.zip'
 
     def "expect that the testExportJob.zip test file exists in the resource folder"() {
         when:

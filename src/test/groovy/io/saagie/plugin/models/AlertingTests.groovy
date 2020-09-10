@@ -12,7 +12,7 @@ class AlertingTests extends Specification {
         def logins = ['login.test']
         def statusList = ['FAILED']
         Alerting alerting = new Alerting(
-            logins:     logins,
+            logins: logins,
             statusList: statusList
         )
 
@@ -30,7 +30,7 @@ class AlertingTests extends Specification {
         def emails = ['email@mail.com']
         def statusList = ['FAILED']
         Alerting alerting = new Alerting(
-            emails:     emails,
+            emails: emails,
             statusList: statusList
         )
 
@@ -50,8 +50,8 @@ class AlertingTests extends Specification {
         def logins = ['login.test']
         def statusList = ['FAILED']
         Alerting alerting = new Alerting(
-            emails:     emails,
-            logins:     logins,
+            emails: emails,
+            logins: logins,
             statusList: statusList
         )
 

@@ -10,7 +10,8 @@ import static io.saagie.plugin.dataops.DataOpsModule.PROJECTS_GET_JOB_INSTANCE_S
 
 @Title('projectsGetJobInstanceStatus task tests')
 class JobGetInstanceStatusTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_GET_JOB_INSTANCE_STATUS;
+    @Shared
+    String taskName = PROJECTS_GET_JOB_INSTANCE_STATUS;
 
     def "projectsGetJobInstanceStatus should return the status of the jobInstance"() {
         given:

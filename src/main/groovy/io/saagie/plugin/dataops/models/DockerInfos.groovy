@@ -11,7 +11,7 @@ class DockerInfos implements IMapable, IExists {
     Map toMap() {
         if (exists()) {
             return [
-                image : image,
+                image              : image,
                 dockerCredentialsId: dockerCredentialsId,
             ]
         }

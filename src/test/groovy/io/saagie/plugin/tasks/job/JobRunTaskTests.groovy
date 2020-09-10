@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsRunJob task tests')
 class JobRunTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_RUN_JOB_TASK
+    @Shared
+    String taskName = PROJECTS_RUN_JOB_TASK
 
     def "projectsRunJob should run a job and return the job instance id and status"() {
         given:

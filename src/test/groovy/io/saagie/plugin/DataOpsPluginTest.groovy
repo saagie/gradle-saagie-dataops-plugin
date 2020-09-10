@@ -20,7 +20,7 @@ class DataOpsPluginTest extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle ('tasks', '--all')
+        BuildResult result = gradle('tasks', '--all')
 
         then:
         notThrown(Exception)
@@ -53,7 +53,7 @@ class DataOpsPluginTest extends DataOpsGradleTaskSpecification {
         '''
 
         when:
-        def result = gradle ('platformList')
+        def result = gradle('platformList')
 
         then:
         Exception e = thrown()

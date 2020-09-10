@@ -8,7 +8,8 @@ import spock.lang.Shared
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 class ProjectUpdateTask extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = 'projectsUpdate'
+    @Shared
+    String taskName = 'projectsUpdate'
 
     def "the task should update the project with only required params"() {
         given:

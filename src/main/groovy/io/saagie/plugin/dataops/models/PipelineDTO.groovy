@@ -1,12 +1,12 @@
 package io.saagie.plugin.dataops.models
 
-class PipelineDTO  implements IExists{
+class PipelineDTO implements IExists {
     String name
     String id
     String description
     Boolean isScheduled
     String cronScheduling
-    AlertingDTO alerting= new AlertingDTO()
+    AlertingDTO alerting = new AlertingDTO()
 
     Object alerting(Closure closure) {
         alerting.with(closure)
@@ -36,7 +36,7 @@ class PipelineDTO  implements IExists{
         name = pipelineV1DetailResult.name
         id = pipelineV1DetailResult.id
         isScheduled = pipelineV1DetailResult.hasProperty("schedule") ? true : false
-        if(isScheduled){
+        if (isScheduled) {
             cronScheduling = pipelineV1DetailResult.schedule
         }
     }

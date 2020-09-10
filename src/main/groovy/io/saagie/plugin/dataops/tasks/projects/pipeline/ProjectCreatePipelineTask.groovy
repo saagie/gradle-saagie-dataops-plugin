@@ -8,12 +8,15 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ProjectCreatePipelineTask extends DefaultTask {
-    @Input DataOpsExtension configuration
+    @Input
+    DataOpsExtension configuration
 
-    @Input String taskName
+    @Input
+    String taskName
 
-    @Internal SaagieClient saagieClient
-    
+    @Internal
+    SaagieClient saagieClient
+
     @Internal
     String result
 

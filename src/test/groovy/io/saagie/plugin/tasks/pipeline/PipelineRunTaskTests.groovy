@@ -12,13 +12,13 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title('projectsRunPipelineInstance task tests')
 class PipelineRunTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_RUN_PIPELINE_TASK
+    @Shared
+    String taskName = PROJECTS_RUN_PIPELINE_TASK
 
     def "projectsRunPipelineInstance should run a pipeline instance"() {
         given:
         enqueueRequest('{"data":{"runPipeline":{"id":"pipeline-instance-id"}}}')
         enqueueRequest('{"data":{"pipelineInstance":{"status":"RUNNING"}}}')
-
 
 
         buildFile << """

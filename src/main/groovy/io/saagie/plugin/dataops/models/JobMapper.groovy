@@ -21,57 +21,57 @@ class JobMapper {
     }
 
     def static Map mapJobAndJobVersionWithoutMail(Job job, JobVersion jobVersion, String projectId) {
-        if(!job){
+        if (!job) {
             return null
         }
         def newJobConfig = mapJobWithoutMail(job, projectId)
         def mappedJobVersion = jobVersion.toMap()
 
 
-        if(jobVersion) {
+        if (jobVersion) {
             newJobConfig.put('jobVersion', [
-                commandLine : mappedJobVersion.commandLine,
-                releaseNote : mappedJobVersion.releaseNote,
-                runtimeVersion : mappedJobVersion.runtimeVersion
+                commandLine   : mappedJobVersion.commandLine,
+                releaseNote   : mappedJobVersion.releaseNote,
+                runtimeVersion: mappedJobVersion.runtimeVersion
             ])
 
-            if(mappedJobVersion.dockerInfo?.image){
+            if (mappedJobVersion.dockerInfo?.image) {
                 newJobConfig.jobVersion.put('dockerInfo', [
-                    image : mappedJobVersion.dockerInfo?.image,
-                    dockerCredentialsId : mappedJobVersion.dockerInfo?.dockerCredentialsId
+                    image              : mappedJobVersion.dockerInfo?.image,
+                    dockerCredentialsId: mappedJobVersion.dockerInfo?.dockerCredentialsId
                 ])
             }
 
-            if(jobVersion.packageInfo?.name || jobVersion.packageInfo?.downloadUrl){
+            if (jobVersion.packageInfo?.name || jobVersion.packageInfo?.downloadUrl) {
                 newJobConfig.jobVersion.put('packageInfo', [
-                    name: jobVersion.packageInfo?.name,
+                    name       : jobVersion.packageInfo?.name,
                     downloadUrl: jobVersion.packageInfo?.downloadUrl
                 ])
             }
 
-            if(mappedJobVersion.userPreviousArtifact){
+            if (mappedJobVersion.userPreviousArtifact) {
                 newJobConfig.jobVersion.put('userPreviousArtifact', [
-                    userPreviousArtifact : mappedJobVersion.userPreviousArtifact
+                    userPreviousArtifact: mappedJobVersion.userPreviousArtifact
                 ])
             }
 
-            if(mappedJobVersion.resources?.cpu || mappedJobVersion.resources?.disk || mappedJobVersion.resources?.memory){
+            if (mappedJobVersion.resources?.cpu || mappedJobVersion.resources?.disk || mappedJobVersion.resources?.memory) {
                 newJobConfig.jobVersion.put('resources', mappedJobVersion.resources)
             }
 
-            if(mappedJobVersion.extraTechnology){
+            if (mappedJobVersion.extraTechnology) {
                 newJobConfig.jobVersion.put('extraTechnology', mappedJobVersion.extraTechnology)
             }
 
-            if(mappedJobVersion.volume){
+            if (mappedJobVersion.volume) {
                 newJobConfig.jobVersion.put('volume', mappedJobVersion.volume)
             }
 
-            if(mappedJobVersion.exposedPorts){
+            if (mappedJobVersion.exposedPorts) {
                 newJobConfig.jobVersion.put('exposedPorts', mappedJobVersion.exposedPorts)
             }
 
-            if(mappedJobVersion.doesUseGPU){
+            if (mappedJobVersion.doesUseGPU) {
                 newJobConfig.jobVersion.put('doesUseGPU', mappedJobVersion.doesUseGPU)
             }
 
@@ -87,28 +87,28 @@ class JobMapper {
 
 
         newJobConfig.put('job', [
-            name : mappedJob?.name,
-            cronScheduling : mappedJob?.cronScheduling,
-            isScheduled : mappedJob?.isScheduled,
-            category : mappedJob?.category,
-            isStreaming : mappedJob?.isStreaming,
-            description : mappedJob?.description,
-            technology: [id: technology]
+            name          : mappedJob?.name,
+            cronScheduling: mappedJob?.cronScheduling,
+            isScheduled   : mappedJob?.isScheduled,
+            category      : mappedJob?.category,
+            isStreaming   : mappedJob?.isStreaming,
+            description   : mappedJob?.description,
+            technology    : [id: technology]
         ])
 
-        if(projectId){
+        if (projectId) {
             newJobConfig.job.put("projectId", projectId)
         }
 
-        if(mappedJob.id) {
+        if (mappedJob.id) {
             newJobConfig.job.put('id', mappedJob.id)
         }
 
-        if(mappedJob.alerting?.emails) {
-            newJobConfig.job.put('alerting',[
-                emails : mappedJob.alerting?.emails,
-                statusList : mappedJob.alerting?.statusList,
-                logins : mappedJob.alerting?.logins
+        if (mappedJob.alerting?.emails) {
+            newJobConfig.job.put('alerting', [
+                emails    : mappedJob.alerting?.emails,
+                statusList: mappedJob.alerting?.statusList,
+                logins    : mappedJob.alerting?.logins
             ])
         }
         return newJobConfig

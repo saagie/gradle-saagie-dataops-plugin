@@ -20,7 +20,7 @@ class JobVersion implements IMapable, IExists {
     Resources resources = new Resources()
 
     ExtraTechnology extraTechnology = new ExtraTechnology()
-    
+
     JobVersion() {
         // TODO: remember to parameterize that once it will be available
         resources.with {
@@ -29,7 +29,7 @@ class JobVersion implements IMapable, IExists {
             cpu = 0.3f
         }
     }
-    
+
     @Deprecated
     Object packageInfo(Closure closure) {
         packageInfo.with(closure)
@@ -69,21 +69,21 @@ class JobVersion implements IMapable, IExists {
     boolean exists() {
         return (
             commandLine ||
-            releaseNote ||
-            runtimeVersion ||
-            usePreviousArtifact ||
+                releaseNote ||
+                runtimeVersion ||
+                usePreviousArtifact ||
 
-            // NOTE: empty lists evaluate to false in groovy
-            volume ||
+                // NOTE: empty lists evaluate to false in groovy
+                volume ||
 
-            // Check that exposedPorts isn't empty and that it contains valid ExposedPorts
-            exposedPorts && exposedPorts.every { it.exists() } ||
-            packageInfo.exists() ||
-            dockerInfo.exists() ||
+                // Check that exposedPorts isn't empty and that it contains valid ExposedPorts
+                exposedPorts && exposedPorts.every { it.exists() } ||
+                packageInfo.exists() ||
+                dockerInfo.exists() ||
 
-            // TODO: uncomment this check once it will be available in the API
-            // resources.exists() ||
-            extraTechnology.exists()
+                // TODO: uncomment this check once it will be available in the API
+                // resources.exists() ||
+                extraTechnology.exists()
         )
     }
 }

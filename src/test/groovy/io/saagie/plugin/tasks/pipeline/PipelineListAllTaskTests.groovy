@@ -12,7 +12,8 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 @Title("projectsListAllPipelinesTask task tests")
 class PipelineListAllTaskTests extends DataOpsGradleTaskSpecification {
-    @Shared String taskName = PROJECTS_LIST_PIPELINES_TASK
+    @Shared
+    String taskName = PROJECTS_LIST_PIPELINES_TASK
 
     def "the task should list all projects pipelines"() {
         given:
