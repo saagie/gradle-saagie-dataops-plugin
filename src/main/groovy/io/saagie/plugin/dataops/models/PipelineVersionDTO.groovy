@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull
 
 class PipelineVersionDTO implements IExists, Comparable {
     String releaseNote
-    String number
+    def number
     def jobs = []
 
     @Override
@@ -28,8 +28,8 @@ class PipelineVersionDTO implements IExists, Comparable {
     def initPipelineVersionWithCommunFields(pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
         jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id] }
-        if (number) {
-            this.number = number
+        if (pipelineVersionDetailResult.number) {
+            this.number = pipelineVersionDetailResult.number
         }
     }
 

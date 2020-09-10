@@ -108,7 +108,7 @@ class SaagieUtils {
     }
 
 
-    Request getProjectJobsRequest() {
+    Request getAllProjectJobsRequest() {
         getProjectJobsRequestBuild('''
             query jobs($projectId: UUID!) {
                 jobs(projectId: $projectId) {
@@ -118,6 +118,23 @@ class SaagieUtils {
                     countJobInstance
                     versions {
                         number
+                        releaseNote
+                        runtimeVersion
+                        packageInfo {
+                            downloadUrl
+                        }
+                        dockerInfo {
+                            image
+                            dockerCredentialsId
+                        }
+                        extraTechnology {
+                           language
+                           version
+                        }
+                        commandLine
+                        isCurrent
+                        isMajor
+                        creator
                     }
                     category
                     technology {
@@ -461,6 +478,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
+            .excludeFieldsByName('packageInfo')
             .addConverter(JobVersion) { JobVersion value ->
                 value.packageInfo.name = file.name
                 return value
@@ -473,7 +491,7 @@ class SaagieUtils {
         ])
 
         // quick hack needed because the toJson seems to update the converted object, even with a clone
-        jobVersion.packageInfo.name = file.absolutePath
+//        jobVersion.packageInfo.name = file.absolutePath
 
         // Needed because we can't exlude a field from the excludeNull() rule of the JsonGenerator
         def nullFile = '},"file":null}'
@@ -481,7 +499,7 @@ class SaagieUtils {
 
         def createProjectJob = gq(''' mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) { createJob(job: $job, jobVersion: $jobVersion, file: $file) { id name } } ''', gqVariablesWithNullFile)
 
-        return buildMultipartRequestFromQuery(createProjectJob, job, jobVersion)
+        return buildMultipartRequestFromQuery(createProjectJob, file,  job, jobVersion)
     }
 
     Request getProjectUpdateJobRequest() {
@@ -556,6 +574,7 @@ class SaagieUtils {
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
+            .excludeFieldsByName('packageInfo')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
@@ -571,7 +590,7 @@ class SaagieUtils {
 
         def updateProjectJob = gq(''' mutation addJobVersionMutation($jobId: UUID!, $jobVersion: JobVersionInput!, $file: Upload) { addJobVersion(jobId: $jobId, jobVersion: $jobVersion, file: $file) { number } } ''', gqVariablesWithNullFile)
 
-        return buildMultipartRequestFromQuery(updateProjectJob, job, jobVersion)
+        return buildMultipartRequestFromQuery(updateProjectJob, file, job, jobVersion)
     }
 
     Request getAddJobVersionRequestWithoutFile(Job job, JobVersion jobVersion) {
@@ -896,9 +915,8 @@ class SaagieUtils {
         }
     }
 
-    private Request buildMultipartRequestFromQuery(String query, Job job, JobVersion jobVersion) {
+    private Request buildMultipartRequestFromQuery(String query, File file, Job job, JobVersion jobVersion) {
         logger.debug('Generating multipart request from query="{}"', query)
-        def file = new File(jobVersion.packageInfo.name)
         def fileName = file.name
         logger.debug('Using [file={}] for upload', file.absolutePath)
 
@@ -962,9 +980,9 @@ class SaagieUtils {
         return newRequest
     }
 
-    Request getListAllPipelinesRequest() {
+    Request getAllProjectPipelinesRequest() {
         Project project = configuration.project
-        logger.debug('Generating getListAllPipelinesRequest for project [id={}]', project.id)
+        logger.debug('Generating getAllProjectPipelinesRequest for project [id={}]', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
@@ -1087,6 +1105,10 @@ class SaagieUtils {
                         dockerInfo {
                             image
                             dockerCredentialsId
+                        }
+                        extraTechnology {
+                           language
+                           version
                         }
                         commandLine
                         isCurrent

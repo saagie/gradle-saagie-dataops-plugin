@@ -97,10 +97,8 @@ class ImportPipelineService {
             jobs = getJobsNameFromJobList(jobList, pipelineVersionMap.jobs)
         }
 
-        if (pipelineVersion.releaseNote) {
-            pipelineVersion {
-                releaseNote = pipelineVersion.releaseNote
-            }
+        if (pipelineVersionMap.releaseNote) {
+            pipelineVersion.releaseNote = pipelineVersionMap.releaseNote
         }
 
         return pipelineVersion
