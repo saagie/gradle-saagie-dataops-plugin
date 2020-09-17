@@ -85,7 +85,7 @@ class HttpClientBuilder {
         setTimeOutForBuildFromTheConfiguration(builder, configuration).build()
     }
 
-    static setTimeOutForBuildFromTheConfiguration(OkHttpClient.Builder builder, DataOpsExtension configuration) {
+    static OkHttpClient.Builder setTimeOutForBuildFromTheConfiguration(OkHttpClient.Builder builder, DataOpsExtension configuration) {
         builder.connectTimeout(configuration.server.timeout, TimeUnit.SECONDS)
         builder.readTimeout(configuration.server.timeout, TimeUnit.SECONDS)
         builder.writeTimeout(configuration.server.timeout, TimeUnit.SECONDS)
