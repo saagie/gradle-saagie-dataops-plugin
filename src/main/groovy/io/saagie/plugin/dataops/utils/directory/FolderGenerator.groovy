@@ -102,7 +102,8 @@ class FolderGenerator {
                                 it.number,
                                 jobId,
                                 it.packageInfo?.name,
-                                it.number as String
+                                it.number as String,
+                                it.isV1
                             )
                         }
                     }
@@ -113,7 +114,9 @@ class FolderGenerator {
                         urlJobIdFolder,
                         exportJob.downloadUrlVersion,
                         jobId,
-                        exportJob.downloadUrl
+                        exportJob.downloadUrl,
+                        "",
+                        exportJob.isV1
                     )
                 }
 
