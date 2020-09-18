@@ -31,10 +31,11 @@ projectsCreatePipeline - Create a pipeline
 projectsDelete - Archive a project
 projectsDeleteJob - Delete a job
 projectsDeletePipeline - delete a pipeline
-projectsExport - Export a list of jobs or pipelines for a project to a zip extension
+projectsExport - Export a list of jobs, pipelines and environments variables for a project to a zip format
+projectsExportV1 - Export a list of jobs, pipelines and environment variables from Manager to a zip format so it can be imported into V2 ( projects )
 projectsGetJobInstanceStatus - Get the status of a job instance
 projectsGetPipelineInstanceStatus - Get the status of a pipeline instance
-projectsImport - Import a List of jobs or pipelines using the artifacts from a zip location
+projectsImport - Import a List of jobs, pipelines or environment variables using the artifacts from a zip location
 projectsList - List all projects on the environment
 projectsListJobs - List all jobs of a project
 projectsListPipelines - List all pipelines of a project

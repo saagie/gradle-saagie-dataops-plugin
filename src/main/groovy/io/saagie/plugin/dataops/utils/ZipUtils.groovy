@@ -1,11 +1,13 @@
 package io.saagie.plugin.dataops.utils
 
-import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipOutputStream
+
+import net.lingala.zip4j.ZipFile
+import net.lingala.zip4j.exception.ZipException
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging;
 
 class ZipUtils {
-
+    static final Logger logger = Logging.getLogger(ZipUtils.class)
     /**
      * Zip provided files
      * @param inputDir Directory to zip
@@ -14,18 +16,14 @@ class ZipUtils {
      */
 
     static File unzip(String zipFileName, String outputDir) {
-        def zip = new ZipFile(new File(zipFileName))
-        zip.entries().each {
-            if (!it.isDirectory()) {
-                def fOut = new File(outputDir + File.separator + it.name)
-                new File(fOut.parent).mkdirs()
-                def fos = new FileOutputStream(fOut)
-                def buf = new byte[it.size]
-                def len = zip.getInputStream(it).read(buf)
-                fos.write(buf, 0, len)
-                fos.close()
-            }
+        try {
+            ZipFile zipFile = new ZipFile(zipFileName);
+            zipFile.extractAll(outputDir);
+        } catch (ZipException e) {
+            logger.error("unzipping failed");
+            logger.error(e.message)
+            e.printStackTrace();
         }
-        zip.close()
+
     }
 }
