@@ -25,19 +25,17 @@ Saagie tasks
 ------------
 groupList - List all groups for the user
 platformList - List available platforms
-projectExportJob1 - export v1 job for saagie
-projectExportJob2 - export v1 job for saagie
 projectsCreate - Create a brand new project
 projectsCreateJob - Create a brand new job in a project
 projectsCreatePipeline - Create a pipeline
 projectsDelete - Archive a project
 projectsDeleteJob - Delete a job
 projectsDeletePipeline - delete a pipeline
-projectsExport - Export a list of jobs or pipelines for a project to a zip extension
-projectsExportV1 - Export a list of jobs or pipelines from Manager to a zip format to be imported into V2( projects)
+projectsExport - Export a list of jobs, pipelines and environments variables for a project to a zip format
+projectsExportV1 - Export a list of jobs, pipelines and environment variables from Manager to a zip format so it can be imported into V2 ( projects )
 projectsGetJobInstanceStatus - Get the status of a job instance
 projectsGetPipelineInstanceStatus - Get the status of a pipeline instance
-projectsImport - Import a List of jobs or pipelines using the artifacts from a zip location
+projectsImport - Import a List of jobs, pipelines or environment variables using the artifacts from a zip location
 projectsList - List all projects on the environment
 projectsListJobs - List all jobs of a project
 projectsListPipelines - List all pipelines of a project
@@ -50,7 +48,6 @@ projectsUpdate - Update an existing project
 projectsUpgradeJob - Upgrade a existing job in a project
 projectsUpgradePipeline - Upgrade a pipeline
 technologyList - List all technologies for the user
-
 ```
 
 ## Quick Example
