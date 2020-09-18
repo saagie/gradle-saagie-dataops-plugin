@@ -125,14 +125,14 @@ class DataOpsModule {
 
         project.task(PROJECTS_EXPORT_ARTIFACTS, type: ProjectsExportJobTask) {
             group = TASK_GROUP
-            description = 'Export a list of jobs or pipelines for a project to a zip extension'
+            description = 'Export a list of jobs, pipelines and environments variables for a project to a zip format'
             configuration = project.saagie
             taskName = PROJECTS_EXPORT_ARTIFACTS
         }
 
         project.task(PROJECTS_EXPORT_ARTIFACTS_V1, type: ProjectsExportJobV1Task) {
             group = TASK_GROUP
-            description = 'Export a list of jobs or pipelines from Manager to a zip format to be imported into V2( projects)'
+            description = 'Export a list of jobs, pipelines and environment variables from Manager to a zip format so it can be imported into V2 ( projects )'
             configuration = project.saagie
             taskName = PROJECTS_EXPORT_ARTIFACTS_V1
         }
@@ -230,7 +230,7 @@ class DataOpsModule {
 
         project.task(PROJECTS_IMPORT_ARTIFACTS_JOB, type: ProjectsImportJobTask) {
             group = TASK_GROUP
-            description = 'Import a List of jobs or pipelines using the artifacts from a zip location'
+            description = 'Import a List of jobs, pipelines or environment variables using the artifacts from a zip location'
             configuration = project.saagie
             taskName = PROJECTS_IMPORT_ARTIFACTS_JOB
         }
