@@ -11,7 +11,7 @@ This plugin is only compatible with gradle 3.0+
 
 ```
 plugins {
-  id "io.saagie.gradle-saagie-dataops-plugin" version "2.1.2"
+  id "io.saagie.gradle-saagie-dataops-plugin" version "2.1.10"
 }
 ```
 
@@ -25,6 +25,8 @@ Saagie tasks
 ------------
 groupList - List all groups for the user
 platformList - List available platforms
+projectExportJob1 - export v1 job for saagie
+projectExportJob2 - export v1 job for saagie
 projectsCreate - Create a brand new project
 projectsCreateJob - Create a brand new job in a project
 projectsCreatePipeline - Create a pipeline
@@ -32,6 +34,7 @@ projectsDelete - Archive a project
 projectsDeleteJob - Delete a job
 projectsDeletePipeline - delete a pipeline
 projectsExport - Export a list of jobs or pipelines for a project to a zip extension
+projectsExportV1 - Export a list of jobs or pipelines from Manager to a zip format to be imported into V2( projects)
 projectsGetJobInstanceStatus - Get the status of a job instance
 projectsGetPipelineInstanceStatus - Get the status of a pipeline instance
 projectsImport - Import a List of jobs or pipelines using the artifacts from a zip location
@@ -47,6 +50,7 @@ projectsUpdate - Update an existing project
 projectsUpgradeJob - Upgrade a existing job in a project
 projectsUpgradePipeline - Upgrade a pipeline
 technologyList - List all technologies for the user
+
 ```
 
 ## Quick Example

@@ -50,10 +50,28 @@ class DataOpsExtension {
 
     EnvVariable env = new EnvVariable()
 
+    EnvVariable newTaskContext = new EnvVariable()
+
     // ====== Closures to create a proper DSL
     Object server(Closure closure) {
         server = new Server()
         server.with(closure)
+    }
+
+    Object newTaskContext(Closure closure) {
+        project = new Project()
+        job = new Job()
+        jobVersion = new JobVersion()
+        jobinstance = new JobInstance()
+        pipeline = new Pipeline()
+        env = new EnvVariable()
+        pipelineVersion = new PipelineVersion()
+        pipelineinstance = new PipelineInstance()
+        importArtifacts = new ImportJob()
+        jobOverride = new ArtifactPropertyOverride()
+        pipelineOverride = new ArtifactPropertyOverride()
+        exportArtifacts = new Export()
+        newTaskContext.with(closure)
     }
 
     Object propertyOverride(Closure closure) {
