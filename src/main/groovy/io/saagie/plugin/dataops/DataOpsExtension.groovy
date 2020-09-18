@@ -50,7 +50,7 @@ class DataOpsExtension {
 
     EnvVariable env = new EnvVariable()
 
-    EnvVariable newTaskContext = new EnvVariable()
+    Object newTaskContext = new Object()
 
     // ====== Closures to create a proper DSL
     Object server(Closure closure) {
