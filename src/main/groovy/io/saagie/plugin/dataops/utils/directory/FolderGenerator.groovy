@@ -103,7 +103,7 @@ class FolderGenerator {
                                 jobId,
                                 it.packageInfo?.name,
                                 it.number as String,
-                                it.isV1
+                                exportJob.isV1
                             )
                         }
                     }
