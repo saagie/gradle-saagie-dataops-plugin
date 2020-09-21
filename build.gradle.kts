@@ -48,6 +48,7 @@ dependencies {
     compile("org.apache.httpcomponents", "httpclient", httpclient)
     compile("org.threeten", "threeten-extra", "1.5.0")
     compile("net.lingala.zip4j", "zip4j", "2.6.1")
+    compile("com.squareup.okio", "okio", "2.8.0")
     implementation("javax.validation:validation-api:$validationApiVersion")
     implementation("org.hibernate.validator:hibernate-validator:$hibernateValidatorVersion")
     implementation("org.hibernate.validator:hibernate-validator-annotation-processor:$hibernateValidatorVersion")
