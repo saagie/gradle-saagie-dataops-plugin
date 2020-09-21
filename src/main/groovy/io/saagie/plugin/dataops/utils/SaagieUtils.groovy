@@ -19,6 +19,8 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okio.BufferedSink
+import okio.Okio
 import org.apache.tika.Tika
 import okhttp3.Response
 import okio.Buffer
@@ -1281,30 +1283,23 @@ class SaagieUtils {
         return newRequest
     }
 
-    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, name) {
-        InputStream inputStream = null
-        OutputStream outputStream = null
-
+    void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, String name) {
         try {
+
             logger.debug("Downloading artifiacts ....")
             Request request = this.buildRequestForFile(urlFrom)
-            def response = client.newCall(request).execute()
-            inputStream = response.body().byteStream()
-            outputStream = new FileOutputStream(new File(to + "/" + name))
-            byte[] buffer = new byte[2048]
-            int length
-            int downloaded = 0
-            while ((length = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, length)
-                downloaded += length
+            OkHttpClient clientToDownloadFile = new OkHttpClient.Builder().build();
+            def response = clientToDownloadFile.newCall(request).execute()
 
-            }
+            File file = new File(to + "/" + name);
+
+            BufferedSink sink = Okio.buffer(Okio.sink(file));
+            sink.writeAll(response.body().source());
+            sink.close()
         } catch (Exception ex) {
             throw new GradleException(ex.message)
         }
         logger.debug("Artifacts downloaded.")
-        outputStream.close()
-        inputStream.close()
     }
 
     Request buildRequestForFile(String url) {
