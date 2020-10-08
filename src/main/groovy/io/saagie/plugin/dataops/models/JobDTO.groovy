@@ -9,6 +9,7 @@ class JobDTO implements IExists {
     String description
     String category
     String technology
+    String technologyName
     Boolean isScheduled
     String cronScheduling
     AlertingDTO alerting = new AlertingDTO()
@@ -34,6 +35,7 @@ class JobDTO implements IExists {
         description = jobDetailResult.description //
         category = jobDetailResult.category //
         technology = jobDetailResult.technology.id
+        technologyName = jobDetailResult.technology.label
         isScheduled = jobDetailResult.isScheduled
         cronScheduling = jobDetailResult.cronScheduling
         alerting = jobDetailResult.alerting
