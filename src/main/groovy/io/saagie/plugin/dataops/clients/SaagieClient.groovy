@@ -1079,6 +1079,15 @@ class SaagieClient {
                                 logger.debug("the is no package info here")
                             }
                         }
+
+                        if (configuration.job.include_all_versions) {
+                            if (jobDetailResult?.versions?.size() > 1) {
+                                jobDetailResult.versions.each {
+                                    exportJob.addJobVersionFromV2ApiResult(it)
+                                }
+                            }
+                        }
+
                     } else {
                         def messageEmptyVersions = "No versions for the job $jobId"
                         logger.error(messageEmptyVersions)
@@ -1416,6 +1425,14 @@ class SaagieClient {
                                     configuration.job.ids = [jobIds, it.jobs.id].flatten()
                                 }
                             }
+                            if(configuration.pipeline.include_all_versions) {
+                                if (pipelineDetailResult?.versions && pipelineDetailResult?.versions.size() > 1) {
+                                    pipelineDetailResult.versions.each {
+                                        exportPipeline.addPipelineVersionFromV2ApiResult(it)
+                                    }
+                                }
+                            }
+
                         } else {
                             def messageEmptyVersions = "No versions for the pipeline $pipelineId"
                             logger.error(messageEmptyVersions)
