@@ -18,6 +18,7 @@ class TechnologyService {
     def technologiesVersionsRequest
     JsonSlurper slurper
     static final Logger logger = Logging.getLogger(TechnologyService.class)
+    def isInitialised = false
 
     def init(
         client,
@@ -29,6 +30,7 @@ class TechnologyService {
         this.slurper = slurper
         this.technologiesRequest = technologiesRequest
         this.technologiesVersionsRequest = technologiesVersionsRequest
+        this.isInitialised = true
     }
 
     def getTechnologies() {
@@ -98,7 +100,7 @@ class TechnologyService {
         SaagieUtils.handleErrorClosure(logger, response)
     }
 
-    def getV2TechnologyByV1Name(String name) {
+    def getV2TechnologyByName(String name) {
         checkReady()
         if (name.equals('java-scala') || name.equals('java')) {
             return findTechnologyByName('Java/Scala')

@@ -75,6 +75,15 @@ class SaagieClient {
         client = HttpClientBuilder.getHttpClient(configuration)
 
         this.checkBaseConfiguration()
+        def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
+        def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
+
+        TechnologyService.instance.init(
+            client,
+            allTechnologies,
+            allTechnologyVersions,
+            slurper
+        )
     }
 
     private checkBaseConfiguration() {
@@ -1117,17 +1126,9 @@ class SaagieClient {
                 logger.debug("getJobDetailV1 response $responseBody")
                 testIfJobV1isValid(parsedV1job)
 
-                def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
-                def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
 
-                TechnologyService.instance.init(
-                    client,
-                    allTechnologies,
-                    allTechnologyVersions,
-                    slurper
-                )
 
-                def technologyV2 = TechnologyService.instance.getV2TechnologyByV1Name(parsedV1job.capsule_code)
+                def technologyV2 = TechnologyService.instance.getV2TechnologyByName(parsedV1job.capsule_code)
                 if (!technologyV2) {
                     throwAndLogError("No technology found from the v1 version to the v2 version")
                 }
@@ -1756,9 +1757,20 @@ class SaagieClient {
                 variable: []
             ]
             def listJobs = null
-            def processJobImportation = { newMappedJobData, job, id, versions = null ->
+            def processJobImportation = { newMappedJobData, job, id, versions = null, technologyName ->
+                if(technologyName != null) {
+                    def technologyV2 = TechnologyService.instance.getV2TechnologyByName(technologyName);
+                    if(technologyV2 && !technologyV2.isAvailable ){
+                        throwAndLogError("Technology ${technologyName} is not available on the targeted server");
+                    }
+
+                    if(technologyV2 && technologyV2.id) {
+                        newMappedJobData.job.technology = technologyV2.id
+                    }
+                }
                 def jobToImport = new Job()
                 def jobVersionToImport = new JobVersion()
+
                 jobToImport = newMappedJobData.job
                 jobVersionToImport = newMappedJobData.jobVersion
                 listJobs = getJobListByNameAndId()
@@ -2076,7 +2088,6 @@ class SaagieClient {
 
         ExportJob[] exportJobs = getAllProjectJobsFromProject()
 
-
         ExportVariables[] exportVariables = []
         boolean variablesExportedIsEmpty = false
         //we will export only the environment variable with scope project
@@ -2085,7 +2096,6 @@ class SaagieClient {
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 
         return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty]
-
     }
 
     ExportPipeline[] getAllProjectPipelinesFromProject() {
