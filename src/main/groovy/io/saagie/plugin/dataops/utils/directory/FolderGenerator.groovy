@@ -61,7 +61,7 @@ class FolderGenerator {
                     name          : exportJob.jobDTO.name,
                     category      : exportJob.jobDTO.category,
                     technology    : exportJob.jobDTO.technology,
-                    technologyName    : exportJob.jobDTO.technologyName,
+                    technologyName: exportJob.jobDTO.technologyName,
                     isScheduled   : exportJob.jobDTO.isScheduled,
                     cronScheduling: exportJob.jobDTO.cronScheduling,
                 ]
