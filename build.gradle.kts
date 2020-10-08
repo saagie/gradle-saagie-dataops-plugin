@@ -90,11 +90,12 @@ release {
 tasks {
     val replaceVersionInFiles by creating {
         doLast {
+             val properties = File("gradle.properties")
+            properties.writeText(properties.readText().replace(previousVersion, version.replace("-SNAPSHOT", "")))
             val readMe = File("README.md")
             val regex = "id\\s\\\"io\\.saagie\\.gradle\\-saagie\\-dataops\\-plugin\\\"\\sversion\\s\\\"([0-9\\.]+)\\"
             readMe.writeText(regex.toRegex().replace(readMe.readText(), "id \"io.saagie.gradle-saagie-dataops-plugin\" version \"${version}\""))
-            val properties = File("gradle.properties")
-            properties.writeText(properties.readText().replace(previousVersion, version.replace("-SNAPSHOT", "")))
+
         }
     }
     val prepareDocCommit by creating(Exec::class) {
