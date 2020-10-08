@@ -99,7 +99,7 @@ class ImportJobService {
                 }
             }
 
-            mapClosure(newMappedJobData, job, job.key, versions)
+            mapClosure(newMappedJobData, job, job.key, versions, newJobConfigWithOverride.technologyName)
         }
 
     }
