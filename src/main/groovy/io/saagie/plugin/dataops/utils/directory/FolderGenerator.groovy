@@ -349,8 +349,8 @@ class FolderGenerator {
     Map generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
         def jobForPipeVersionArray = []
         if (pipelineVersionDTO && pipelineVersionDTO.jobs) {
-            jobList.each { job ->
-                pipelineVersionDTO?.jobs?.each { jobId ->
+            pipelineVersionDTO?.jobs?.each { jobId ->
+                jobList.each { job ->
                     if (jobId && job && jobId.id == job.id) {
                         jobForPipeVersionArray.add([
                             id  : job.id,
