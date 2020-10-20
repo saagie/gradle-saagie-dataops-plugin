@@ -352,6 +352,70 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectTechnologies)
     }
 
+//    ================= App request =====================
+
+    Request getAppDetailRequest(String appId) {
+        logger.debug('Generating App detail with id', appId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([id: appId])
+
+        def getAppDetailQuery = gq('''
+            labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number        __typename      }      __typename    }    versions {     number      creator      creationDate      number      isCurrent      releaseNote      dockerInfo {        image        dockerCredentialsId       __typename      }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName        __typename      }      storagePaths     __typename    }    alerting {      emails      statusList      loginEmails {        login        email       __typename      }      __typename    }    technology {     id      __typename    }    __typename  }}
+        ''', gqVariables)
+        return buildRequestFromQuery(getAppDetailQuery)
+    }
+
+    Request getAppListByNameAndIdRequest(String projectId) {
+        logger.debug('Generating app list for project with id', projectId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([projectId: projectId])
+
+        def getAppsListQuery = gq('''
+            query labWebAppsQuery($projectId: UUID!) {  labWebApps(projectId: $projectId) {  id   name  }}
+        ''', gqVariables)
+        return buildRequestFromQuery(getAppsListQuery)
+    }
+
+    Request getAppTechnologiesList(String appId) {
+        logger.debug('Generating technologies for application with id', appId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([id: appId])
+
+        def getAppTechnologiesListQuery = gq('''
+            query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags        __typename      }      __typename    }    __typename  }}
+        ''', gqVariables)
+        return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
+    }
+
+    Request updateAppVersion(String appId ) {
+        logger.debug('Updating application version for application with id', appId)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([id: appId])
+
+        def getAppTechnologiesListQuery = gq('''
+            query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags        __typename      }      __typename    }    __typename  }}
+        ''', gqVariables)
+        return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
+    }
+
+    Request getProjectCreateAppRequest(String appId) {
+        logger.debug('Updating application version for application with id', appId)
+        return createJobModel();
+    }
+//    ========================================
+
     Request getPipelineRequestFromParamV1(String pipelineId) {
         Server server = configuration.server
         logger.debug('Generating request in order to get pipeline detail from V1')
@@ -449,14 +513,20 @@ class SaagieUtils {
         Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
         logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
 
+        return createJobModel(mapedJobAndJobVersion);
+    }
+
+    Request createJobModel(Map jobMapper) {
+        logger.debug('Generating createJobModel [jobMaper={}]', jobMapper)
+
         def jsonGenerator = new JsonGenerator.Options()
             .excludeNulls()
             .excludeFieldsByName('usePreviousArtifact')
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            job       : mapedJobAndJobVersion?.job,
-            jobVersion: mapedJobAndJobVersion?.jobVersion
+            job       : jobMapper?.job,
+            jobVersion: jobMapper?.jobVersion
         ]);
 
         def createProjectJob = gq('''
@@ -501,7 +571,7 @@ class SaagieUtils {
 
         def createProjectJob = gq(''' mutation createJobMutation($job: JobInput!, $jobVersion: JobVersionInput!, $file: Upload) { createJob(job: $job, jobVersion: $jobVersion, file: $file) { id name } } ''', gqVariablesWithNullFile)
 
-        return buildMultipartRequestFromQuery(createProjectJob, file,  job, jobVersion)
+        return buildMultipartRequestFromQuery(createProjectJob, file, job, jobVersion)
     }
 
     Request getProjectUpdateJobRequest() {
@@ -1256,25 +1326,31 @@ class SaagieUtils {
         return buildRequestFromQuery(listVersionForAJobRequest)
     }
 
-    private Request buildRequestFromQuery(String query) {
+    private Request buildRequestFromQuery(String query, isBearer = false, isGateway = false) {
         logger.debug('Generating request from query="{}"', query)
         RequestBody body = RequestBody.create(query, JSON)
         Server server = configuration.server
         Request newRequest
+        String url
+        if (isGateway) {
+            url = "${removeLastSlash(configuration.server.url)}/gateway/api/graphql"
+        } else {
+            url = "${removeLastSlash(configuration.server.url)}/projects/api/platform/${configuration.server.environment}/graphql";
+        }
         if (server.jwt) {
             logger.debug('Generating graphql request with JWT auth...')
             def realm = server.realm
             def jwtToken = server.token
             newRequest = new Request.Builder()
-                .url("${configuration.server.url}/projects/api/platform/${configuration.server.environment}/graphql")
+                .url(url)
                 .addHeader('Cookie', "SAAGIETOKEN$realm=$jwtToken")
                 .post(body)
                 .build()
         } else {
             logger.debug('Generating graphql request with basic auth...')
             newRequest = new Request.Builder()
-                .url("${configuration.server.url}/api/v1/projects/platform/${configuration.server.environment}/graphql")
-                .addHeader('Authorization', getCredentials())
+                .url(url)
+                .addHeader('Authorization', !isBearer ? getCredentials() : getBearerCredentials())
                 .post(body)
                 .build()
         }
@@ -1282,6 +1358,7 @@ class SaagieUtils {
         debugRequest(newRequest)
         return newRequest
     }
+
 
     void downloadFromHTTPSServer(String urlFrom, String to, OkHttpClient client, String name) {
         try {
@@ -1321,17 +1398,15 @@ class SaagieUtils {
         return url ? url.substring(url.lastIndexOf('/') + 1, url.length()) : null
     }
 
-    static removeLastSlash(String url) {
-        if (url.endsWith("/")) {
-            url = url.substring(0, url.length() - 1)
-        }
-        return url
-    }
-
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
     }
 
+    private String getBearerCredentials() {
+        Server server = configuration.server
+        String jwtToken = server.token
+        return "Bearer ${jwtToken}"
+    }
     // From stackoverflow: https://stackoverflow.com/a/36072704/8543172
     static Map extractProperties(obj) {
         obj.getClass()
@@ -1458,5 +1533,11 @@ class SaagieUtils {
         return value ? value : '*'
     }
 
+    static String removeLastSlash(String url) {
+        if (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
+        }
+        return url
+    }
 
 }
