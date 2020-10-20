@@ -2,6 +2,9 @@ package io.saagie.plugin.dataops.utils
 
 import groovy.json.JsonGenerator
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.App
+import io.saagie.plugin.dataops.models.AppMapper
+import io.saagie.plugin.dataops.models.AppVersionDTO
 import io.saagie.plugin.dataops.models.Job
 import io.saagie.plugin.dataops.models.JobInstance
 import io.saagie.plugin.dataops.models.JobMapper
@@ -396,23 +399,27 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
     }
 
-    Request updateAppVersion(String appId ) {
+    Request updateAppVersion(String appId, AppVersionDTO appVersionDTO  ) {
         logger.debug('Updating application version for application with id', appId)
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([id: appId])
+        def gqVariables = jsonGenerator.toJson([
+            appId: appId,
+            appVersion: appVersionDTO
+        ])
 
-        def getAppTechnologiesListQuery = gq('''
-            query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags        __typename      }      __typename    }    __typename  }}
+        def getUpdateAppVersionQuery = gq('''
+            mutation addAppVersionMutation($appId: UUID!, $appVersion: JobVersionInput!) {  addJobVersion(jobId: $appId, jobVersion: $appVersion) {    number    __typename  }}
         ''', gqVariables)
-        return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
+        return buildRequestFromQuery(getUpdateAppVersionQuery)
     }
 
-    Request getProjectCreateAppRequest(String appId) {
+    Request getProjectCreateAppRequest(App app, AppVersionDTO appVersionDTO) {
+        Map mapedAppAndAppVersion = AppMapper.mapAppAndAppVersionWithoutMail(app, appVersionDTO, configuration.project.id)
         logger.debug('Updating application version for application with id', appId)
-        return createJobModel();
+        return createJobModel(mapedAppAndAppVersion);
     }
 //    ========================================
 
