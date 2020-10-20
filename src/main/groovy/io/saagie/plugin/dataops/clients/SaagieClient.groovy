@@ -1135,7 +1135,6 @@ class SaagieClient {
                 testIfJobV1isValid(parsedV1job)
 
 
-
                 def technologyV2 = TechnologyService.instance.getV2TechnologyByName(parsedV1job.capsule_code)
                 if (!technologyV2) {
                     throwAndLogError("No technology found from the v1 version to the v2 version")
@@ -1434,7 +1433,7 @@ class SaagieClient {
                                     configuration.job.ids = [jobIds, it.jobs.id].flatten()
                                 }
                             }
-                            if(configuration.pipeline?.include_all_versions) {
+                            if (configuration.pipeline?.include_all_versions) {
                                 if (pipelineDetailResult?.versions && pipelineDetailResult?.versions.size() > 1) {
                                     pipelineDetailResult.versions.each {
                                         exportPipeline.addPipelineVersionFromV2ApiResult(it)
@@ -1476,9 +1475,11 @@ class SaagieClient {
         }
         return arrayPipelines as ExportPipeline[]
     }
+
     ExportApp[] getListAppAndAppVersionsFromConfig() {
         return getListAppAndAppVersions(this.&getAppAndAppVersionDetailToExport)
     }
+
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         return getListJobAndJobVersions(this.&getJobAndJobVersionDetailToExport)
     }
@@ -1783,13 +1784,13 @@ class SaagieClient {
             ]
             def listJobs = null
             def processJobImportation = { newMappedJobData, job, id, versions = null, technologyName ->
-                if(technologyName != null) {
+                if (technologyName != null) {
                     def technologyV2 = TechnologyService.instance.getV2TechnologyByName(technologyName);
-                    if(technologyV2 && !technologyV2.isAvailable ){
+                    if (technologyV2 && !technologyV2.isAvailable) {
                         throwAndLogError("Technology ${technologyName} is not available on the targeted server");
                     }
 
-                    if(technologyV2 && technologyV2.id) {
+                    if (technologyV2 && technologyV2.id) {
                         newMappedJobData.job.technology = technologyV2.id
                     }
                 }
@@ -2125,7 +2126,10 @@ class SaagieClient {
         configuration.env.include_all_var = true
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 
-        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty]
+        ExportApp[] exportApps = getAllProjectAppsFromProject()
+
+
+        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps]
     }
 
     ExportPipeline[] getAllProjectPipelinesFromProject() {
@@ -2184,6 +2188,10 @@ class SaagieClient {
         return mapJobListForProjectResultFromApiToExportJobs(this.getListOfAllProjectJobs())
     }
 
+    ExportApp[] getAllProjectAppsFromProject() {
+        return mapAppListForProjectResultFromApiToExportApps(this.getListOfAllProjectApps())
+    }
+
     private getListOfAllProjectJobs() {
         def listJobs = []
         tryCatchClosure({
@@ -2203,6 +2211,7 @@ class SaagieClient {
         }, 'Unknown error in getListOfAllProjectJobs', 'getProjectJobs Request')
 
     }
+
 
     private ExportJob[] mapJobListForProjectResultFromApiToExportJobs(jobList) {
 
@@ -2236,5 +2245,17 @@ class SaagieClient {
         return arrayJobs as ExportJob[]
     }
 
+    private getListOfAllProjectApps() {
+        def listApps = []
 
+        // TODO: add a methode in SaggieUtils to Request all the apps for a project
+        // TODO: add closure
+    }
+
+
+    private ExportApp[] mapAppListForProjectResultFromApiToExportApps(appList) {
+
+        def arrayApps = []
+        return arrayApps as ExportApp[]
+    }
 }
