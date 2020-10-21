@@ -274,7 +274,7 @@ class SaagieUtils {
         ])
 
         def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation($entityId: UUID, $envVar: EnvironmentVariableInput!) {  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {    id   name   __typename  }}
+            mutation saveGlobalEnvVarMutation($entityId: UUID, $envVar: EnvironmentVariableInput!) {  saveEnvironmentVariable(entityId: $entityId, environmentVariable: $envVar) {    id   name   }}
         ''', gqVariables)
 
         return buildRequestFromQuery(getProjectInstanceStatus)
@@ -293,7 +293,7 @@ class SaagieUtils {
         ])
 
         def getProjectInstanceStatus = gq('''
-            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) { saveEnvironmentVariable(environmentVariable: $envVar) {    id name  __typename  }}
+            mutation saveGlobalEnvVarMutation($envVar: EnvironmentVariableInput!) { saveEnvironmentVariable(environmentVariable: $envVar) {    id name    }}
         ''', gqVariables)
 
         return buildRequestFromQuery(getProjectInstanceStatus)
@@ -366,7 +366,7 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([id: appId])
 
         def getAppDetailQuery = gq('''
-            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number        __typename      }      __typename    }    versions {     number      creator      creationDate      number      isCurrent      releaseNote      dockerInfo {        image        dockerCredentialsId       __typename      }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName        __typename      }      storagePaths     __typename    }    alerting {      emails      statusList      loginEmails {        login        email       __typename      }      __typename    }    technology {     id  label     __typename    }    __typename  }}
+            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote      dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
         ''', gqVariables)
         return buildRequestFromQuery(getAppDetailQuery)
     }
@@ -394,7 +394,7 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([id: appId])
 
         def getAppTechnologiesListQuery = gq('''
-            query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags        __typename      }      __typename    }    __typename  }}
+            query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags              }          }      }}
         ''', gqVariables)
         return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
     }
@@ -411,7 +411,7 @@ class SaagieUtils {
         ])
 
         def getUpdateAppVersionQuery = gq('''
-            mutation addAppVersionMutation($appId: UUID!, $appVersion: JobVersionInput!) {  addJobVersion(jobId: $appId, jobVersion: $appVersion) {    number    __typename  }}
+            mutation addAppVersionMutation($appId: UUID!, $appVersion: JobVersionInput!) {  addJobVersion(jobId: $appId, jobVersion: $appVersion) {    number      }}
         ''', gqVariables)
         return buildRequestFromQuery(getUpdateAppVersionQuery)
     }

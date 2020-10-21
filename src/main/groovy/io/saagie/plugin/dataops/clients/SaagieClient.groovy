@@ -931,7 +931,7 @@ class SaagieClient {
         ExportVariables[] exportVariables
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 
-        return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
+        return export(exportPipelines, exportJobs, exportVariables,null,  listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
     }
 
     String exportArtifactsV2() {
@@ -1074,10 +1074,20 @@ class SaagieClient {
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null || parsedResult.data.labWebApp == null) {
-                    def message = "Something went wrong when getting app detail: $responseBody for app id $appId"
+                    def message = null
+                    if(parsedResult.data == null) {
+                        message = "Something went wrong when getting app detail: $responseBody for app id $appId"
+                        logger.error(message)
+                    }
+
+                    if(parsedResult.data.labWebApp == null) {
+                        message = "App with id $appId does not exist"
+                    }
+
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
+                    logger.debug("getAppAndAppVersionDetailToExport response $responseBody")
                     def appDetailResult = parsedResult.data.labWebApp
                     exportApp.setAppFromApiResult(appDetailResult)
                     if (appDetailResult.versions && !appDetailResult.versions.isEmpty()) {
