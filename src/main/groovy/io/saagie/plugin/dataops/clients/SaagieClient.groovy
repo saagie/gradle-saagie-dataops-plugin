@@ -1065,7 +1065,46 @@ class SaagieClient {
             !configuration?.apps?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
-        
+
+        tryCatchClosure({
+            Request getAppDetail = saagieUtils.getAppDetailRequest(appId)
+            ExportApp exportApp = new ExportApp()
+            client.newCall(getAppDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null || parsedResult.data.labWebApp == null) {
+                    def message = "Something went wrong when getting app detail: $responseBody for app id $appId"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    def appDetailResult = parsedResult.data.labWebApp
+                    exportApp.setAppFromApiResult(appDetailResult)
+                    if (appDetailResult.versions && !appDetailResult.versions.isEmpty()) {
+                        appDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                        appDetailResult.versions.each {
+                            if (it.isCurrent) {
+                                exportApp.setAppVersionFromApiResult(it)
+                            }
+                        }
+
+                        if (configuration.apps?.include_all_versions) {
+                            if (appDetailResult?.versions?.size() > 1) {
+                                appDetailResult.versions.each {
+                                    exportApp.addAppVersionFromV2ApiResult(it)
+                                }
+                            }
+                        }
+
+                    } else {
+                        def messageEmptyVersions = "No versions for the app $appId"
+                        logger.error(messageEmptyVersions)
+                        throw new GradleException(messageEmptyVersions)
+                    }
+                }
+            }
+            return exportApp
+        }, 'Unknown error in getAppAndAppVersionDetailToExport method', 'getAppDetailRequest request') as ExportApp
     }
 
     ExportJob getJobAndJobVersionDetailToExport(String jobId) {

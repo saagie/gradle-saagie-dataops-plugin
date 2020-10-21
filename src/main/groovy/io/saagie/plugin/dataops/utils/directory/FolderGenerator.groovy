@@ -2,16 +2,13 @@ package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.AppVersionDTO
-import io.saagie.plugin.dataops.models.DockerInfos
 import io.saagie.plugin.dataops.models.ExportApp
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.ExportVariables
-import io.saagie.plugin.dataops.models.ExposedPort
 import io.saagie.plugin.dataops.models.JobVersionDTO
 import io.saagie.plugin.dataops.models.PipelineVersionDTO
-import io.saagie.plugin.dataops.models.Resources
 import io.saagie.plugin.dataops.models.VariableEnvironmentDetailDTO
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
@@ -48,12 +45,12 @@ class FolderGenerator {
     }
 
     void generateFolderFromParams(variablesExportedIsEmpty) {
-        if (variablesExportedIsEmpty && checkExistenceOfJobsPipelinesAndVariables()) {
+        if (variablesExportedIsEmpty && checkExistenceOfJobsPipelinesVariablesAndApps()) {
             throw new GradleException("Cannot generate zip file")
         }
 
-        if (checkExistenceOfJobsPipelinesAndVariables()) {
-            throw new GradleException("jobs, pipelines and variables to be exported cannot be empty at the same time, and cannot generate zip file")
+        if (checkExistenceOfJobsPipelinesVariablesAndApps()) {
+            throw new GradleException("jobs, pipelines,variables and apps to be exported cannot be empty at the same time, and cannot generate zip file")
         }
         exportJobList.each { exportJob ->
             generateFolderForJob(exportJob)
@@ -528,8 +525,8 @@ class FolderGenerator {
     }
 
 
-    boolean checkExistenceOfJobsPipelinesAndVariables() {
-        return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length
+    boolean checkExistenceOfJobsPipelinesVariablesAndApps() {
+        return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length && !exportAppList.length
     }
 
     static extractNameFileFromUrl(String url) {

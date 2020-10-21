@@ -80,7 +80,7 @@ class AppMapper {
         }
 
         if (mappedApp.alerting?.emails) {
-            newAppConfig.app.put('alerting', [
+            newAppConfig.job.put('alerting', [
                 emails    : mappedApp.alerting?.emails,
                 statusList: mappedApp.alerting?.statusList,
                 logins    : mappedApp.alerting?.logins
