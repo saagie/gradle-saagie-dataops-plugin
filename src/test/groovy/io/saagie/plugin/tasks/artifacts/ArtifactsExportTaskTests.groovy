@@ -275,6 +275,123 @@ class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
         tempJobFile.delete()
     }
 
+
+    def "projectsExportJob should export app and app versions"() {
+        given:
+        File tempAppDirectory = File.createTempDir("project", ".tmp")
+        enqueueRequest("""{"data":{"labWebApp":{"id":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","name":"appname","description":"description","creationDate":"2020-10-15T08:24:31.747Z","isDeletable":true,"storageSizeInMB":68,"instances":[{"id":"35da0b4b-db64-4fc0-94cb-2b80c1afa3e3","status":"KILLED","statusDetails":null,"startTime":"2020-10-21T17:42:00.393Z","endTime":"2020-10-21T17:42:18.006Z","version":{"number":2}}],"versions":[{"number":2,"creator":"create_name","creationDate":"2020-10-21T17:41:59.327Z","isCurrent":true,"releaseNote":"Release note","dockerInfo":{"image":"dockervalidimage2","dockerCredentialsId":null},"exposedPorts":[{"name":"webapp","port":8080,"isAuthenticationRequired":false,"isRewriteUrl":true,"basePathVariableName":"app_path"},{"name":"weappoptional","port":4000,"isAuthenticationRequired":true,"isRewriteUrl":true,"basePathVariableName":null}],"storagePaths":["/test3","/test4"]},{"number":1,"creator":"creator.name","creationDate":"2020-10-15T08:24:31.747Z","isCurrent":false,"releaseNote":"release note message","dockerInfo":{"image":"dockervalidimage","dockerCredentialsId":null},"exposedPorts":[{"name":"portname","port":8080,"isAuthenticationRequired":true,"isRewriteUrl":true,"basePathVariableName":"port_name"}],"storagePaths":["/test","/test2"]}],"alerting":{"emails":["email.email@email.com"],"statusList":["SUCCEEDED","FAILED","REQUESTED","QUEUED","KILLING"],"loginEmails":[]},"technology":{"id":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","label":"Docker image"}}}}""")
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                apps {
+                    ids = ["xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"]
+                    include_all_versions = true
+                }
+
+                exportArtifacts {
+                    export_file = '${tempAppDirectory.getAbsolutePath()}/zipappfile.zip'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        def computedValue = """{"status":"success","exportfile":"${tempAppDirectory.getAbsolutePath()}/zipappfile.zip"}"""
+
+        then:
+        notThrown(Exception)
+        assert new File("${tempAppDirectory.getAbsolutePath()}/zipappfile.zip").exists()
+        result.output.contains(computedValue)
+        tempAppDirectory.deleteDir()
+    }
+
+    def "projectsExport should fail if app id doesn't exist"() {
+        given:
+        File tempAppDirectory = File.createTempDir("project", ".tmp")
+        enqueueRequest("""{"data": {"labWebApp": null}}""")
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                apps {
+                    ids = ["xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"]
+                    include_all_versions = true
+                }
+
+                exportArtifacts {
+                    export_file = '${tempAppDirectory.getAbsolutePath()}/zipappfile.zip'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("App with id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx does not exist")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
+    def "projectsExport should throw error if not app configuration provided"() {
+        given:
+        File tempAppDirectory = File.createTempDir("project", ".tmp")
+         buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                exportArtifacts {
+                    export_file = '${tempAppDirectory.getAbsolutePath()}/zipappfile.zip'
+                    overwrite = true
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        UnexpectedBuildFailure e = thrown()
+        result == null
+        e.message.contains("jobs, pipelines,variables and apps to be exported cannot be empty at the same time, and cannot generate zip file")
+        e.getBuildResult().task(":${taskName}").outcome == FAILED
+    }
+
     def "projectsExportJob should export job, job version, pipeLines, pipeline versions and environment variables"() {
         given:
         File tempJobDirectory = File.createTempDir("project", ".tmp")
