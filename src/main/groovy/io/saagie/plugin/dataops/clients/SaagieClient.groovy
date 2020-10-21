@@ -945,15 +945,18 @@ class SaagieClient {
         ExportJob[] exportJobs = []
 
         ExportVariables[] exportVariables = []
+
+        ExportApp[] exportApps = []
+
         boolean variablesExportedIsEmpty = false
 
         if (configuration.project.include_all_artifacts) {
-            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty) = exportAllArtifactsProject()
+            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps) = exportAllArtifactsProject()
         } else {
-            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty) = exportArtifactsFromProjectConfiguration()
+            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps) = exportArtifactsFromProjectConfiguration()
         }
 
-        return export(exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty)
+        return export(exportPipelines, exportJobs, exportVariables, exportApps, variablesExportedIsEmpty )
 
     }
 
@@ -967,7 +970,7 @@ class SaagieClient {
         return [exportVariables, variablesExportedIsEmpty]
     }
 
-    String export(ExportPipeline[] exportPipelines, ExportJob[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, boolean variablesExportedIsEmpty, isV1 = false) {
+    String export(ExportPipeline[] exportPipelines, ExportJob[] exportJobs, ExportVariables[] exportVariables, ExportApp[] exportApps, listJobWithNameAndIdV1 = null, boolean variablesExportedIsEmpty, isV1 = false) {
 
         ExportContainer exportContainer = [configuration]
         boolean customDirectoryExist = false
@@ -995,6 +998,7 @@ class SaagieClient {
             folder.exportJobList = exportJobs
             folder.exportPipelineList = exportPipelines
             folder.exportVariableList = exportVariables
+            folder.exportAppList = exportApps
             folder.jobList = listJobs
             folder.generateFolderFromParams(variablesExportedIsEmpty)
             ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryExist]
@@ -1061,6 +1065,7 @@ class SaagieClient {
             !configuration?.apps?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
+        
     }
 
     ExportJob getJobAndJobVersionDetailToExport(String jobId) {
