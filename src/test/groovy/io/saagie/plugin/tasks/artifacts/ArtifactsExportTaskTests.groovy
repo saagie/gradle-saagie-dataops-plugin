@@ -351,8 +351,6 @@ class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
         when:
         BuildResult result = gradle(taskName)
 
-        def computedValue = """{"status":"success","exportfile":"${tempAppDirectory.getAbsolutePath()}/zipappfile.zip"}"""
-
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
