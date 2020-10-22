@@ -4,13 +4,6 @@ class AppMapper {
     App job = new App()
     AppVersionDTO jobVersion = new AppVersionDTO()
 
-    public AppMapper() {
-        this.AppVersion.resources {
-            disk = 512
-            memory = 512
-            cpu = 0.3
-        }
-    }
 
     Object app(Closure closure) {
         app.with(closure)

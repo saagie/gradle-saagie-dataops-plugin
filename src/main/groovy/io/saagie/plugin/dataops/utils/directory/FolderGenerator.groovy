@@ -120,7 +120,7 @@ class FolderGenerator {
             throw new GradleException(e.message)
         }
     }
-    // TODO add logic for generateFolderForApp
+
     void generateFolderForApp(ExportApp exportApp) {
         def appId = exportApp.appDTO.id
         def urlAppIdFolder = "${inputDire}${sl}${name}${sl}App${sl}${appId}"

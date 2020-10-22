@@ -366,12 +366,12 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([id: appId])
 
         def getAppDetailQuery = gq('''
-            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote      dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
+            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote  resources{cpu memory disk}    dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
         ''', gqVariables)
         return buildRequestFromQuery(getAppDetailQuery)
     }
 
-    Request getAppListByNameAndIdRequest(String projectId) {
+    Request getAppListByProjectIdRequest(String projectId) {
         logger.debug('Generating app list for project with id', projectId)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -418,7 +418,7 @@ class SaagieUtils {
 
     Request getProjectCreateAppRequest(App app, AppVersionDTO appVersionDTO) {
         Map mapedAppAndAppVersion = AppMapper.mapAppAndAppVersionWithoutMail(app, appVersionDTO, configuration.project.id)
-        logger.debug('Updating application version for application with id', appId)
+        logger.debug('Generating getProjectCreateAppRequest [app={}, appVersion={}]', app, appVersionDTO)
         return createJobModel(mapedAppAndAppVersion);
     }
 //    ========================================

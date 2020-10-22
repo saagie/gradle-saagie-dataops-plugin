@@ -931,6 +931,7 @@ class SaagieClient {
         ExportVariables[] exportVariables
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 
+        // We need to put null because we don't export applications from v1.
         return export(exportPipelines, exportJobs, exportVariables,null,  listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
     }
 
@@ -1566,8 +1567,8 @@ class SaagieClient {
         def listAppIds = listAppIdsInt.unique { a, b -> a <=> b }
         def arrayApps = []
 
-        listAppIds.each { jobId ->
-            arrayApps.add(operation(jobId as String))
+        listAppIds.each { appId ->
+            arrayApps.add(operation(appId as String))
         }
         return arrayApps as ExportApp[]
     }
