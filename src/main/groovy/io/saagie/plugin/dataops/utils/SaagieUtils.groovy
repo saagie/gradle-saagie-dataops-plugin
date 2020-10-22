@@ -550,7 +550,7 @@ class SaagieUtils {
 
     Request getProjectCreateJobRequestWithGraphQL(Job job, JobVersion jobVersion) {
         Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
-        logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
+        logger.debug('Generating getProjectCreateJobRequest  [job={}, jobVersion={}]', job, jobVersion)
 
         File file = new File(jobVersion.packageInfo.name)
         logger.debug('Using [file={}] for upload', file.absolutePath)
