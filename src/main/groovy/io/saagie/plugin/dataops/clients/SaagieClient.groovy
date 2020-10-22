@@ -4,6 +4,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.EnvVarScopeTypeEnum
+import io.saagie.plugin.dataops.models.ExportApp
 import io.saagie.plugin.dataops.models.ExportJob
 import io.saagie.plugin.dataops.models.ExportPipeline
 import io.saagie.plugin.dataops.models.ExportVariables
@@ -930,7 +931,8 @@ class SaagieClient {
         ExportVariables[] exportVariables
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 
-        return export(exportPipelines, exportJobs, exportVariables, listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
+        // We need to put null because we don't export applications from v1.
+        return export(exportPipelines, exportJobs, exportVariables,null,  listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
     }
 
     String exportArtifactsV2() {
@@ -944,15 +946,18 @@ class SaagieClient {
         ExportJob[] exportJobs = []
 
         ExportVariables[] exportVariables = []
+
+        ExportApp[] exportApps = []
+
         boolean variablesExportedIsEmpty = false
 
         if (configuration.project.include_all_artifacts) {
-            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty) = exportAllArtifactsProject()
+            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps) = exportAllArtifactsProject()
         } else {
-            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty) = exportArtifactsFromProjectConfiguration()
+            (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps) = exportArtifactsFromProjectConfiguration()
         }
 
-        return export(exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty)
+        return export(exportPipelines, exportJobs, exportVariables, exportApps, variablesExportedIsEmpty )
 
     }
 
@@ -966,7 +971,7 @@ class SaagieClient {
         return [exportVariables, variablesExportedIsEmpty]
     }
 
-    String export(ExportPipeline[] exportPipelines, ExportJob[] exportJobs, ExportVariables[] exportVariables, listJobWithNameAndIdV1 = null, boolean variablesExportedIsEmpty, isV1 = false) {
+    String export(ExportPipeline[] exportPipelines, ExportJob[] exportJobs, ExportVariables[] exportVariables, ExportApp[] exportApps, listJobWithNameAndIdV1 = null, boolean variablesExportedIsEmpty, isV1 = false) {
 
         ExportContainer exportContainer = [configuration]
         boolean customDirectoryExist = false
@@ -994,6 +999,7 @@ class SaagieClient {
             folder.exportJobList = exportJobs
             folder.exportPipelineList = exportPipelines
             folder.exportVariableList = exportVariables
+            folder.exportAppList = exportApps
             folder.jobList = listJobs
             folder.generateFolderFromParams(variablesExportedIsEmpty)
             ZippingFolder zippingFolder = [exportContainer.exportConfigPath, inputDirectoryToZip, customDirectoryExist]
@@ -1053,6 +1059,63 @@ class SaagieClient {
         }
 
         return [customDirectoryExist, tempJobDirectory]
+    }
+
+    ExportApp getAppAndAppVersionDetailToExport(String appId) {
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.apps?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
+
+        tryCatchClosure({
+            Request getAppDetail = saagieUtils.getAppDetailRequest(appId)
+            ExportApp exportApp = new ExportApp()
+            client.newCall(getAppDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null || parsedResult.data.labWebApp == null) {
+                    def message = null
+                    if(parsedResult.data == null) {
+                        message = "Something went wrong when getting app detail: $responseBody for app id $appId"
+                        logger.error(message)
+                    }
+
+                    if(parsedResult.data.labWebApp == null) {
+                        message = "App with id $appId does not exist"
+                    }
+
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    logger.debug("getAppAndAppVersionDetailToExport response $responseBody")
+                    def appDetailResult = parsedResult.data.labWebApp
+                    exportApp.setAppFromApiResult(appDetailResult)
+                    if (appDetailResult.versions && !appDetailResult.versions.isEmpty()) {
+                        appDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                        appDetailResult.versions.each {
+                            if (it.isCurrent) {
+                                exportApp.setAppVersionFromApiResult(it)
+                            }
+                        }
+
+                        if (configuration.apps?.include_all_versions) {
+                            if (appDetailResult?.versions?.size() > 1) {
+                                appDetailResult.versions.each {
+                                    exportApp.addAppVersionFromV2ApiResult(it)
+                                }
+                            }
+                        }
+
+                    } else {
+                        def messageEmptyVersions = "No versions for the app $appId"
+                        logger.error(messageEmptyVersions)
+                        throw new GradleException(messageEmptyVersions)
+                    }
+                }
+            }
+            return exportApp
+        }, 'Unknown error in getAppAndAppVersionDetailToExport method', 'getAppDetailRequest request') as ExportApp
     }
 
     ExportJob getJobAndJobVersionDetailToExport(String jobId) {
@@ -1125,7 +1188,6 @@ class SaagieClient {
                 def parsedV1job = slurper.parseText responseBody
                 logger.debug("getJobDetailV1 response $responseBody")
                 testIfJobV1isValid(parsedV1job)
-
 
 
                 def technologyV2 = TechnologyService.instance.getV2TechnologyByName(parsedV1job.capsule_code)
@@ -1426,7 +1488,7 @@ class SaagieClient {
                                     configuration.job.ids = [jobIds, it.jobs.id].flatten()
                                 }
                             }
-                            if(configuration.pipeline?.include_all_versions) {
+                            if (configuration.pipeline?.include_all_versions) {
                                 if (pipelineDetailResult?.versions && pipelineDetailResult?.versions.size() > 1) {
                                     pipelineDetailResult.versions.each {
                                         exportPipeline.addPipelineVersionFromV2ApiResult(it)
@@ -1469,6 +1531,10 @@ class SaagieClient {
         return arrayPipelines as ExportPipeline[]
     }
 
+    ExportApp[] getListAppAndAppVersionsFromConfig() {
+        return getListAppAndAppVersions(this.&getAppAndAppVersionDetailToExport)
+    }
+
     ExportJob[] getListJobAndJobVersionsFromConfig() {
         return getListJobAndJobVersions(this.&getJobAndJobVersionDetailToExport)
     }
@@ -1490,6 +1556,21 @@ class SaagieClient {
             arrayJobs.add(listJobsByNameAndIdFromV1 != null ? operation(jobId as String, listJobsByNameAndIdFromV1) : operation(jobId as String))
         }
         return arrayJobs as ExportJob[]
+    }
+
+    ExportApp[] getListAppAndAppVersions(Closure operation) {
+        checkRequiredConfig(
+            !configuration?.apps?.ids ||
+                !configuration?.exportArtifacts?.export_file
+        )
+        def listAppIdsInt = configuration.apps.ids.collect { it as String }
+        def listAppIds = listAppIdsInt.unique { a, b -> a <=> b }
+        def arrayApps = []
+
+        listAppIds.each { appId ->
+            arrayApps.add(operation(appId as String))
+        }
+        return arrayApps as ExportApp[]
     }
 
     String callGetJobDetail() {
@@ -1758,13 +1839,13 @@ class SaagieClient {
             ]
             def listJobs = null
             def processJobImportation = { newMappedJobData, job, id, versions = null, technologyName ->
-                if(technologyName != null) {
+                if (technologyName != null) {
                     def technologyV2 = TechnologyService.instance.getV2TechnologyByName(technologyName);
-                    if(technologyV2 && !technologyV2.isAvailable ){
+                    if (technologyV2 && !technologyV2.isAvailable) {
                         throwAndLogError("Technology ${technologyName} is not available on the targeted server");
                     }
 
-                    if(technologyV2 && technologyV2.id) {
+                    if (technologyV2 && technologyV2.id) {
                         newMappedJobData.job.technology = technologyV2.id
                     }
                 }
@@ -2079,7 +2160,12 @@ class SaagieClient {
             (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
         }
 
-        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty]
+        ExportApp[] exportApps = []
+        if (configuration.apps.ids) {
+            exportApps = getListAppAndAppVersionsFromConfig()
+        }
+
+        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps]
     }
 
     def exportAllArtifactsProject() {
@@ -2095,7 +2181,10 @@ class SaagieClient {
         configuration.env.include_all_var = true
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV2FromConfig)
 
-        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty]
+        ExportApp[] exportApps = getAllProjectAppsFromProject()
+
+
+        return [exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps]
     }
 
     ExportPipeline[] getAllProjectPipelinesFromProject() {
@@ -2154,6 +2243,10 @@ class SaagieClient {
         return mapJobListForProjectResultFromApiToExportJobs(this.getListOfAllProjectJobs())
     }
 
+    ExportApp[] getAllProjectAppsFromProject() {
+        return mapAppListForProjectResultFromApiToExportApps(this.getListOfAllProjectApps())
+    }
+
     private getListOfAllProjectJobs() {
         def listJobs = []
         tryCatchClosure({
@@ -2173,6 +2266,7 @@ class SaagieClient {
         }, 'Unknown error in getListOfAllProjectJobs', 'getProjectJobs Request')
 
     }
+
 
     private ExportJob[] mapJobListForProjectResultFromApiToExportJobs(jobList) {
 
@@ -2206,5 +2300,17 @@ class SaagieClient {
         return arrayJobs as ExportJob[]
     }
 
+    private getListOfAllProjectApps() {
+        def listApps = []
 
+        // TODO: add a methode in SaggieUtils to Request all the apps for a project
+        // TODO: add closure
+    }
+
+
+    private ExportApp[] mapAppListForProjectResultFromApiToExportApps(appList) {
+
+        def arrayApps = []
+        return arrayApps as ExportApp[]
+    }
 }

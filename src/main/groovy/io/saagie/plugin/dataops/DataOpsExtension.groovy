@@ -1,6 +1,7 @@
 package io.saagie.plugin.dataops
 
 import groovy.transform.TypeChecked
+import io.saagie.plugin.dataops.models.App
 import io.saagie.plugin.dataops.models.ArtifactPropertyOverride
 import io.saagie.plugin.dataops.models.EnvVariable
 import io.saagie.plugin.dataops.models.Export
@@ -33,6 +34,8 @@ class DataOpsExtension {
     JobInstance jobinstance = new JobInstance()
 
     PipelineInstance pipelineinstance = new PipelineInstance()
+
+    App apps =  new App()
 
     Pipeline pipeline = new Pipeline()
 
@@ -74,6 +77,10 @@ class DataOpsExtension {
         newTaskContext.with(closure)
     }
 
+    Object apps(Closure closure) {
+        apps = new App()
+        apps.with(closure)
+    }
     Object propertyOverride(Closure closure) {
         propertyOverride = new PropertyOverride()
         propertyOverride.with(closure)
