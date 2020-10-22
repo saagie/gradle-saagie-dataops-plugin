@@ -1,6 +1,8 @@
 package io.saagie.plugin.dataops.utils.directory
 
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.AppVersionDTO
+import io.saagie.plugin.dataops.models.ExportApp
 import io.saagie.plugin.dataops.models.ExportJob
 import groovy.json.JsonBuilder
 import io.saagie.plugin.dataops.models.ExportPipeline
@@ -17,6 +19,7 @@ class FolderGenerator {
     ExportJob[] exportJobList = []
     ExportPipeline[] exportPipelineList = []
     ExportVariables[] exportVariableList = []
+    ExportApp[] exportAppList = []
     def inputDire
     SaagieUtils saagieUtils
     OkHttpClient client
@@ -41,6 +44,189 @@ class FolderGenerator {
         this.overwrite = overwrite
     }
 
+    void generateFolderFromParams(variablesExportedIsEmpty) {
+        if (variablesExportedIsEmpty && checkExistenceOfJobsPipelinesVariablesAndApps()) {
+            throw new GradleException("Cannot generate zip file")
+        }
+
+        if (checkExistenceOfJobsPipelinesVariablesAndApps()) {
+            throw new GradleException("jobs, pipelines,variables and apps to be exported cannot be empty at the same time, and cannot generate zip file")
+        }
+        exportJobList.each { exportJob ->
+            generateFolderForJob(exportJob)
+        }
+        exportPipelineList.each { exportPipeline ->
+            generateFolderForPipeline(exportPipeline)
+        }
+
+        exportVariableList.each { exportVariable ->
+            generateFolderForVariable(exportVariable)
+        }
+
+        exportAppList.each { exportApp ->
+            generateFolderForApp(exportApp)
+        }
+    }
+
+
+    static ArrayList<Map> generateFromJobVersions(ArrayList<JobVersionDTO> versions) {
+        def newJobVersionsCollections = versions.collect {
+            return generateJobVersion(it, null)
+        }
+        return newJobVersionsCollections
+    }
+
+    static ArrayList<Map> generateFromAppVersions(ArrayList<AppVersionDTO> versions) {
+        def newAppVersionsCollections = versions.collect {
+            return generateAppVersion(it)
+        }
+        return newAppVersionsCollections
+    }
+
+    void downloadArtifact(
+        urlJobIdFolder,
+        downloadUrlVersion,
+        jobId,
+        downloadUrl,
+        String extraFolder = '',
+        isV1 = false) {
+        try {
+            def urlFileOflocalPackage = "${urlJobIdFolder}${sl}package"
+            if (extraFolder && extraFolder.length() > 0) {
+                urlFileOflocalPackage += "${sl}${extraFolder}"
+            }
+            File localPackage = new File(urlFileOflocalPackage)
+            localPackage.mkdirs()
+            String urlToDownload = ""
+
+            if (isV1) {
+                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) + "/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
+            } else {
+                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
+                    "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}" +
+                    projectId +
+                    "${sl}job${sl}" +
+                    jobId +
+                    "${sl}version${sl}${downloadUrlVersion}${sl}artifact${sl}" +
+                    SaagieUtils.getFileNameFromUrl(downloadUrl)
+            }
+            saagieUtils.downloadFromHTTPSServer(
+                urlToDownload,
+                urlFileOflocalPackage,
+                client,
+                SaagieUtils.getFileNameFromUrl(downloadUrl)
+            )
+        } catch (IOException e) {
+            throw new GradleException(e.message)
+        }
+    }
+
+    void generateFolderForApp(ExportApp exportApp) {
+        def appId = exportApp.appDTO.id
+        def urlAppIdFolder = "${inputDire}${sl}${name}${sl}App${sl}${appId}"
+        def folder = new File(urlAppIdFolder);
+
+        if (overwrite && folder.exists()) {
+            def folderStatus = folder.deleteDir()
+            if (!folderStatus) {
+                throw new GradleException("Couldn t delete existing folder ${inputDire}${sl}${name}${sl}App")
+            }
+        }
+
+        if (exportApp.exists()) {
+            def createFolderForApp = folder.mkdirs()
+            if (createFolderForApp) {
+                Map appDetailObject = [
+                    name          : exportApp.appDTO.name,
+                    category      : exportApp.appDTO.category,
+                    technology    : exportApp.appDTO.technology,
+                    technologyName: exportApp.appDTO.technologyName,
+                    isScheduled   : exportApp.appDTO.isScheduled,
+                    storageSizeInMB: exportApp.appDTO.storageSizeInMB,
+                ]
+
+                if (
+                exportApp.appDTO.alerting &&
+                    exportApp.appDTO.alerting.emails &&
+                    exportApp.appDTO.alerting.emails.size() > 0) {
+                    appDetailObject << [*: [
+                        alerting: exportApp.appDTO.alerting
+                    ]]
+                }
+
+                if (exportApp.appDTO?.description) {
+                    appDetailObject << [*: [
+                        description: exportApp.appDTO?.description
+                    ]]
+                }
+                def appVersionDetailJsonObject = generateAppVersion(exportApp.appVersionDTO)
+                Map appJsonObject = [
+                    app       : appDetailObject,
+                    appVersion: appVersionDetailJsonObject
+                ]
+
+                if (exportApp.versions) {
+                    appJsonObject << [*: [
+                        versions: generateFromAppVersions(exportApp.versions)
+                    ]]
+                }
+                def builder = new JsonBuilder(appJsonObject).toPrettyString()
+                File appFile = new File("${urlAppIdFolder}${sl}app.json")
+                appFile.write(builder)
+
+            } else {
+                throw new GradleException("Cannot create directories for the app")
+            }
+        }
+    }
+
+    static Map generateAppVersion(AppVersionDTO appVersionDTO) {
+        Map appVersionDetailJsonObject = [:]
+
+        if (appVersionDTO.number) {
+            appVersionDetailJsonObject << [*: [
+                number: appVersionDTO.number,
+            ]]
+        }
+
+        if (appVersionDTO.storagePaths) {
+            appVersionDetailJsonObject << [*: [
+                storagePaths: appVersionDTO.storagePaths,
+            ]]
+        }
+
+        if (appVersionDTO.exposedPorts) {
+            appVersionDetailJsonObject << [*: [
+                exposedPorts: appVersionDTO.exposedPorts,
+            ]]
+        }
+
+        if (appVersionDTO?.resources?.cpu &&
+            appVersionDTO?.resources?.disk &&
+            appVersionDTO?.resources?.memory ) {
+            appVersionDetailJsonObject << [*: [
+                resources: appVersionDTO.resources,
+            ]]
+        }
+
+        if (
+        appVersionDTO.dockerInfo &&
+            appVersionDTO.dockerInfo.image
+        ) {
+            appVersionDetailJsonObject << [*: [
+                dockerInfo: appVersionDTO.dockerInfo,
+            ]]
+        }
+
+        if (appVersionDTO.releaseNote) {
+            appVersionDetailJsonObject << [*: [
+                releaseNote: appVersionDTO.releaseNote
+            ]]
+        }
+
+        return appVersionDetailJsonObject
+
+    }
 
     void generateFolderForJob(ExportJob exportJob) {
         def jobId = exportJob.jobDTO.id
@@ -89,7 +275,7 @@ class FolderGenerator {
 
                 if (exportJob.versions) {
                     jobJsonObject << [*: [
-                        versions: generateFromVersions(exportJob.versions)
+                        versions: generateFromJobVersions(exportJob.versions)
                     ]]
                 }
                 def builder = new JsonBuilder(jobJsonObject).toPrettyString()
@@ -124,51 +310,6 @@ class FolderGenerator {
             } else {
                 throw new GradleException("Cannot create directories for the job")
             }
-        }
-    }
-
-    ArrayList<Map> generateFromVersions(ArrayList<JobVersionDTO> versions) {
-        def newJobVersionsCollections = versions.collect {
-            return generateJobVersion(it, null)
-        }
-        return newJobVersionsCollections
-    }
-
-    void downloadArtifact(
-        urlJobIdFolder,
-        downloadUrlVersion,
-        jobId,
-        downloadUrl,
-        String extraFolder = '',
-        isV1 = false) {
-        try {
-            def urlFileOflocalPackage = "${urlJobIdFolder}${sl}package"
-            if (extraFolder && extraFolder.length() > 0) {
-                urlFileOflocalPackage += "${sl}${extraFolder}"
-            }
-            File localPackage = new File(urlFileOflocalPackage)
-            localPackage.mkdirs()
-            String urlToDownload = ""
-
-            if (isV1) {
-                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) + "/manager/api/v1/platform/${environment}/job/${jobId}/version/${downloadUrlVersion}/binary"
-            } else {
-                urlToDownload = SaagieUtils.removeLastSlash(serverUrl) +
-                    "${sl}api${sl}v1${sl}projects${sl}platform${sl}${environment}${sl}project${sl}" +
-                    projectId +
-                    "${sl}job${sl}" +
-                    jobId +
-                    "${sl}version${sl}${downloadUrlVersion}${sl}artifact${sl}" +
-                    SaagieUtils.getFileNameFromUrl(downloadUrl)
-            }
-            saagieUtils.downloadFromHTTPSServer(
-                urlToDownload,
-                urlFileOflocalPackage,
-                client,
-                SaagieUtils.getFileNameFromUrl(downloadUrl)
-            )
-        } catch (IOException e) {
-            throw new GradleException(e.message)
         }
     }
 
@@ -383,28 +524,9 @@ class FolderGenerator {
         return pipelineVersionDetailJson
     }
 
-    void generateFolderFromParams(variablesExportedIsEmpty) {
-        if (variablesExportedIsEmpty && checkExistenceOfJobsPipelinesAndVariables()) {
-            throw new GradleException("Cannot generate zip file")
-        }
 
-        if (checkExistenceOfJobsPipelinesAndVariables()) {
-            throw new GradleException("jobs, pipelines and variables to be exported cannot be empty at the same time, and cannot generate zip file")
-        }
-        exportJobList.each { exportJob ->
-            generateFolderForJob(exportJob)
-        }
-        exportPipelineList.each { exportPipeline ->
-            generateFolderForPipeline(exportPipeline)
-        }
-
-        exportVariableList.each { exportVariable ->
-            generateFolderForVariable(exportVariable)
-        }
-    }
-
-    boolean checkExistenceOfJobsPipelinesAndVariables() {
-        return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length
+    boolean checkExistenceOfJobsPipelinesVariablesAndApps() {
+        return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length && !exportAppList.length
     }
 
     static extractNameFileFromUrl(String url) {
