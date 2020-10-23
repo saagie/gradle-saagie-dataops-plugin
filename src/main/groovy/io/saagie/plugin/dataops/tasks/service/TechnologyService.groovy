@@ -259,4 +259,4 @@ class TechnologyService {
         def tech = this.appTechnologyList.find{it.name?.equals(technologyId)}
         return tech
     }
-}2
+}
