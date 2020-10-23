@@ -8,6 +8,20 @@ class AppVersionDTO implements IExists {
     DockerInfos dockerInfo = new DockerInfos()
     Resources resources = new Resources()
 
+    Object dockerInfo(Closure closure) {
+        dockerInfo.with(closure)
+    }
+
+    Object resources(Closure closure) {
+        resources.with(closure)
+    }
+
+    Object exposedPorts(Closure closure) {
+        exposedPorts.with(closure)
+    }
+
+
+
     @Override
     boolean exists() {
         return dockerInfo ||

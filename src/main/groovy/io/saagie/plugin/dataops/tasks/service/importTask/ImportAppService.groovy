@@ -11,55 +11,52 @@ class ImportAppService {
 
         apps.each { app ->
             def versions = null
-
+            def appId = app.key
+            Map appConfig = app.value.configOverride
 
             AppMapper newMappedAppData = new AppMapper()
 
-            newMappedAppData.app {
-                name = app.name
-                technology = app.technology
-                isScheduled = app.isScheduled
-                category = app.category
-                description = app.description
-                storageSizeInMB = app.storageSizeInMB
+            newMappedAppData.job {
+                name = appConfig.app.name
+                technology = appConfig.app.technology
+                isScheduled = appConfig.app.isScheduled
+                category = appConfig.app.category
+                description = appConfig.app.description
+                storageSizeInMB = appConfig.app.storageSizeInMB
             }
 
-            if (app.alerting?.emails) {
-                newMappedAppData.app.alerting {
-                    emails = app.alerting?.emails
-                    statusList = app.alerting?.statusList
-                    logins = app.alerting?.logins
+            if (appConfig.app.alerting?.emails) {
+                newMappedAppData.job.alerting {
+                    emails = appConfig.app.alerting?.emails
+                    statusList = appConfig.app.alerting?.statusList
+                    logins = appConfig.app.alerting?.logins
                 }
             }
 
-            newMappedAppData.appVersion {
-                releaseNote = app.appVersion.releaseNote
+            newMappedAppData.jobVersion {
+                releaseNote = appConfig.appVersion.releaseNote
 
                 dockerInfo {
-                    image = app.appVersion.dockerInfo?.image
-                    dockerCredentialsId = app.appVersion.dockerInfo?.dockerCredentialsId
+                    image = appConfig.appVersion.dockerInfo?.image
+                    dockerCredentialsId = appConfig.appVersion.dockerInfo?.dockerCredentialsId
                 }
+
                 resources {
-                    memory = app.appVersion.resources.memory
-                    cpu = app.appVersion.resources.cpu
-                    disk = app.appVersion.resources.disk
+                    memory = appConfig.appVersion.resources.memory
+                    cpu = appConfig.appVersion.resources.cpu
+                    disk = appConfig.appVersion.resources.disk
                 }
-                exposedPorts {
-                    name = app.appVersion.exposedPorts.name
-                    port = app.appVersion.exposedPorts.port
-                    isAuthenticationRequired = app.appVersion.exposedPorts.isAuthenticationRequired
-                    isRewriteUrl = app.appVersion.exposedPorts.isRewriteUrl
-                    basePathVariableName = app.appVersion.exposedPorts.basePathVariableName
-                }
+
+                exposedPorts = appConfig.appVersion.exposedPorts
 
             }
 
-            if (app.versions && app.versions.size() > 0) {
-                versions = app.versions
+            if (appConfig.versions && appConfig.versions.size() > 0) {
+                versions = appConfig.versions
             }
 
 
-            mapClosure(newMappedAppData, app, app.key, versions, app.technologyName)
+            mapClosure(newMappedAppData, app, app.key, versions, appConfig.app.technologyName)
         }
 
     }

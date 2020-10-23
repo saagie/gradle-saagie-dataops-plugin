@@ -249,18 +249,14 @@ class TechnologyService {
                 if (!parsedTechnologiesData.data || !parsedTechnologiesData.data.repositories) {
                     throwAndLogError("Something went wrong when getting app technologies")
                 }
-                appTechnologyList = parsedTechnologiesData.data.technologies
+                appTechnologyList = parsedTechnologiesData.data.repositories
             }
         }
         return appTechnologyList
     }
 
-    boolean checkTechnologyIdExistInAppTechnologyList(String technologyId) {
-        def existingTechnology;
-        existingTechnology = this.appTechnologyList.find{it.id.equals(technologyId)}
-        if (!existingTechnology) {
-            return false
-        }
-        return true
+    def checkTechnologyIdExistInAppTechnologyList(String technologyId) {
+        def tech = this.appTechnologyList.find{it.name?.equals(technologyId)}
+        return tech
     }
-}
+}2

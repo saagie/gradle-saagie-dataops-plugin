@@ -5,12 +5,12 @@ class AppMapper {
     AppVersionDTO jobVersion = new AppVersionDTO()
 
 
-    Object app(Closure closure) {
-        app.with(closure)
+    Object job(Closure closure) {
+        job.with(closure)
     }
 
-    Object appVersion(Closure closure) {
-        appVersion.with(closure)
+    Object jobVersion(Closure closure) {
+        jobVersion.with(closure)
     }
 
     def static Map mapAppAndAppVersionWithoutMail(App app, AppVersionDTO appVersion, String projectId) {

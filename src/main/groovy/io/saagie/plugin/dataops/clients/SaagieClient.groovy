@@ -81,7 +81,7 @@ class SaagieClient {
         this.checkBaseConfiguration()
         def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
         def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
-        def  allTechnologiesForApp = saagieUtils.&getAppTechnologiesList()
+        def  allTechnologiesForApp = saagieUtils.&getAppTechnologiesList
         TechnologyService.instance.init(
             client,
             allTechnologies,
@@ -2002,11 +2002,11 @@ class SaagieClient {
             def processAppToImport = { newMappedAppData, job, id, versions = null, technologyId ->
                 // check the for technology
                 if (technologyId != null) {
-                    def isTechnologyExist = TechnologyService.instance.checkTechnologyIdExistInAppTechnologyList(technologyId);
-                    if (!isTechnologyExist) {
+                    def foundTechnology = TechnologyService.instance.checkTechnologyIdExistInAppTechnologyList(technologyId);
+                    if (!foundTechnology) {
                         throwAndLogError("Technology with id ${technologyId} is not available on the targeted server");
                     }
-                    newMappedAppData.app.technology = technologyId
+                    newMappedAppData.app.technology = foundTechnology?.id
                 }
                 def appToImport = new App()
                 def appVersionToImport = new AppVersionDTO()
