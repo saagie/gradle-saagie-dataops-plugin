@@ -7,6 +7,7 @@ class SaagieClientUtils {
     static final EXPORTED_JOB_PACKAGE_FOLDER_NAME = 'package'
     static final EXPORTED_PIPELINE_CONFIG_FILENAME = 'pipeline.json'
     static final EXPORTED_VARIABLE_CONFIG_FILENAME = 'variable.json'
+    static final EXPORTED_APP_CONFIG_FILENAME = 'app.json'
 
     /**
      * run through all files in the provided folder, and return
@@ -126,4 +127,34 @@ class SaagieClientUtils {
         }
         return null
     }
+
+
+    def static extractAppConfigAndPackageFromExportedApp(File exportedAppFolder) {
+        Map extractedConfig = [
+            apps: [:],
+        ]
+
+        File appsFolder = new File("${exportedAppFolder.absolutePath}/App")
+        if (appsFolder.exists()) {
+            appsFolder.eachFile { appFolder ->
+                String appId = appFolder.name
+                String appFolderPath = appFolder.absolutePath
+
+                extractedConfig.apps[appId] = [
+                    configOverride: null
+                ]
+
+                def jsonParser = new JsonSlurper()
+                def appConfigFile = new File("${appFolderPath}/${EXPORTED_APP_CONFIG_FILENAME}").listFiles()
+                extractedConfig.apps[appId].configOverride = jsonParser.parse(appConfigFile)
+            }
+
+            return extractedConfig
+        }
+
+        return null
+    }
+
+
+
 }

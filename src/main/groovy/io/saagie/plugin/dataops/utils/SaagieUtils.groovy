@@ -371,13 +371,14 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppDetailQuery)
     }
 
-    Request getAppListByProjectIdRequest(String projectId) {
-        logger.debug('Generating app list for project with id', projectId)
+    Request getAppListByProjectIdRequest() {
+        Project project = configuration.project
+        logger.debug('Generating app list for project with id', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([projectId: projectId])
+        def gqVariables = jsonGenerator.toJson([projectId: project.id])
 
         def getAppsListQuery = gq('''
             query labWebAppsQuery($projectId: UUID!) {  labWebApps(projectId: $projectId) {  id   name  }}
@@ -385,13 +386,13 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppsListQuery)
     }
 
-    Request getAppTechnologiesList(String appId) {
-        logger.debug('Generating technologies for application with id', appId)
+    Request getAppTechnologiesList() {
+        logger.debug('Generating technologies for application')
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([id: appId])
+        def gqVariables = jsonGenerator.toJson([:])
 
         def getAppTechnologiesListQuery = gq('''
             query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags              }          }      }}
@@ -399,14 +400,14 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
     }
 
-    Request updateAppVersion(String appId, AppVersionDTO appVersionDTO  ) {
+    Request updateAppVersion(String appId, AppVersionDTO appVersionDTO) {
         logger.debug('Updating application version for application with id', appId)
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            appId: appId,
+            appId     : appId,
             appVersion: appVersionDTO
         ])
 

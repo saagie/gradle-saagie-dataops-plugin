@@ -19,17 +19,21 @@ class TechnologyService {
     JsonSlurper slurper
     static final Logger logger = Logging.getLogger(TechnologyService.class)
     def isInitialised = false
+    def appTechnologyList
+    def appTechnologiesRequest
 
     def init(
         client,
         technologiesRequest,
         technologiesVersionsRequest,
-        slurper
+        slurper,
+        allTechnologiesForAppRequest
     ) {
         this.client = client
         this.slurper = slurper
         this.technologiesRequest = technologiesRequest
         this.technologiesVersionsRequest = technologiesVersionsRequest
+        this.appTechnologiesRequest = allTechnologiesForAppRequest
         this.isInitialised = true
     }
 
@@ -229,5 +233,34 @@ class TechnologyService {
 
     def convertToNumber(String technologyLabel) {
         return technologyLabel.findAll(/\d+/)*.toInteger().join().toInteger()
+    }
+
+    def getAppTechnologies() {
+        checkReady()
+        Request appTechnologiesCall = appTechnologiesRequest()
+
+        if (!appTechnologyList) {
+
+            client.newCall(appTechnologiesCall).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                logger.debug("getAppTechnologies response $responseBody")
+                def parsedTechnologiesData = slurper.parseText(responseBody)
+                if (!parsedTechnologiesData.data || !parsedTechnologiesData.data.repositories) {
+                    throwAndLogError("Something went wrong when getting app technologies")
+                }
+                appTechnologyList = parsedTechnologiesData.data.technologies
+            }
+        }
+        return appTechnologyList
+    }
+
+    boolean checkTechnologyIdExistInAppTechnologyList(String technologyId) {
+        def existingTechnology;
+        existingTechnology = this.appTechnologyList.find{it.id.equals(technologyId)}
+        if (!existingTechnology) {
+            return false
+        }
+        return true
     }
 }
