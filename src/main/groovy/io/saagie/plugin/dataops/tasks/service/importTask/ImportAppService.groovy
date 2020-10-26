@@ -23,6 +23,7 @@ class ImportAppService {
                 category = appConfig.app.category
                 description = appConfig.app.description
                 storageSizeInMB = appConfig.app.storageSizeInMB
+                isStreaming = appConfig.app.isStreaming
             }
 
             if (appConfig.app.alerting?.emails) {
@@ -75,13 +76,8 @@ class ImportAppService {
                 cpu = appVersionMap.resources.cpu
                 disk = appVersionMap.resources.disk
             }
-            exposedPorts {
-                name = appVersionMap.exposedPorts.name
-                port = appVersionMap.exposedPorts.port
-                isAuthenticationRequired = appVersionMap.exposedPorts.isAuthenticationRequired
-                isRewriteUrl = appVersionMap.exposedPorts.isRewriteUrl
-                basePathVariableName = appVersionMap.exposedPorts.basePathVariableName
-            }
+
+            exposedPorts = appVersionMap.exposedPorts
 
         }
 

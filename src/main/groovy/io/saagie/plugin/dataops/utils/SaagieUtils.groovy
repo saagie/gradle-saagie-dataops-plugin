@@ -366,7 +366,7 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([id: appId])
 
         def getAppDetailQuery = gq('''
-            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote  resources{cpu memory disk}    dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
+            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   category   isScheduled   isStreaming   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote  resources{cpu memory disk}    dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
         ''', gqVariables)
         return buildRequestFromQuery(getAppDetailQuery)
     }
@@ -408,7 +408,7 @@ class SaagieUtils {
 
         def gqVariables = jsonGenerator.toJson([
             appId     : appId,
-            appVersion: appVersionDTO
+            appVersion: appVersionDTO.toMap()
         ])
 
         def getUpdateAppVersionQuery = gq('''
