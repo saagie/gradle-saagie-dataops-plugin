@@ -206,7 +206,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{status=success, job=[], pipeline=[], variable=[], app=[{id=id-1, name=testImport9, versions=2}]}')
+        result.output.contains('{status=success, job=[], pipeline=[], variable=[], app=[{id=id-1, name=testImport9}]}')
     }
 
 
