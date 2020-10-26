@@ -81,7 +81,7 @@ class SaagieClient {
         this.checkBaseConfiguration()
         def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
         def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
-        def  allTechnologiesForApp = saagieUtils.&getAppTechnologiesList
+        def allTechnologiesForApp = saagieUtils.&getAppTechnologiesList
         TechnologyService.instance.init(
             client,
             allTechnologies,
@@ -1999,12 +1999,12 @@ class SaagieClient {
             TechnologyService.instance.getAppTechnologies();
 
             def listApps = null
-            def processAppToImport = { newMappedAppData, job, id, versions = null, technologyId ->
+            def processAppToImport = { newMappedAppData, job, id, versions = null, technologyName ->
                 // check the for technology
-                if (technologyId != null) {
-                    def foundTechnology = TechnologyService.instance.checkTechnologyIdExistInAppTechnologyList(technologyId);
+                if (technologyName != null) {
+                    def foundTechnology = TechnologyService.instance.checkTechnologyIdExistInAppTechnologyList(technologyName);
                     if (!foundTechnology) {
-                        throwAndLogError("Technology with id ${technologyId} is not available on the targeted server");
+                        throwAndLogError("Technology with name ${technologyName} is not available on the targeted server");
                     }
                     newMappedAppData.job.technology = foundTechnology?.id
                 }
@@ -2014,10 +2014,21 @@ class SaagieClient {
                 appToImport = newMappedAppData.job
                 appVersionToImport = newMappedAppData.jobVersion
                 listApps = getAppListByProjectId()
+                boolean nameExist = false
+                def foundNameId = null
+                if (listApps) {
+                    listApps.each {
+                        if (it.name == newMappedAppData.job.name) {
+                            nameExist = true
+                            foundNameId = it.id
+                        }
+                    }
+                }
 
                 def parsedNewlyCreatedApp = null
                 // change the app to Queue so we can remove the first
-                if (listApps) {
+                if (listApps && nameExist) {
+                    appToImport.id = foundNameId
                     addAppVersion(appToImport, appVersionToImport)
 
                 } else {
@@ -2042,11 +2053,13 @@ class SaagieClient {
                 ]
 
                 if (versions && versions.size() >= 1) {
-                    if (!parsedNewlyCreatedApp?.id) {
+                    if (!parsedNewlyCreatedApp?.id && !foundNameId) {
                         throw new GradleException("Couldn't get id for the app after creation or update")
                     }
                     if (parsedNewlyCreatedApp?.id) {
                         appToImport.id = parsedNewlyCreatedApp?.id
+                    }else {
+                        appToImport.id = foundNameId
                     }
                     versions.each {
                         AppVersionDTO appVersionFromVersions = ImportAppService.convertFromMapToJsonVersion(it)
@@ -2404,8 +2417,8 @@ class SaagieClient {
                 logger.debug("Apps with name and id : ")
                 logger.debug(responseBodyForAppList)
                 def parsedResultForAppList = slurper.parseText(responseBodyForAppList)
-                if (parsedResultForAppList.data?.labWebApp) {
-                    listApps = parsedResultForAppList.data.labWebApp
+                if (parsedResultForAppList.data?.labWebApps) {
+                    listApps = parsedResultForAppList.data.labWebApps
                 }
                 return listApps
             }
@@ -2464,7 +2477,6 @@ class SaagieClient {
 
         logger.debug('Using config [project={}, app={}, appVersion={}]', configuration.project, app, appVersion)
 
-        app.category=""
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateAppRequest(app, appVersion)
         tryCatchClosure({
