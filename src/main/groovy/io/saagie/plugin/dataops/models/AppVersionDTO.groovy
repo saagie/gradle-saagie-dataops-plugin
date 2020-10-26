@@ -1,6 +1,6 @@
 package io.saagie.plugin.dataops.models
 
-class AppVersionDTO implements IExists {
+class AppVersionDTO implements IMapable,IExists {
     List<String> storagePaths = []
     String releaseNote
     int number
@@ -21,7 +21,19 @@ class AppVersionDTO implements IExists {
     }
 
 
-
+    @Override
+    Map toMap() {
+        if (exists()) {
+            return [
+                releaseNote        : releaseNote,
+                exposedPorts       : exposedPorts ? exposedPorts as List : [],
+                storagePaths       : storagePaths ? storagePaths as List : [],
+                dockerInfo         : dockerInfo.toMap(),
+                resources          : resources.toMap(),
+            ]
+        }
+        return null
+    }
     @Override
     boolean exists() {
         return dockerInfo ||
