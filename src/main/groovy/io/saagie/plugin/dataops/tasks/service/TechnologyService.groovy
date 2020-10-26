@@ -257,7 +257,7 @@ class TechnologyService {
     }
 
     def checkTechnologyIdExistInAppTechnologyList(String technologyId) {
-        def tech = this.appTechnologyList.find{it.label?.equals(technologyId)}
+        def tech = this.getAppTechnologies().find{it.label?.equals(technologyId)}
         return tech
     }
 

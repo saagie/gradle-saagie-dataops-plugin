@@ -1996,7 +1996,7 @@ class SaagieClient {
 
             }
 
-            TechnologyService.instance.getAppTechnologies();
+
 
             def listApps = null
             def processAppToImport = { newMappedAppData, job, id, versions = null, technologyName ->

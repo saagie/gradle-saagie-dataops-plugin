@@ -27,6 +27,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
     String exportAppZipFilename = './exportedApp.zip'
     @Shared
     String exportAppWithAppVersionZipFilename = './exportedAppWithAppVersion.zip'
+    String exportAppWithAppWithTechnologyNameDoesntExistVersionZipFilename = './exportedAppWithAppVersionNameDoesntExist.zip'
 
 
 
@@ -89,7 +90,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-2","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
         enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Test 2"},{"id":"id-2","name":"Test Long"},{"id":"id-3","name":"test pipeline"},{"id":"id-4","name":"test pipeline 23"},{"id":"id-5","name":"test pipeline id 5"}]}}')
@@ -136,7 +136,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportPipelineWithoutJobZipFilename)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-2","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
         enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
@@ -172,42 +171,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
 
 
-
-    def "the task should create new app and add new version to another app based on the exported config"() {
-        given:
-        URL resource = classLoader.getResource(exportAppZipFilename)
-        File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-2","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
-        enqueueRequest('{"data":{"labWebApps":[{"id":"id-app-1","name":"testImport8"},{"id":"id-app-2","name":"testImport7"},{"id":"id-app-3","name":"testImport6"},{"id":"id-app-4","name":"testImport5"},{"id":"id-app-5","name":"testImport4"},{"id":"id-app-6","name":"testImport3"},{"id":"id-app-7","name":"testImport2"},{"id":"id-app-8","name":"testImport"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"id-app-10","name":"testImport9"}}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
-
-        buildFile << """
-            saagie {
-                server {
-                    url = '${mockServerUrl}'
-                    login = 'login'
-                    password = 'password'
-                    environment = 1
-                }
-
-                project {
-                    id = 'project-id'
-                }
-
-                importArtifacts {
-                    import_file = '${exportedConfig.absolutePath}'
-                }
-            }
-        """
-
-        when:
-        BuildResult result = gradle(taskName)
-
-        then:
-        notThrown(Exception)
-        result.output.contains('{status=success, job=[], pipeline=[], variable=[], app=[{id=id-1, name=testImport9}]}')
-    }
 
 
     def "the task should add appVersion based on the build configuration if name exist"() {
@@ -250,7 +213,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportJobZipFilename)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-1","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"createJob":{"id":"id-1","name":"Job from import"}}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
@@ -290,7 +252,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportJobJustJobVersionWithoutPipelineZipFilename)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-1","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"addJobVersion":{"number":"jobNumber"}}}')
 
@@ -326,7 +287,6 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportJobWithoutPipelineZipFilename)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-1","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}]}}')
@@ -358,14 +318,49 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         notThrown(Exception)
         result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[], variable=[], app=[]}')
     }
+
+
+    def "the task should create new app and add new version to another app based on the exported config"() {
+        given:
+        URL resource = classLoader.getResource(exportAppZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-2","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
+        enqueueRequest('{"data":{"labWebApps":[{"id":"id-app-1","name":"testImport8"},{"id":"id-app-2","name":"testImport7"},{"id":"id-app-3","name":"testImport6"},{"id":"id-app-4","name":"testImport5"},{"id":"id-app-5","name":"testImport4"},{"id":"id-app-6","name":"testImport3"},{"id":"id-app-7","name":"testImport2"},{"id":"id-app-8","name":"testImport"}]}}')
+        enqueueRequest('{"data":{"createJob":{"id":"id-app-10","name":"testImport9"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                }
+
+                importArtifacts {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        result.output.contains('{status=success, job=[], pipeline=[], variable=[], app=[{id=id-1, name=testImport9}]}')
+    }
     def "the task should fail if the app's technology does not exists"() {
 
         given:
-        URL resource = classLoader.getResource(exportAppWithAppVersionZipFilename)
+        URL resource = classLoader.getResource(exportAppWithAppWithTechnologyNameDoesntExistVersionZipFilename)
         File exportedConfig = new File(resource.getFile())
         enqueueRequest('{"data":{"repositories":[{"id":"id-tech-1","name":"Saagie","technologies":[{"id":"id-tech-2","label":"tech-1","description":"description-1","icon":"icon-1","backgroundColor":null,"available":true,"customFlags":["flag-1"]},{"id":"id-tech-3","label":"tech-3","description":"des-3","icon":"icon-3","backgroundColor":"#E87A35","available":true,"customFlags":[]},{"id":"id-tech-4","label":"tech-4","description":"desc-4","icon":"icon-4","backgroundColor":"#728E9B","available":true,"customFlags":[]}]}]}}')
-        enqueueRequest('{"data":{"labWebApps":[{"id":"id-app-1","name":"app-1"},{"id":"id-app-2","name":"testImport7"},{"id":"id-app-3","name":"testImport6"},{"id":"id-app-4","name":"testImport5"},{"id":"id-app-5","name":"testImport4"},{"id":"id-app-6","name":"testImport3"},{"id":"id-app-7","name":"testImport2"},{"id":"id-app-8","name":"testImport"}]}}')
-        enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
 
         buildFile << """
             saagie {
@@ -391,10 +386,8 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         then:
         UnexpectedBuildFailure e = thrown()
         result == null
-        e.message.contains("Technology with name tech-2 is not available on the targeted server")
+        e.message.contains("Technology with name Mlflow Server name doesnt exist is not available on the targeted server")
         e.getBuildResult().task(":${taskName}").outcome == FAILED
     }
-
-
 
 }

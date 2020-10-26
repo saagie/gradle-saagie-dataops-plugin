@@ -43,6 +43,6 @@ class ArtifactsImportV2EnvVarTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{status=success, job=[], pipeline=[], variable=[{id=variable-1, name=GLOBAL_AMINE}, {id=variable-2, name=testUX2}]}')
+        result.output.contains('{status=success, job=[], pipeline=[], variable=[{id=variable-1, name=GLOBAL_AMINE}, {id=variable-2, name=testUX2}], app=[]}')
     }
 }
