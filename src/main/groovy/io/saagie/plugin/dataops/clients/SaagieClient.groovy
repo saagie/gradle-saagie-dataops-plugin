@@ -2469,14 +2469,12 @@ class SaagieClient {
     }
 
 
-    @Deprecated
     String createProjectApp(App app, AppVersionDTO appVersion) {
         logger.info('Starting deprecated createProjectApp task')
         checkRequiredConfigForAppAndAppVersionAndProjectId(app, appVersion)
 
 
         logger.debug('Using config [project={}, app={}, appVersion={}]', configuration.project, app, appVersion)
-
 
         Request projectCreateJobRequest = saagieUtils.getProjectCreateAppRequest(app, appVersion)
         tryCatchClosure({
