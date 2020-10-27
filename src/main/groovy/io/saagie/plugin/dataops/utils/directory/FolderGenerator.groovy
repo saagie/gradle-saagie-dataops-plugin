@@ -137,12 +137,14 @@ class FolderGenerator {
             def createFolderForApp = folder.mkdirs()
             if (createFolderForApp) {
                 Map appDetailObject = [
-                    name          : exportApp.appDTO.name,
-                    category      : exportApp.appDTO.category,
-                    technology    : exportApp.appDTO.technology,
-                    technologyName: exportApp.appDTO.technologyName,
-                    isScheduled   : exportApp.appDTO.isScheduled,
+                    name           : exportApp.appDTO.name,
+                    category       : exportApp.appDTO.category,
+                    technology     : exportApp.appDTO.technology,
+                    technologyName : exportApp.appDTO.technologyName,
+                    isScheduled    : exportApp.appDTO.isScheduled,
                     storageSizeInMB: exportApp.appDTO.storageSizeInMB,
+                    isStreaming    : exportApp.appDTO.isStreaming,
+                    description    : exportApp.appDTO.description,
                 ]
 
                 if (
@@ -154,11 +156,7 @@ class FolderGenerator {
                     ]]
                 }
 
-                if (exportApp.appDTO?.description) {
-                    appDetailObject << [*: [
-                        description: exportApp.appDTO?.description
-                    ]]
-                }
+
                 def appVersionDetailJsonObject = generateAppVersion(exportApp.appVersionDTO)
                 Map appJsonObject = [
                     app       : appDetailObject,
@@ -203,7 +201,7 @@ class FolderGenerator {
 
         if (appVersionDTO?.resources?.cpu &&
             appVersionDTO?.resources?.disk &&
-            appVersionDTO?.resources?.memory ) {
+            appVersionDTO?.resources?.memory) {
             appVersionDetailJsonObject << [*: [
                 resources: appVersionDTO.resources,
             ]]

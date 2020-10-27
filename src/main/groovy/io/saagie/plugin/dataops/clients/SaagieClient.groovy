@@ -3,6 +3,8 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import io.saagie.plugin.dataops.DataOpsExtension
+import io.saagie.plugin.dataops.models.App
+import io.saagie.plugin.dataops.models.AppVersionDTO
 import io.saagie.plugin.dataops.models.EnvVarScopeTypeEnum
 import io.saagie.plugin.dataops.models.ExportApp
 import io.saagie.plugin.dataops.models.ExportJob
@@ -20,6 +22,7 @@ import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Category
 import io.saagie.plugin.dataops.tasks.projects.enums.JobV1Type
 import io.saagie.plugin.dataops.tasks.service.TechnologyService
 import io.saagie.plugin.dataops.tasks.service.exportTask.ExportContainer
+import io.saagie.plugin.dataops.tasks.service.importTask.ImportAppService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportJobService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportPipelineService
 import io.saagie.plugin.dataops.tasks.service.importTask.ImportVariableService
@@ -78,12 +81,13 @@ class SaagieClient {
         this.checkBaseConfiguration()
         def allTechnologies = saagieUtils.&getListAllTechnologiesRequest
         def allTechnologyVersions = saagieUtils.&getListTechnologyVersionsRequest
-
+        def allTechnologiesForApp = saagieUtils.&getAppTechnologiesList
         TechnologyService.instance.init(
             client,
             allTechnologies,
             allTechnologyVersions,
-            slurper
+            slurper,
+            allTechnologiesForApp
         )
     }
 
@@ -932,7 +936,7 @@ class SaagieClient {
         (exportVariables, variablesExportedIsEmpty) = getVariableListIfConfigIsDefined(this.&getListVariablesV1FromConfig)
 
         // We need to put null because we don't export applications from v1.
-        return export(exportPipelines, exportJobs, exportVariables,null,  listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
+        return export(exportPipelines, exportJobs, exportVariables, null, listJobsByNameAndIdFromV1, variablesExportedIsEmpty, true)
     }
 
     String exportArtifactsV2() {
@@ -957,7 +961,7 @@ class SaagieClient {
             (exportPipelines, exportJobs, exportVariables, variablesExportedIsEmpty, exportApps) = exportArtifactsFromProjectConfiguration()
         }
 
-        return export(exportPipelines, exportJobs, exportVariables, exportApps, variablesExportedIsEmpty )
+        return export(exportPipelines, exportJobs, exportVariables, exportApps, variablesExportedIsEmpty)
 
     }
 
@@ -1076,12 +1080,12 @@ class SaagieClient {
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null || parsedResult.data.labWebApp == null) {
                     def message = null
-                    if(parsedResult.data == null) {
+                    if (parsedResult.data == null) {
                         message = "Something went wrong when getting app detail: $responseBody for app id $appId"
                         logger.error(message)
                     }
 
-                    if(parsedResult.data.labWebApp == null) {
+                    if (parsedResult.data.labWebApp == null) {
                         message = "App with id $appId does not exist"
                     }
 
@@ -1831,12 +1835,16 @@ class SaagieClient {
             def jobsConfigFromExportedZip = SaagieClientUtils.extractJobConfigAndPackageFromExportedJob(exportedArtifactsPathRoot)
             def pipelinesConfigFromExportedZip = SaagieClientUtils.extractPipelineConfigAndPackageFromExportedPipeline(exportedArtifactsPathRoot)
             def variablesConfigFromExportedZip = SaagieClientUtils.extractVariableConfigAndPackageFromExportedVariable(exportedArtifactsPathRoot)
+            def appsConfigFromExportedZip = SaagieClientUtils.extractAppConfigAndPackageFromExportedApp(exportedArtifactsPathRoot)
+
             def response = [
                 status  : 'success',
                 job     : [],
                 pipeline: [],
-                variable: []
+                variable: [],
+                app     : [],
             ]
+
             def listJobs = null
             def processJobImportation = { newMappedJobData, job, id, versions = null, technologyName ->
                 if (technologyName != null) {
@@ -1988,6 +1996,84 @@ class SaagieClient {
 
             }
 
+
+
+            def listApps = null
+            def processAppToImport = { newMappedAppData, job, id, versions = null, technologyName ->
+                // check the for technology
+                if (technologyName != null) {
+                    def foundTechnology = TechnologyService.instance.checkTechnologyIdExistInAppTechnologyList(technologyName);
+                    if (!foundTechnology) {
+                        throwAndLogError("Technology with name ${technologyName} is not available on the targeted server");
+                    }
+                    newMappedAppData.job.technology = foundTechnology?.id
+                }
+                def appToImport = new App()
+                def appVersionToImport = new AppVersionDTO()
+
+                appToImport = newMappedAppData.job
+                appVersionToImport = newMappedAppData.jobVersion
+                listApps = getAppListByProjectId()
+                boolean nameExist = false
+                def foundNameId = null
+                if (listApps) {
+                    listApps.each {
+                        if (it.name == newMappedAppData.job.name) {
+                            nameExist = true
+                            foundNameId = it.id
+                        }
+                    }
+                }
+
+                def parsedNewlyCreatedApp = null
+                // change the app to Queue so we can remove the first
+                if (listApps && nameExist) {
+                    appToImport.id = foundNameId
+                    addAppVersion(appToImport, appVersionToImport)
+
+                } else {
+                    if (versions) {
+                        versions.sort { a, b ->
+                            return a.number?.toInteger() <=> b.number?.toInteger()
+                        }
+                    }
+                    versions = versions as Queue
+                    if (versions && versions.size() >= 1) {
+                        def firstVersionInV1Format = versions.poll()
+                        AppVersionDTO firstVersion = ImportAppService.convertFromMapToJsonVersion(firstVersionInV1Format)
+                        appVersionToImport = firstVersion
+                    }
+                    def resultCreatedApp = createProjectApp(appToImport, appVersionToImport)
+                    parsedNewlyCreatedApp = slurper.parseText(resultCreatedApp)
+                }
+
+                response.app << [
+                    id  : job.key,
+                    name: newMappedAppData.job.name
+                ]
+
+                if (versions && versions.size() >= 1) {
+                    if (!parsedNewlyCreatedApp?.id && !foundNameId) {
+                        throw new GradleException("Couldn't get id for the app after creation or update")
+                    }
+                    if (parsedNewlyCreatedApp?.id) {
+                        appToImport.id = parsedNewlyCreatedApp?.id
+                    }else {
+                        appToImport.id = foundNameId
+                    }
+                    versions.each {
+                        AppVersionDTO appVersionFromVersions = ImportAppService.convertFromMapToJsonVersion(it)
+                        addAppVersion(appToImport, appVersionFromVersions)
+                    }
+
+                    response.app.last() << [
+                        versions: versions.size() + 1
+                    ]
+                }
+
+            }
+
+
             if (jobsConfigFromExportedZip?.jobs) {
                 ImportJobService.importAndCreateJobs(
                     jobsConfigFromExportedZip.jobs,
@@ -2015,6 +2101,13 @@ class SaagieClient {
                 )
             }
 
+            if (appsConfigFromExportedZip?.apps) {
+                ImportAppService.importAndCreateApps(
+                    appsConfigFromExportedZip.apps,
+                    configuration,
+                    processAppToImport
+                )
+            }
             return response
         } catch (InvalidUserDataException invalidUserDataException) {
             throw invalidUserDataException
@@ -2312,5 +2405,102 @@ class SaagieClient {
 
         def arrayApps = []
         return arrayApps as ExportApp[]
+    }
+
+    private getAppListByProjectId() {
+        def listApps = null
+        tryCatchClosure({
+            Request appsListRequest = saagieUtils.getAppListByProjectIdRequest()
+            client.newCall(appsListRequest).execute().withCloseable { responseAppList ->
+                handleErrors(responseAppList)
+                String responseBodyForAppList = responseAppList.body().string()
+                logger.debug("Apps with name and id : ")
+                logger.debug(responseBodyForAppList)
+                def parsedResultForAppList = slurper.parseText(responseBodyForAppList)
+                if (parsedResultForAppList.data?.labWebApps) {
+                    listApps = parsedResultForAppList.data.labWebApps
+                }
+                return listApps
+            }
+        }, 'Unknown error in getAppListByProjectId', 'getAppListByProjectIdRequest Request')
+    }
+
+    String addAppVersion(app, appVersion) {
+        // 2. add appVersion id there is a appVersion config
+        if (appVersion?.exists()) {
+            Request addAppVersionRequest = saagieUtils.updateAppVersion(app?.id, appVersion)
+
+            client.newCall(addAppVersionRequest).execute().withCloseable { updateResponse ->
+                handleErrors(updateResponse)
+                String updateResponseBody = updateResponse.body().string()
+                def updatedAppVersion = slurper.parseText(updateResponseBody)
+                if (updatedAppVersion.data == null) {
+                    def message = "Something went wrong when adding new app version: $updateResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String newAppVersion = updatedAppVersion.data.addJobVersion.number
+                    logger.info('Added new version: {}', newAppVersion)
+                    return newAppVersion
+                }
+            }
+        } else if (app?.id) {
+            Request listAppVersion = saagieUtils.getAppDetailRequest(app?.id)
+            client.newCall(listAppVersion).execute().withCloseable { listAppVersionsResponse ->
+                handleErrors(listAppVersionsResponse)
+                String listAppVersionResponseBody = listAppVersionsResponse.body().string()
+                def listAppVersionsData = slurper.parseText(listAppVersionResponseBody)
+                if (listAppVersionsData.data == null) {
+                    def message = "Something went wrong when getting list app versions: $listAppVersionResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    logger.info('getting list app versions: {}', listAppVersionsData.data.job.versions)
+                    String currentNumber
+                    listAppVersionsData.data.labWebApp.versions.each {
+                        if (it.isCurrent) {
+                            currentNumber = it.number
+                        }
+                    }
+                    return currentNumber
+                }
+            }
+        }
+    }
+
+
+    String createProjectApp(App app, AppVersionDTO appVersion) {
+        logger.info('Starting deprecated createProjectApp task')
+        checkRequiredConfigForAppAndAppVersionAndProjectId(app, appVersion)
+
+
+        logger.debug('Using config [project={}, app={}, appVersion={}]', configuration.project, app, appVersion)
+
+        Request projectCreateJobRequest = saagieUtils.getProjectCreateAppRequest(app, appVersion)
+        tryCatchClosure({
+            client.newCall(projectCreateJobRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating project app: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdApp = parsedResult.data.createJob
+                    return JsonOutput.toJson(createdApp)
+                }
+            }
+        }, 'Unknown error in deprecated Task: createProjectApp', 'Function: createProjectApp')
+    }
+
+    void checkRequiredConfigForAppAndAppVersionAndProjectId(App app, AppVersionDTO appVersion) {
+        checkRequiredConfig(
+            !configuration?.project?.id ||
+                !app?.name ||
+                !app?.technology ||
+                !appVersion?.resources
+        )
     }
 }

@@ -20,7 +20,7 @@ class ArtifactsImportV1Test extends DataOpsGradleTaskSpecification {
         given:
         URL resource = classLoader.getResource(exportedPipelineWithoutJobForV1)
         File exportedConfig = new File(resource.getFile())
-        enqueueRequest('{"data":{"jobs":[{"id":"job-1","name":"job name not contained in the pipeline version"}, {"id":"job-2","name":"job name name contained in the pipeline version"}]}}')
+         enqueueRequest('{"data":{"jobs":[{"id":"job-1","name":"job name not contained in the pipeline version"}, {"id":"job-2","name":"job name name contained in the pipeline version"}]}}')
 
         buildFile << """
             saagie {
@@ -42,7 +42,7 @@ class ArtifactsImportV1Test extends DataOpsGradleTaskSpecification {
         """
 
         when:
-        BuildResult result = gradle(taskName, "-d")
+        BuildResult result = gradle(taskName)
 
         then:
         UnexpectedBuildFailure e = thrown()
