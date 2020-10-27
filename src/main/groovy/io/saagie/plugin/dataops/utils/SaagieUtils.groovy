@@ -366,18 +366,19 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([id: appId])
 
         def getAppDetailQuery = gq('''
-            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote  resources{cpu memory disk}    dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
+            query labWebApp($id: UUID!) { labWebApp(id: $id) {    id    name    description    creationDate    isDeletable   category   isScheduled   isStreaming   storageSizeInMB    instances(limit: 1, checkInPipelineInstance: false) {      id     status     statusDetails     startTime      endTime      version {        number              }          }    versions {     number      creator      creationDate      number      isCurrent      releaseNote  resources{cpu memory disk}    dockerInfo {        image        dockerCredentialsId             }      exposedPorts {        name        port        isAuthenticationRequired       isRewriteUrl        basePathVariableName              }      storagePaths         }    alerting {      emails      statusList      loginEmails {        login        email             }          }    technology {     id  label         }      }}
         ''', gqVariables)
         return buildRequestFromQuery(getAppDetailQuery)
     }
 
-    Request getAppListByProjectIdRequest(String projectId) {
-        logger.debug('Generating app list for project with id', projectId)
+    Request getAppListByProjectIdRequest() {
+        Project project = configuration.project
+        logger.debug('Generating app list for project with id', project.id)
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([projectId: projectId])
+        def gqVariables = jsonGenerator.toJson([projectId: project.id])
 
         def getAppsListQuery = gq('''
             query labWebAppsQuery($projectId: UUID!) {  labWebApps(projectId: $projectId) {  id   name  }}
@@ -385,13 +386,13 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppsListQuery)
     }
 
-    Request getAppTechnologiesList(String appId) {
-        logger.debug('Generating technologies for application with id', appId)
+    Request getAppTechnologiesList() {
+        logger.debug('Generating technologies for application')
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([id: appId])
+        def gqVariables = jsonGenerator.toJson([:])
 
         def getAppTechnologiesListQuery = gq('''
             query repositoriesQuery {  repositories {    id    name    technologies {      ... on AppTechnology {        id        label        description        icon        backgroundColor        available        customFlags              }          }      }}
@@ -399,15 +400,15 @@ class SaagieUtils {
         return buildRequestFromQuery(getAppTechnologiesListQuery, true, true)
     }
 
-    Request updateAppVersion(String appId, AppVersionDTO appVersionDTO  ) {
+    Request updateAppVersion(String appId, AppVersionDTO appVersionDTO) {
         logger.debug('Updating application version for application with id', appId)
 
         def jsonGenerator = new JsonGenerator.Options()
             .build()
 
         def gqVariables = jsonGenerator.toJson([
-            appId: appId,
-            appVersion: appVersionDTO
+            appId     : appId,
+            appVersion: appVersionDTO.toMap()
         ])
 
         def getUpdateAppVersionQuery = gq('''
@@ -550,7 +551,7 @@ class SaagieUtils {
 
     Request getProjectCreateJobRequestWithGraphQL(Job job, JobVersion jobVersion) {
         Map mapedJobAndJobVersion = JobMapper.mapJobAndJobVersionWithoutMail(job, jobVersion, configuration.project.id)
-        logger.debug('Generating getProjectCreateJobRequest [job={}, jobVersion={}]', job, jobVersion)
+        logger.debug('Generating getProjectCreateJobRequest  [job={}, jobVersion={}]', job, jobVersion)
 
         File file = new File(jobVersion.packageInfo.name)
         logger.debug('Using [file={}] for upload', file.absolutePath)
