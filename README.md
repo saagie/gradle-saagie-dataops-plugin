@@ -5,7 +5,8 @@ If you are looking for the gradle plugin for Saagie Manager 1.0 please go there 
 
 More informations about Saagie: https://www.saagie.com
 
-This plugin is only compatible with gradle 3.0+
+This plugin is only compatible with Gradle 5.1 to 6.x (not compatible with Gradle 7.0+)
+
 
 ## Setup
 
