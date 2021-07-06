@@ -140,7 +140,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
         enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
         enqueueRequest('{"data":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}')
-        enqueueRequest('{"data":{"createPipeline":{"id":"id-1","name":"test pipeline 23"}}}')
+        enqueueRequest('{"data":{"addPipelineVersion":{"number":2}}}')
 
         buildFile << """
             saagie {
@@ -166,7 +166,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{status=success, job=[], pipeline=[{id=id-2, name=test pipeline exist}, {id=id-1, name=test pipeline 23}], variable=[], app=[]}')
+        result.output.contains('{status=success, job=[], pipeline=[{id=id-1, name=test pipeline 23}, {id=id-2, name=test pipeline exist}], variable=[], app=[]}')
     }
 
 
@@ -288,7 +288,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         URL resource = classLoader.getResource(exportJobWithoutPipelineZipFilename)
         File exportedConfig = new File(resource.getFile())
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
-        enqueueRequest('{"data":{"createJob":{"id":"job-id","name":"Job from import"}}}')
+        enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}]}}')
         enqueueRequest('{"data":{"addJobVersion":{"number":2}}}')
 
@@ -316,7 +316,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-2, name=name exist}, {id=id-1, name=test added job}], pipeline=[], variable=[], app=[]}')
+        result.output.contains('{status=success, job=[{id=id-1, name=test added job}, {id=id-2, name=name exist}], pipeline=[], variable=[], app=[]}')
     }
 
 
