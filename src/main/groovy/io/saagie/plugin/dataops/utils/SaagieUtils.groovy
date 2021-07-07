@@ -1450,10 +1450,13 @@ class SaagieUtils {
         }
     }
 
-    static debugResponse(Response response) {
+    static debugResponse(Response response, String body) {
         logger.debug("====== Response ======")
         logger.debug("${response.protocol().toString()} ${response.code} ${response.message}")
         response.headers().names().each { logger.debug("${it}: ${response.headers().get(it)}") }
+        logger.debug("====== Body ======")
+        logger.debug("${body}")
+        logger.debug("====== Response End ======")
     }
 
     static handleErrorClosure = { Logger l, response ->
@@ -1464,7 +1467,7 @@ class SaagieUtils {
         }
         String body = response.body().string()
 
-        debugResponse(response)
+        debugResponse(response, body)
 
         String status = "${response.code()}"
         def message = "Error $status when requesting \n$body"
