@@ -5,12 +5,16 @@ import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Server
 import okhttp3.Authenticator
 import okhttp3.Credentials
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.Route
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy
 import org.apache.http.ssl.SSLContexts
+import org.gradle.api.GradleException
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLContext
@@ -25,7 +29,7 @@ import java.util.concurrent.TimeUnit
 
 @TypeChecked
 class HttpClientBuilder {
-
+    static final Logger logger = Logging.getLogger(HttpClientBuilder.class)
     static private X509TrustManager trustManagerInstance = new X509TrustManager() {
         @Override
         void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
@@ -89,6 +93,36 @@ class HttpClientBuilder {
         builder.connectTimeout(configuration.server.timeout, TimeUnit.SECONDS)
         builder.readTimeout(configuration.server.timeout, TimeUnit.SECONDS)
         builder.writeTimeout(configuration.server.timeout, TimeUnit.SECONDS)
+        builder.interceptors().add(new Interceptor() {
+            @Override
+            public Response intercept(Interceptor.Chain chain) throws IOException {
+                Request request = chain.request()
+                Response response = null
+                boolean responseOK = false
+                String errorMessage = ''
+                int tryCount = 0
+
+                while (!responseOK && tryCount < 3) {
+                    logger.debug("{} attempt", tryCount)
+                    try {
+                        response = chain.proceed(request)
+                        responseOK = response.isSuccessful()
+                    }catch (Exception e){
+                        logger.error("Request is not successful - " + tryCount);
+                        if(tryCount == 2){
+                            errorMessage= e.message
+                        }
+                    }finally{
+                        tryCount++;
+                    }
+                }
+                if(!responseOK){
+                    throw new GradleException(errorMessage)
+                }
+                // otherwise just pass the original response on
+                return response;
+            }
+        })
         return builder;
     }
 
