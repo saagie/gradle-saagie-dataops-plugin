@@ -1,5 +1,6 @@
 package io.saagie.plugin.dataops.utils
 
+import groovy.json.JsonBuilder
 import groovy.json.JsonGenerator
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.App
@@ -953,10 +954,11 @@ class SaagieUtils {
 
     Request getJwtTokenRequest() {
         logger.debug('Requesting JWT...')
+
         Request newRequest = new Request.Builder()
-            .url("${configuration.server.url}/data-fabric/api/auth")
-            .addHeader('Authorization', getCredentials())
-            .get()
+            .url("${configuration.server.url}/authentication/api/open/authenticate")
+            .addHeader('Saagie-Realm', getRealm())
+            .post(getCredentialsAsJson())
             .build()
 
         debugRequest(newRequest)
@@ -1044,15 +1046,13 @@ class SaagieUtils {
     Request getPlatformListRequest() {
         Server server = configuration.server
         logger.debug('Generating request in order to get access rights by platforms')
-
-        String realm = server.realm
         String jwtToken = server.token
 
         logger.debug("Using realm=${realm} and jwt=${jwtToken}")
         Request newRequest = new Request.Builder()
             .url("${configuration.server.url}/security/api/groups/authorizations/${configuration.server.environment}/permissions/projects")
             .addHeader('Cookie', "SAAGIETOKEN${realm.toUpperCase()}=${jwtToken}")
-            .addHeader('Saagie-Realm', realm.toLowerCase())
+            .addHeader('Saagie-Realm', getRealm())
             .get()
             .build()
 
@@ -1408,6 +1408,16 @@ class SaagieUtils {
 
     private String getCredentials() {
         Credentials.basic(configuration.server.login, configuration.server.password)
+    }
+
+    private RequestBody getCredentialsAsJson() {
+        io.saagie.plugin.dataops.models.Credentials credz =
+           new io.saagie.plugin.dataops.models.Credentials(login: configuration.server.login, password: configuration.server.password)
+        RequestBody.create(new JsonBuilder(credz).toString(), JSON)
+    }
+
+    private String getRealm() {
+        configuration.server.realm?.toLowerCase()
     }
 
     private String getBearerCredentials() {
