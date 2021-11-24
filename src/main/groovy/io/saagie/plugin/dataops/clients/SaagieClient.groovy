@@ -68,7 +68,7 @@ class SaagieClient {
         this.configuration = configuration
         this.taskName = taskName
 
-        // TODO: remember to parameterize that once it will be available
+        // TODO: remember to remove it once it will be removed (is deprecated for now <end of 2021>)
         this.configuration.jobVersion.resources {
             disk = 512
             memory = 512

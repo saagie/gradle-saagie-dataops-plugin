@@ -13,6 +13,10 @@ keys.tar
 *.iml
 .idea
 
+# Eclipse
+.project
+.classpath
+
 # VSCode
 .history
 .vscode
