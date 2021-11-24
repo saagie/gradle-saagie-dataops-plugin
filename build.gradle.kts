@@ -20,7 +20,6 @@ plugins {
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
-    id("de.marcphilipp.nexus-publish") version "0.4.0"
     groovy
     maven
     signing
@@ -31,8 +30,7 @@ group = "io.saagie"
 description = "Gradle plugin to manage Saagie's DataFabric jobs with gradle."
 
 repositories {
-    jcenter()
-    mavenCentral()
+    gradlePluginPortal()
 }
 
 configurations {
@@ -85,100 +83,6 @@ val javadocJar = tasks.register<Jar>("javadocJar") {
 release {
     preTagCommitMessage = "[ci skip] pre tag commit:"
     newVersionCommitMessage = "[ci skip] new version commit:"
-}
-
-tasks {
-    val replaceVersionInFiles by creating {
-        doLast {
-            val readMe = File("README.md")
-            val regex = "id\\s\"io\\.saagie\\.gradle\\-saagie\\-dataops\\-plugin\"\\sversion\\s\"([0-9\\.]+)\""
-            readMe.writeText(regex.toRegex().replace(readMe.readText(), "id \"io.saagie.gradle-saagie-dataops-plugin\" version \"${version}\""))
-            val properties = File("gradle.properties")
-            properties.writeText(properties.readText().replace(previousVersion, version.replace("-SNAPSHOT", "")))
-        }
-    }
-    val prepareDocCommit by creating(Exec::class) {
-        dependsOn(replaceVersionInFiles)
-        description = "Replace version number in documentation"
-        commandLine = listOf("git", "add", "README.md", "gradle.properties")
-    }
-    val commitVersion by creating(Exec::class) {
-        dependsOn(prepareDocCommit)
-        description = "Commit version"
-        commandLine = listOf("git", "commit", "-m", "[ci skip] replace readme version.")
-    }
-    val updateVersion by getting {
-        dependsOn(commitVersion)
-    }
-
-    val publish by getting
-
-    val publishPlugins by getting {
-        dependsOn(publish)
-    }
-    val afterReleaseBuild by getting {
-        dependsOn(publishPlugins)
-    }
-}
-
-nexusPublishing {
-    repositories {
-        sonatype {
-            username.set(nexusUsername)
-            password.set(nexusPassword)
-        }
-    }
-}
-
-publishing {
-    publications {
-        val plugin = create<MavenPublication>("pluginMaven") {
-            groupId = group.toString()
-            artifactId = project.name
-            version = project.version.toString()
-
-            from(components["java"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
-
-            pom {
-                url.set("https://github.com/saagie/gradle-saagie-dataops-plugin")
-                name.set(project.name)
-                description.set(project.description)
-
-                scm {
-                    url.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
-                    connection.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
-                    developerConnection.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
-                }
-
-                licenses {
-                    license {
-                        name.set("The Apache Software License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                        distribution.set("repo")
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set("decampsrenan")
-                        name.set("Renan Decamps")
-                        url.set("https://github.com/decampsrenan")
-                    }
-                }
-            }
-        }
-        signing {
-            isRequired = signatory != null
-            sign(plugin)
-        }
-    }
-}
-nexusStaging {
-    username = nexusUsername
-    password = nexusPassword
-    delayBetweenRetriesInMillis = 30000
 }
 
 gradlePlugin {
