@@ -414,7 +414,6 @@ class SaagieClient {
 
     }
 
-
     String addJobVersion(job, jobVersion) {
         // 2. add jobVersion id there is a jobVersion config
         if (jobVersion?.exists()) {
@@ -2198,7 +2197,7 @@ class SaagieClient {
         }
     }
 
-    private checkRequiredConfig(boolean conditions) {
+    boolean checkRequiredConfig(boolean conditions) {
         logger.info('Checking required pre-conditions...')
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
@@ -2226,8 +2225,12 @@ class SaagieClient {
         try {
             closure()
         } catch (InvalidUserDataException invalidUserDataException) {
+            logger.debug(message)
+            logger.debug("${invalidUserDataException.message} ${potentialFunctionName ?: ''}")
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
+            logger.debug(message)
+            logger.debug("${stopActionException.message} ${potentialFunctionName ?: ''}")
             throw stopActionException
         } catch (Exception exception) {
             logger.error(message)

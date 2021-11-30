@@ -1,29 +1,24 @@
 package io.saagie.plugin.dataops
 
 import io.saagie.plugin.dataops.tasks.group.GroupListTask
-import io.saagie.plugin.dataops.tasks.projects.job.ProjectDeleteJobTask
-import io.saagie.plugin.dataops.tasks.projects.job.ProjectCreateJobTask
-import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectCreatePipelineTask
-import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectDeletePipelineTask
-import io.saagie.plugin.dataops.tasks.projects.project.ProjectDeleteTask
-import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectGetJobInstanceStatusTask
-import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectGetPipelineInstanceStatusTask
-import io.saagie.plugin.dataops.tasks.projects.job.ProjectListJobsTask
-import io.saagie.plugin.dataops.tasks.projects.project.ProjectListTask
-import io.saagie.plugin.dataops.tasks.projects.technology.ProjectListTechnologiesTask
-import io.saagie.plugin.dataops.tasks.projects.job.ProjectRunJobTask
-import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectRunPipelineTask
-import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectStopJobInstanceTask
-import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectStopPipelineInstanceTask
-import io.saagie.plugin.dataops.tasks.projects.job.ProjectUpgradeJobTask
-import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectUpgradePipelineTask
 import io.saagie.plugin.dataops.tasks.platform.PlatformListTask
-import io.saagie.plugin.dataops.tasks.projects.project.ProjectsCreateTask
+import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsExportJobTask
 import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsExportJobV1Task
 import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsImportJobTask
-import io.saagie.plugin.dataops.tasks.projects.artifact.ProjectsExportJobTask
-import io.saagie.plugin.dataops.tasks.projects.pipeline.ProjectsListPipelinesTask
+import io.saagie.plugin.dataops.tasks.projects.graphPipeline.*
+import io.saagie.plugin.dataops.tasks.projects.graphPipelineInstance.ProjectGetGraphPipelineInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.graphPipelineInstance.ProjectStopGraphPipelineInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.job.*
+import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectGetJobInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.jobInstance.ProjectStopJobInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.pipeline.*
+import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectGetPipelineInstanceStatusTask
+import io.saagie.plugin.dataops.tasks.projects.pipelineInstance.ProjectStopPipelineInstanceTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectDeleteTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectListTask
+import io.saagie.plugin.dataops.tasks.projects.project.ProjectsCreateTask
 import io.saagie.plugin.dataops.tasks.projects.project.ProjectsUpdateTask
+import io.saagie.plugin.dataops.tasks.projects.technology.ProjectListTechnologiesTask
 import io.saagie.plugin.dataops.tasks.projects.technology.TechnologyListTask
 import org.gradle.api.Project
 
@@ -54,6 +49,13 @@ class DataOpsModule {
     final static String PROJECTS_EXPORT_ARTIFACTS = 'projectsExport'
     final static String PROJECTS_EXPORT_ARTIFACTS_V1 = 'projectsExportV1'
     final static String PROJECTS_IMPORT_ARTIFACTS_JOB = 'projectsImport'
+    final static String PROJECTS_CREATE_GRAPH_PIPELINE_TASK = 'projectsCreateGraphPipeline'
+    final static String PROJECTS_GET_GRAPH_PIPELINE_INSTANCE_STATUS = 'projectsGetGraphPipelineInstanceStatus'
+    final static String PROJECTS_UPGRADE_GRAPH_PIPELINE_TASK = 'projectsUpgradeGraphPipeline'
+    final static String PROJECTS_RUN_GRAPH_PIPELINE_TASK = 'projectsRunGraphPipeline'
+    final static String PROJECTS_STOP_GRAPH_PIPELINE_INSTANCE_TASK = 'projectsStopGraphPipelineInstance'
+    final static String PROJECTS_DELETE_GRAPH_PIPELINE_TASK = 'projectsDeleteGraphPipeline'
+    final static String PROJECTS_LIST_GRAPH_PIPELINES_TASK = 'projectsListGraphPipelines'
 
     final static String TASK_GROUP = 'Saagie'
 
@@ -233,6 +235,55 @@ class DataOpsModule {
             description = 'Import a List of jobs, pipelines or environment variables using the artifacts from a zip location'
             configuration = project.saagie
             taskName = PROJECTS_IMPORT_ARTIFACTS_JOB
+        }
+
+        project.task(PROJECTS_CREATE_GRAPH_PIPELINE_TASK, type: ProjectCreateGraphPipelineTask) {
+            group = TASK_GROUP
+            description = 'Create a graph pipeline'
+            configuration = project.saagie
+            taskName = PROJECTS_CREATE_GRAPH_PIPELINE_TASK
+        }
+
+        project.task(PROJECTS_GET_GRAPH_PIPELINE_INSTANCE_STATUS, type: ProjectGetGraphPipelineInstanceStatusTask) {
+            group = TASK_GROUP
+            description = 'Get the status of a graph pipeline instance'
+            configuration = project.saagie
+            taskName = PROJECTS_GET_GRAPH_PIPELINE_INSTANCE_STATUS
+        }
+
+        project.task(PROJECTS_UPGRADE_GRAPH_PIPELINE_TASK, type: ProjectUpgradeGraphPipelineTask) {
+            group = TASK_GROUP
+            description = 'Upgrade a graph pipeline'
+            configuration = project.saagie
+            taskName = PROJECTS_UPGRADE_GRAPH_PIPELINE_TASK
+        }
+
+        project.task(PROJECTS_RUN_GRAPH_PIPELINE_TASK, type: ProjectRunGraphPipelineTask) {
+            group = TASK_GROUP
+            description = 'Run a graph pipeline'
+            configuration = project.saagie
+            taskName = PROJECTS_RUN_GRAPH_PIPELINE_TASK
+        }
+
+        project.task(PROJECTS_STOP_GRAPH_PIPELINE_INSTANCE_TASK, type: ProjectStopGraphPipelineInstanceTask) {
+            group = TASK_GROUP
+            description = 'Stop a graph pipeline instance'
+            configuration = project.saagie
+            taskName = PROJECTS_STOP_GRAPH_PIPELINE_INSTANCE_TASK
+        }
+
+        project.task(PROJECTS_DELETE_GRAPH_PIPELINE_TASK, type: ProjectDeleteGraphPipelineTask) {
+            group = TASK_GROUP
+            description = 'Delete a graph pipeline'
+            configuration = project.saagie
+            taskName = PROJECTS_DELETE_GRAPH_PIPELINE_TASK
+        }
+
+        project.task(PROJECTS_LIST_GRAPH_PIPELINES_TASK, type: ProjectsListGraphPipelinesTask) {
+            group = TASK_GROUP
+            description = 'List all graph pipelines of a project'
+            configuration = project.saagie
+            taskName = PROJECTS_LIST_GRAPH_PIPELINES_TASK
         }
     }
 }

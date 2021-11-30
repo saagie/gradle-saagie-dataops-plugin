@@ -14,6 +14,7 @@ import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import org.gradle.api.GradleException
 
+// TODO 2875 : que faire de l'import/export des graph Pipeline ?
 class FolderGenerator {
 
     ExportJob[] exportJobList = []

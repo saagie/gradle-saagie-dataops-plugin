@@ -38,7 +38,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-
+// TODO 2875 : mette les requêtes graphQL pour les Graph Pipeline
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
     static final MediaType JSON = MediaType.parse('application/json; charset=utf-8')
@@ -1106,6 +1106,76 @@ class SaagieUtils {
         ''', gqVariables)
 
         return buildRequestFromQuery(listAllPipelineRequest)
+    }
+
+    Request getListAllProjectGraphPipelinesRequest(){
+        Project project = configuration.project
+        logger.debug('Generating getAllProjectPipelinesRequest for project [id={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            id: project.id
+        ])
+
+        def listAllGraphPipelineRequest = gq('''
+            query projectQuery($id: UUID!) {
+              project(id: $id) {
+                id
+                pipelines {
+                  id
+                  name
+                  description
+                  creationDate
+                  isScheduled
+                  cronScheduling
+                  scheduleStatus
+                  alerting {
+                      loginEmails {
+                          login
+                          email
+                      }
+                      emails
+                      statusList
+                  }
+                  versions {
+                    number
+                    isCurrent
+                    isMajor
+                    releaseNote
+                    creationDate
+                    creator
+                    graph {
+                      jobNodes {
+                        id
+                        job {
+                          id
+                        }
+                        nextNodes
+                        position {
+                          x
+                          y
+                        }
+                      }
+                      conditionNodes {
+                        id
+                        nextNodesSuccess
+                        nextNodesFailure
+                        position {
+                          x
+                          y
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            ''', gqVariables)
+
+        return buildRequestFromQuery(listAllGraphPipelineRequest)
     }
 
     Request getListAllTechnologiesRequest() {
