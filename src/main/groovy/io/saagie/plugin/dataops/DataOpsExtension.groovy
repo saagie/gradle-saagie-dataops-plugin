@@ -15,7 +15,7 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.Server
-import okio.Pipe
+import io.saagie.plugin.dataops.models.graphPipeline.GraphPipelineVersion
 
 import javax.validation.constraints.NotNull
 
@@ -40,6 +40,8 @@ class DataOpsExtension {
     Pipeline pipeline = new Pipeline()
 
     PipelineVersion pipelineVersion = new PipelineVersion()
+
+    GraphPipelineVersion graphPipelineVersion = new GraphPipelineVersion()
 
     ImportJob importArtifacts = new ImportJob()
 
@@ -69,6 +71,7 @@ class DataOpsExtension {
         pipeline = new Pipeline()
         env = new EnvVariable()
         pipelineVersion = new PipelineVersion()
+        graphPipelineVersion = new GraphPipelineVersion()
         pipelineinstance = new PipelineInstance()
         importArtifacts = new ImportJob()
         jobOverride = new ArtifactPropertyOverride()
@@ -119,6 +122,11 @@ class DataOpsExtension {
     Object pipelineVersion(Closure closure) {
         pipelineVersion = new PipelineVersion()
         pipelineVersion.with(closure)
+    }
+
+    Object graphPipelineVersion(Closure closure) {
+        graphPipelineVersion = new GraphPipelineVersion()
+        graphPipelineVersion.with(closure)
     }
 
     Object pipelineinstance(Closure closure) {

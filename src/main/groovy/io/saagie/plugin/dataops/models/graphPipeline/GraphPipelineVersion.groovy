@@ -4,16 +4,17 @@ import io.saagie.plugin.dataops.models.IMapable
 
 class GraphPipelineVersion implements IMapable {
     String releaseNote
-    List<String> jobs = []
+    PipelineGraph graph = new PipelineGraph()
+
+    Object graph(Closure closure) {
+        graph.with(closure)
+    }
 
     @Override
     Map toMap() {
-        if (releaseNote && !jobs.empty) {
-            return [
-                releaseNote: releaseNote,
-                jobs       : jobs
-            ]
-        }
-        return null
+        return [
+            releaseNote : releaseNote,
+            graph       : graph.toMap()
+        ]
     }
 }

@@ -7,20 +7,20 @@ import org.jetbrains.annotations.NotNull
 class GraphPipelineVersionDTO implements IExists, Comparable {
     String releaseNote
     def number
-    def jobs = []
+    def graph
 
     @Override
     boolean exists() {
-        return releaseNote || (jobs && jobs.length)
+        return releaseNote || graph
     }
 
     void setPipelineVersionFromApiResult(pipelineVersionDetailResult) {
         initPipelineVersionWithCommunFields(pipelineVersionDetailResult)
     }
 
-    void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number) {
+    void setPipelineVersionFromV1ApiResult(graph, String releaseNote, String number) {
         this.releaseNote = releaseNote
-        this.jobs = jobs
+        this.graph = graph
         if (number) {
             this.number = number
         }
@@ -28,12 +28,13 @@ class GraphPipelineVersionDTO implements IExists, Comparable {
 
     def initPipelineVersionWithCommunFields(pipelineVersionDetailResult) {
         releaseNote = pipelineVersionDetailResult.releaseNote
-        jobs = pipelineVersionDetailResult.jobs.collect { [id: it.id] }
+        graph = pipelineVersionDetailResult.graph
         if (pipelineVersionDetailResult.number) {
             this.number = pipelineVersionDetailResult.number
         }
     }
 
+    // TODO 2875: modify with graph instead jobs
     @Override
     int compareTo(@NotNull Object o) {
         def diffJobs = SaagieUtils.getDifferenceOfTwoArrays(jobs, o.jobs)

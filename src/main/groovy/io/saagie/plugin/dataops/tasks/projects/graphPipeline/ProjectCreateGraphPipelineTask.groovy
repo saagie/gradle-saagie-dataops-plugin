@@ -24,7 +24,7 @@ class ProjectCreateGraphPipelineTask extends DefaultTask {
     @TaskAction
     def createProjectGraphPipeline() {
         saagieClient = new GraphPipelineClient(configuration, taskName)
-        result = saagieClient.createProjectGraphPipeline(configuration.pipeline, configuration.pipelineVersion)
+        result = saagieClient.createProjectGraphPipeline(configuration.pipeline, configuration.graphPipelineVersion)
         logger.quiet(result)
         return result
     }

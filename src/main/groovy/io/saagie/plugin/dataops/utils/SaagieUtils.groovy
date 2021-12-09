@@ -15,6 +15,7 @@ import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
+import io.saagie.plugin.dataops.models.graphPipeline.GraphPipelineVersion
 import io.saagie.plugin.dataops.tasks.projects.enums.UnitTime
 import okhttp3.Credentials
 import okhttp3.HttpUrl
@@ -38,7 +39,6 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-// TODO 2875 : mette les requêtes graphQL pour les Graph Pipeline
 class SaagieUtils {
     static final Logger logger = Logging.getLogger(SaagieUtils.class)
     static final MediaType JSON = MediaType.parse('application/json; charset=utf-8')
@@ -782,6 +782,31 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
+    Request getCreateGraphPipelineRequest(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+        Project project = configuration.project
+
+        logger.debug('Generating getCreateGraphPipelineRequest for project [projectId={}, pipeline={}, graphPipelineVersion={}]', project.id, pipeline, graphPipelineVersion)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def graphqlGraphPipelineVar = [
+            *          : pipeline.toMap(),
+            projectId  : project.id,
+            graph     : graphPipelineVersion.graph.toMap(),
+            releaseNote: graphPipelineVersion.releaseNote
+        ]
+        graphqlGraphPipelineVar.remove('id')
+
+        def gqVariables = jsonGenerator.toJson([
+            pipeline: graphqlGraphPipelineVar
+        ])
+        def runProjectJobRequest = gq(''' mutation createGraphPipelineMutation($pipeline: GraphPipelineInput!) { createGraphPipeline(pipeline: $pipeline) { id } } ''', gqVariables)
+
+        return buildRequestFromQuery(runProjectJobRequest)
+    }
+
     Request getProjectJobInstanceStatusRequest() {
         JobInstance jobInstance = configuration.jobinstance
         logger.debug('Generating getProjectJobsRequest [projectId={}]', jobInstance.id)
@@ -868,6 +893,37 @@ class SaagieUtils {
         return buildRequestFromQuery(addPipelineVersionRequest)
     }
 
+    Request getAddGraphPipelineVersionRequest(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+        logger.debug('Generating getAddGraphPipelineVersionRequest [pipelineId={}]', pipeline.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([
+            pipelineId : pipeline.id,
+            graph     : graphPipelineVersion.graph.toMap(),
+            releaseNote: graphPipelineVersion.releaseNote
+        ])
+
+        def addPipelineVersionRequest = gq('''
+            mutation addGraphPipelineVersionMutation(
+                $pipelineId: UUID!,
+                $graph: PipelineGraphInput!,
+                $releaseNote: String,
+            ) {
+                addGraphPipelineVersion(
+                    pipelineId: $pipelineId,
+                    graph: $graph,
+                    releaseNote: $releaseNote
+                ) {
+                    number
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(addPipelineVersionRequest)
+    }
 
     Request getProjectRunPipelineRequest() {
         Pipeline pipeline = configuration.pipeline

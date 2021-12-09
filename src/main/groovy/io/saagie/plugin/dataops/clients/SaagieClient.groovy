@@ -528,7 +528,7 @@ class SaagieClient {
         return pipelineResult
     }
 
-    private updatePipelineInfos() {
+    protected updatePipelineInfos() {
         logger.debug('Using config [pipeline={}]', configuration.pipeline)
         Request projectUpdatePipelineRequest = saagieUtils.getProjectUpdatePipelineRequest()
         tryCatchClosure({
