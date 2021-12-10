@@ -6,6 +6,7 @@ import groovy.transform.TypeChecked
 class ExportPipeline implements IExists {
 
     PipelineDTO pipelineDTO = new PipelineDTO()
+
     PipelineVersionDTO pipelineVersionDTO = new PipelineVersionDTO()
     ArrayList<PipelineVersionDTO> versions = new ArrayList<PipelineVersionDTO>()
 
@@ -14,26 +15,27 @@ class ExportPipeline implements IExists {
         return pipelineDTO.exists() || pipelineVersionDTO.exists()
     }
 
+    // V1
+    void setPipelineFromV1ApiResult(pipelineDetailResult) {
+        pipelineDTO.setPipelineFromV1ApiResult(pipelineDetailResult)
+    }
+    // V1
+    void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number = null) {
+        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
+    }
+    // V1
+    void addPipelineVersionDtoToVersionsFromV1(jobs, String releaseNote, String number = null) {
+        PipelineVersionDTO pipelineVersionDTOFromVersionsV1 = new PipelineVersionDTO()
+        pipelineVersionDTOFromVersionsV1.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
+        versions.add(0, pipelineVersionDTOFromVersionsV1)
+    }
+
     void setPipelineFromApiResult(pipelineDetailResult) {
         pipelineDTO.setPipelineFromApiResult(pipelineDetailResult)
     }
 
-    void setPipelineFromV1ApiResult(pipelineDetailResult) {
-        pipelineDTO.setPipelineFromV1ApiResult(pipelineDetailResult)
-    }
-
-    void setPipelineVersionFromV1ApiResult(jobs, String releaseNote, String number = null) {
-        pipelineVersionDTO.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
-    }
-
     void setPipelineVersionFromApiResult(version) {
         pipelineVersionDTO.setPipelineVersionFromApiResult(version)
-    }
-
-    void addPipelineVersionDtoToVersions(jobs, String releaseNote, String number = null) {
-        PipelineVersionDTO pipelineVersionDTOFromVersionsV1 = new PipelineVersionDTO()
-        pipelineVersionDTOFromVersionsV1.setPipelineVersionFromV1ApiResult(jobs, releaseNote, number)
-        versions.add(0, pipelineVersionDTOFromVersionsV1)
     }
 
     void addPipelineVersionFromV2ApiResult(version) {

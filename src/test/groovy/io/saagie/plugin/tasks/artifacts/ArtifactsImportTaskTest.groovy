@@ -167,12 +167,12 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
         then:
         notThrown(Exception)
         println result.output
-        result.output.contains('{status=success, job=[], pipeline=[{id=id-1, name=test pipeline 23}, {id=id-2, name=test pipeline exist}], variable=[], app=[]}')
+        result.output.contains('{status=success, job=[]')
+        def pipelines = result.output.findAll('pipeline=\\[.*\\], variable').first()
+        pipelines.contains('{id=id-1, name=test pipeline 23}')
+        pipelines.contains('{id=id-2, name=test pipeline exist}')
+        result.output.contains('variable=[], app=[]}')
     }
-
-
-
-
 
     def "the task should add appVersion based on the build configuration if name exist"() {
         given:
@@ -317,7 +317,11 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('{status=success, job=[{id=id-1, name=test added job}, {id=id-2, name=name exist}], pipeline=[], variable=[], app=[]}')
+        result.output.contains('{status=success')
+        def jobs = result.output.findAll('job=\\[.*\\], pipeline').first()
+        jobs.contains('{id=id-1, name=test added job}')
+        jobs.contains('{id=id-2, name=name exist}')
+        result.output.contains('pipeline=[], variable=[], app=[]}')
     }
 
 

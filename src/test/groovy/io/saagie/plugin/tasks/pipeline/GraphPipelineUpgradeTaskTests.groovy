@@ -46,7 +46,7 @@ class GraphPipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                     }
                 }
 
-                graphPipelineVersion {
+                pipelineVersion {
                     releaseNote = "new release note version"
                     graph {
                         jobNodes = [

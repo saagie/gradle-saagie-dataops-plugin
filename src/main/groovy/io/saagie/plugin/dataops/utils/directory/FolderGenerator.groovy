@@ -13,8 +13,10 @@ import io.saagie.plugin.dataops.models.VariableEnvironmentDetailDTO
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import org.gradle.api.GradleException
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 
-// TODO 2875 : que faire de l'import/export des graph Pipeline ?
+// TODO 2875 : import graph Pipeline
 class FolderGenerator {
 
     ExportJob[] exportJobList = []
@@ -367,7 +369,6 @@ class FolderGenerator {
         def urlPipelineIdFolder = "${inputDire}${sl}${name}${sl}Pipeline${sl}${pipelineId}"
         def folder = new File(urlPipelineIdFolder);
 
-
         if (overwrite && folder.exists()) {
             def folderStatus = folder.deleteDir()
             if (!folderStatus) {
@@ -487,8 +488,11 @@ class FolderGenerator {
     }
 
     Map generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
-        def jobForPipeVersionArray = []
+        Map pipelineVersionDetailJson = [:]
+
         if (pipelineVersionDTO && pipelineVersionDTO.jobs) {
+            def jobForPipeVersionArray = []
+
             pipelineVersionDTO?.jobs?.each { jobId ->
                 jobList.each { job ->
                     if (jobId && job && jobId.id == job.id) {
@@ -499,30 +503,29 @@ class FolderGenerator {
                     }
                 }
             }
+
+            pipelineVersionDetailJson << [*: [
+                jobs: jobForPipeVersionArray
+            ]]
         }
 
-        Map pipelineVersionDetailJson = [
-            jobs: jobForPipeVersionArray
-        ]
+        if (pipelineVersionDTO && pipelineVersionDTO.graph) {
+            pipelineVersionDetailJson.put('graph', pipelineVersionDTO.graph)
+        }
 
-        if (
-        pipelineVersionDTO?.releaseNote
-        ) {
+        if (pipelineVersionDTO?.releaseNote) {
             pipelineVersionDetailJson << [*: [
                 releaseNote: pipelineVersionDTO?.releaseNote
             ]]
         }
 
-        if (
-        pipelineVersionDTO?.number
-        ) {
+        if (pipelineVersionDTO?.number) {
             pipelineVersionDetailJson << [*: [
                 number: pipelineVersionDTO?.number
             ]]
         }
         return pipelineVersionDetailJson
     }
-
 
     boolean checkExistenceOfJobsPipelinesVariablesAndApps() {
         return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length && !exportAppList.length

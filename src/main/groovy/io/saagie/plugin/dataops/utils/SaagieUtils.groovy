@@ -15,7 +15,6 @@ import io.saagie.plugin.dataops.models.Pipeline
 import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.Server
-import io.saagie.plugin.dataops.models.graphPipeline.GraphPipelineVersion
 import io.saagie.plugin.dataops.tasks.projects.enums.UnitTime
 import okhttp3.Credentials
 import okhttp3.HttpUrl
@@ -473,7 +472,7 @@ class SaagieUtils {
 
     Request getPipelineRequestFromParam(pipelineId) {
         Project project = configuration.project
-        logger.debug('generating getPipelineRequest [projectId={}]', project.id)
+        logger.debug('generating getPipelineRequest [pipelineId={}]', project.id)
 
         def jsonGenerator = getJsonGenerator()
 
@@ -511,6 +510,67 @@ class SaagieUtils {
 
                 }
             }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(pipelineResult)
+    }
+
+    Request getGraphPipelineRequestFromParam(pipelineId) {
+        Project project = configuration.project
+        logger.debug('generating getGraphPipelineRequest [pipelineId={}]', project.id)
+
+        def jsonGenerator = getJsonGenerator()
+
+        def gqVariables = jsonGenerator.toJson([pipelineId: pipelineId])
+
+        def pipelineResult = gq('''
+            query graphPipeline ($pipelineId: UUID!) {
+                graphPipeline(id: $pipelineId) {
+                    id
+                    name
+                    description
+                    isScheduled
+                    cronScheduling
+                    alerting {
+                        loginEmails {
+                            login
+                            email
+                        }
+                        emails
+                        statusList
+                    }
+                    versions {
+                        number
+                        isCurrent
+                        isMajor
+                        releaseNote
+                        creationDate
+                        creator
+                        graph {
+                            jobNodes {
+                                id
+                                job {
+                                    id
+                                }
+                                position {
+                                    x
+                                    y
+                                }
+                                nextNodes
+                            }
+                            conditionNodes {
+                                id
+                                position {
+                                    x
+                                    y
+                                }
+                                nextNodesSuccess
+                                nextNodesFailure
+                            }
+                        }
+                    }
+                }
+              }
         ''', gqVariables)
 
         return buildRequestFromQuery(pipelineResult)
@@ -782,7 +842,7 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
-    Request getCreateGraphPipelineRequest(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+    Request getCreateGraphPipelineRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
         Project project = configuration.project
 
         logger.debug('Generating getCreateGraphPipelineRequest for project [projectId={}, pipeline={}, graphPipelineVersion={}]', project.id, pipeline, graphPipelineVersion)
@@ -893,7 +953,7 @@ class SaagieUtils {
         return buildRequestFromQuery(addPipelineVersionRequest)
     }
 
-    Request getAddGraphPipelineVersionRequest(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+    Request getAddGraphPipelineVersionRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
         logger.debug('Generating getAddGraphPipelineVersionRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()

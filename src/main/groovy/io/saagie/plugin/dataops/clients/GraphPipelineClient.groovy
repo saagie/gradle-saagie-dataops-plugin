@@ -3,7 +3,7 @@ package io.saagie.plugin.dataops.clients
 import groovy.json.JsonOutput
 import io.saagie.plugin.dataops.DataOpsExtension
 import io.saagie.plugin.dataops.models.Pipeline
-import io.saagie.plugin.dataops.models.graphPipeline.GraphPipelineVersion
+import io.saagie.plugin.dataops.models.PipelineVersion
 import okhttp3.Request
 import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
@@ -20,25 +20,11 @@ class GraphPipelineClient extends SaagieClient{
         logger.info('Starting projectsListAllGraphPipelines task')
         checkRequiredConfig(!configuration?.project?.id)
 
-        Request platformListRequest = saagieUtils.getListAllProjectGraphPipelinesRequest()
-        tryCatchClosure({
-            client.newCall(platformListRequest).execute().withCloseable { response ->
-                handleErrors(response)
-                String responseBody = response.body().string()
-                def parsedResult = slurper.parseText(responseBody)
-                if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting graph pipelines list: $responseBody"
-                    logger.error(message)
-                    throw new GradleException(message)
-                } else {
-                    List pipelineList = parsedResult.data.project.pipelines
-                    return JsonOutput.toJson(pipelineList)
-                }
-            }
-        }, 'Unknown error in Task: projectsListAllGraphPipelines', 'Function: listAllGraphPipelines')
+        def pipelineList = getAllGraphPipelines()
+        return JsonOutput.toJson(pipelineList)
     }
 
-    String createProjectGraphPipeline(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+    String createProjectGraphPipeline(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
         logger.info('Starting createGraphPipeline task')
         checkRequiredConfig(!configuration?.project?.id || !pipeline?.name)
 
@@ -70,15 +56,15 @@ class GraphPipelineClient extends SaagieClient{
         def pipelineResult = updatePipelineInfos()
 
         // 2. try to update pipeline version
-        if (configuration?.graphPipelineVersion) {
-            checkRequiredConfig(configuration?.graphPipelineVersion && configuration?.graphPipelineVersion?.graph?.jobNodes?.isEmpty())
-            updateGraphPipelineVersion(configuration?.pipeline, configuration?.graphPipelineVersion)
+        if (configuration?.pipelineVersion) {
+            checkRequiredConfig(configuration?.pipelineVersion && configuration?.pipelineVersion?.graph?.jobNodes?.isEmpty())
+            updateGraphPipelineVersion(configuration?.pipeline, configuration?.pipelineVersion)
         }
 
         return pipelineResult
     }
 
-    private updateGraphPipelineVersion(Pipeline pipeline, GraphPipelineVersion graphPipelineVersion) {
+    private updateGraphPipelineVersion(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
         logger.debug('Calling updateGraphPipelineVersion')
         logger.debug('Using config [pipeline={}]', pipeline)
         logger.debug('Using config [graphPipelineVersion={}]', graphPipelineVersion)

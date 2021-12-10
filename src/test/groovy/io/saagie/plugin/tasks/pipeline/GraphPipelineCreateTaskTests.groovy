@@ -43,7 +43,7 @@ class GraphPipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
                     name = 'Pipeline name'
                 }
 
-                graphPipelineVersion {
+                pipelineVersion {
                     releaseNote = "pipeline version 1"
                     graph {
                         jobNodes = [
@@ -147,7 +147,7 @@ class GraphPipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
                     name = 'Pipeline name already used'
                 }
 
-                graphPipelineVersion {
+                pipelineVersion {
                     releaseNote = "pipeline version 1"
                     graph {
                         jobNodes = [
@@ -222,7 +222,7 @@ class GraphPipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
                 name = 'Pipeline name'
             }
 
-            graphPipelineVersion {
+            pipelineVersion {
                 releaseNote = "pipeline version 1"
                 graph {
                     jobNodes = [
@@ -303,7 +303,7 @@ class GraphPipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
                 }
             }
 
-            graphPipelineVersion {
+            pipelineVersion {
                 releaseNote = "pipeline version 1"
                 graph {
                     jobNodes = [

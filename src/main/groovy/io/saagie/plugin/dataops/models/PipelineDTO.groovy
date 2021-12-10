@@ -29,7 +29,6 @@ class PipelineDTO implements IExists {
         isScheduled = pipelineDetailResult.isScheduled
         cronScheduling = pipelineDetailResult.cronScheduling
         alerting = pipelineDetailResult.alerting
-
     }
 
     void setPipelineFromV1ApiResult(pipelineV1DetailResult) {
