@@ -167,6 +167,93 @@ class ArtifactsExportTaskTests extends DataOpsGradleTaskSpecification {
         tempJobFile.delete()
     }
 
+    def "projectsExportJob should export only graph pipeLines"() {
+        given:
+        File tempJobDirectory = File.createTempDir("project", ".tmp")
+        File tempJobFile = File.createTempFile("package", ".tmp")
+
+        enqueueRequest("""{"data":{"graphPipeline":{"id":"pipeline-1","name":"pipeline-1","description":"pipeline-1","versions":[{"number":1,"creationDate":"2019-11-06T07:49:27.235Z","releaseNote":null,"graph":{
+          "jobNodes": [
+            {
+              "id": "72187690-d7f4-11eb-b632-f10974faf871",
+              "nextNodes": [
+                "12187690-d7f4-11eb-b632-f10974faf871"
+              ],
+              "job": {
+                "id": "4ee4ea88-ecde-413c-b200-00ab8f77e658"
+              }
+            },
+            {
+              "id": "81f96790-d7f4-11eb-b632-f10974faf871",
+              "nextNodes": [],
+              "job": {
+                "id": "4ee4ea88-ecde-413c-b200-00ab8f77e658"
+              }
+            },
+            {
+              "id": "71f96790-d7f4-11eb-b632-f10974faf871",
+              "nextNodes": [
+                "81f96790-d7f4-11eb-b632-f10974faf871"
+              ],
+              "job": {
+                "id": "4ee4ea88-ecde-413c-b200-00ab8f77e658"
+              }
+            }
+          ],
+          "conditionNodes": [
+            {
+              "id": "12187690-d7f4-11eb-b632-f10974faf871",
+              "nextNodesSuccess": [
+                "71f96790-d7f4-11eb-b632-f10974faf871"
+              ],
+              "nextNodesFailure": [
+                "81f96790-d7f4-11eb-b632-f10974faf871"
+              ]
+            }
+          ]
+        },
+        "isCurrent":true,"isMajor":false,"creator":"youen.chene"}],"isScheduled":false,"cronScheduling":null,"scheduleStatus":null,"alerting":null}}}""")
+
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name job 2"},{"id":"id-3","name":"name job 3"}]}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = 'http://localhost:9000/'
+                    login = 'user'
+                    password = 'password'
+                    environment = 1
+                    useLegacy = false
+                }
+
+                project {
+                    id = 'project-id'
+                    has_graph_pipelines = true
+                }
+
+                pipeline {
+                    ids = ['pipeline-1']
+                }
+
+                exportArtifacts {
+                    export_file = '${tempJobDirectory.getAbsolutePath()}/zipfile.zip'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName, '-d')
+
+        def computedValue = """{"status":"success","exportfile":"${tempJobDirectory.getAbsolutePath()}/zipfile.zip"}"""
+
+        then:
+        notThrown(Exception)
+        assert new File("${tempJobDirectory.getAbsolutePath()}/zipfile.zip").exists()
+        result.output.contains(computedValue)
+        tempJobDirectory.deleteDir()
+        tempJobFile.delete()
+    }
+
     def "projectsExportJob should export job, job version and pipeLines with include_job true"() {
         given:
         File tempJobDirectory = File.createTempDir("project", ".tmp")

@@ -13,10 +13,7 @@ import io.saagie.plugin.dataops.models.VariableEnvironmentDetailDTO
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import okhttp3.OkHttpClient
 import org.gradle.api.GradleException
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
 
-// TODO 2875 : import graph Pipeline
 class FolderGenerator {
 
     ExportJob[] exportJobList = []
@@ -490,7 +487,7 @@ class FolderGenerator {
     Map generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
         Map pipelineVersionDetailJson = [:]
 
-        if (pipelineVersionDTO && pipelineVersionDTO.jobs) {
+        if (pipelineVersionDTO?.jobs && !pipelineVersionDTO.jobs.isEmpty()) {
             def jobForPipeVersionArray = []
 
             pipelineVersionDTO?.jobs?.each { jobId ->
@@ -509,8 +506,26 @@ class FolderGenerator {
             ]]
         }
 
-        if (pipelineVersionDTO && pipelineVersionDTO.graph) {
-            pipelineVersionDetailJson.put('graph', pipelineVersionDTO.graph)
+        if (pipelineVersionDTO?.graph?.jobNodes && !pipelineVersionDTO.graph.jobNodes.isEmpty()) {
+            def jobNodesArray = []
+            pipelineVersionDTO.graph.jobNodes.each {
+                jobNodesArray.add(
+                    [
+                        id: it.id,
+                        job: [
+                            id: it.job.id,
+                            name: jobList.find { job -> job.id == it.job.id }
+                        ],
+                        position: it.position,
+                        nextNodes: it.nextNodes
+                    ]
+                )
+            }
+            Map graphMap = [
+                jobNodes: jobNodesArray,
+                conditionNodes:  pipelineVersionDTO.graph.conditionNodes
+            ]
+            pipelineVersionDetailJson.put('graph', graphMap)
         }
 
         if (pipelineVersionDTO?.releaseNote) {

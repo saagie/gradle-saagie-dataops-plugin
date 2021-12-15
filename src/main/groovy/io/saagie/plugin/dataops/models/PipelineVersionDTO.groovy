@@ -2,15 +2,17 @@ package io.saagie.plugin.dataops.models
 
 import io.saagie.plugin.dataops.models.graphPipeline.ConditionNode
 import io.saagie.plugin.dataops.models.graphPipeline.JobNode
-import io.saagie.plugin.dataops.models.graphPipeline.PipelineGraph
+import io.saagie.plugin.dataops.models.graphPipeline.PipelineGraphDto
 import io.saagie.plugin.dataops.utils.SaagieUtils
 import org.jetbrains.annotations.NotNull
 
 class PipelineVersionDTO implements IExists, Comparable {
     String releaseNote
     def number
+    // Deprecated since graph pipelines
+    @Deprecated
     def jobs = []
-    PipelineGraph graph = new PipelineGraph()
+    PipelineGraphDto graph = new PipelineGraphDto()
 
     @Override
     boolean exists() {
@@ -52,7 +54,7 @@ class PipelineVersionDTO implements IExists, Comparable {
         return diffJobs.size() > 0 ? 1 : releaseNote <=> o.releaseNote
     }
 
-    int graphCompareTo(@NotNull Object o) {
+    private int graphCompareTo(@NotNull Object o) {
         if (releaseNote != o.releaseNote) {
             return releaseNote <=> o.releaseNote
         }
@@ -62,13 +64,18 @@ class PipelineVersionDTO implements IExists, Comparable {
         def conditionNodes = graph.conditionNodes as List<ConditionNode>
         def conditionNodesParam = o.graph.conditionNodes as List<ConditionNode>
 
-        if (jobNodes.size() != jobNodesParam.size()) {
+        if (!jobNodesListAreEquals(jobNodes, jobNodesParam)
+            || !conditionNodesListAreEquals(conditionNodes, conditionNodesParam)
+        ) {
             return 1
         }
-        if (conditionNodes.size() != conditionNodesParam.size()) {
-            return 1
-        }
+        return 0
+    }
 
+    private static boolean jobNodesListAreEquals(List<JobNode> jobNodes, List<JobNode> jobNodesParam) {
+        if (jobNodes.size() != jobNodesParam.size()) {
+            return false
+        }
         def jobNodesParamSort = jobNodesParam.sort { it.id }
         jobNodes.sort { it.id }.eachWithIndex {jobNode, index ->
             if (jobNode.id != jobNodesParamSort[index].id
@@ -76,10 +83,16 @@ class PipelineVersionDTO implements IExists, Comparable {
                 || jobNode.position.y != jobNodesParamSort[index].position.y
                 || SaagieUtils.getDifferenceOfTwoArrays(jobNode.nextNodes as ArrayList, jobNodesParamSort[index].nextNodes as ArrayList) > 0
             ) {
-                return 1
+                return false
             }
         }
+        return true
+    }
 
+    private static boolean conditionNodesListAreEquals(List<ConditionNode> conditionNodes, List<ConditionNode> conditionNodesParam) {
+        if (conditionNodes.size() != conditionNodesParam.size()) {
+            return false
+        }
         def conditionNodesParamSort = conditionNodesParam.sort { it.id }
         conditionNodes.sort { it.id }.eachWithIndex {conditionNode, index ->
             if (conditionNode.id != conditionNodesParamSort[index].id
@@ -89,10 +102,9 @@ class PipelineVersionDTO implements IExists, Comparable {
                 || SaagieUtils.getDifferenceOfTwoArrays(conditionNode.nextNodesSuccess as ArrayList, conditionNodesParamSort[index].nextNodesSuccess as ArrayList) > 0
                 || SaagieUtils.getDifferenceOfTwoArrays(conditionNode.nextNodesFailure as ArrayList, conditionNodesParamSort[index].nextNodesFailure as ArrayList) > 0
             ) {
-                return 1
+                return false
             }
         }
-
-        return 0
+        return true
     }
 }

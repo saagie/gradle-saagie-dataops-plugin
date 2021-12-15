@@ -200,6 +200,29 @@ class SaagieUtils {
         return buildRequestFromQuery(listProjectJobs)
     }
 
+    Request getProjectGraphPipelinesRequestGetNameAndId() {
+        Project project = configuration.project
+        logger.debug('Generating getProjectGraphPipelinesRequestGetNameAndId [projectId={}]', project.id)
+
+        def jsonGenerator = new JsonGenerator.Options()
+            .excludeNulls()
+            .build()
+
+        def gqVariables = jsonGenerator.toJson([projectId: project.id])
+
+        def listProjectJobs = gq('''
+            query getGraphPipelinesByProject($projectId: UUID!) {
+                project(id: $projectId) {
+                    pipelines {
+                        id
+                        name
+                    }
+                }
+            }
+        ''', gqVariables)
+        return buildRequestFromQuery(listProjectJobs)
+    }
+
     static boolean isCollectionOrArray(object) {
         [Collection, Object[]].any { it.isAssignableFrom(object.getClass()) }
     }
@@ -842,7 +865,7 @@ class SaagieUtils {
         return buildRequestFromQuery(runProjectJobRequest)
     }
 
-    Request getCreateGraphPipelineRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
+    Request getCreateGraphPipelineRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion, boolean isImportContext) {
         Project project = configuration.project
 
         logger.debug('Generating getCreateGraphPipelineRequest for project [projectId={}, pipeline={}, graphPipelineVersion={}]', project.id, pipeline, graphPipelineVersion)
@@ -854,7 +877,7 @@ class SaagieUtils {
         def graphqlGraphPipelineVar = [
             *          : pipeline.toMap(),
             projectId  : project.id,
-            graph     : graphPipelineVersion.graph.toMap(),
+            graph     : isImportContext ? graphPipelineVersion.graph: graphPipelineVersion.graph.toMap(),
             releaseNote: graphPipelineVersion.releaseNote
         ]
         graphqlGraphPipelineVar.remove('id')
@@ -953,7 +976,7 @@ class SaagieUtils {
         return buildRequestFromQuery(addPipelineVersionRequest)
     }
 
-    Request getAddGraphPipelineVersionRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion) {
+    Request getAddGraphPipelineVersionRequest(Pipeline pipeline, PipelineVersion graphPipelineVersion, boolean isImportContext) {
         logger.debug('Generating getAddGraphPipelineVersionRequest [pipelineId={}]', pipeline.id)
 
         def jsonGenerator = new JsonGenerator.Options()
@@ -962,7 +985,7 @@ class SaagieUtils {
 
         def gqVariables = jsonGenerator.toJson([
             pipelineId : pipeline.id,
-            graph     : graphPipelineVersion.graph.toMap(),
+            graph     : isImportContext ? graphPipelineVersion.graph: graphPipelineVersion.graph.toMap(),
             releaseNote: graphPipelineVersion.releaseNote
         ])
 

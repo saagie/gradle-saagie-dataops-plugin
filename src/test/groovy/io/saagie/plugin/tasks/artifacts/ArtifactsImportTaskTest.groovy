@@ -20,6 +20,8 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared
     String exportPipelineWithoutJobZipFilename = './exportedPipelineWithoutJob.zip'
     @Shared
+    String exporGraphtPipelineWithoutJobZipFilename = './exportedGraphPipelineWithoutJob.zip'
+    @Shared
     String exportJobWithoutPipelineZipFilename = './exportedJobWithoutPipeline.zip'
     @Shared
     String exportJobJustJobVersionWithoutPipelineZipFilename = './exportJobJustJobVersionWithoutPipelineZipFilename.zip'
@@ -153,6 +155,49 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
                 project {
                     id = 'project-id'
+                }
+
+                importArtifacts {
+                    import_file = '${exportedConfig.absolutePath}'
+                }
+            }
+        """
+
+        when:
+        BuildResult result = gradle(taskName)
+
+        then:
+        notThrown(Exception)
+        println result.output
+        result.output.contains('{status=success, job=[]')
+        def pipelines = result.output.findAll('pipeline=\\[.*\\], variable').first()
+        pipelines.contains('{id=id-1, name=test pipeline 23}')
+        pipelines.contains('{id=id-2, name=test pipeline exist}')
+        result.output.contains('variable=[], app=[]}')
+    }
+
+    def "the task should create a new graph pipeline and add new version to another pipeline without job based on the exported config"() {
+        given:
+        URL resource = classLoader.getResource(exporGraphtPipelineWithoutJobZipFilename)
+        File exportedConfig = new File(resource.getFile())
+        enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
+        enqueueRequest('{"data":{"project":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}}')
+        enqueueRequest('{"data":{"addGraphPipelineVersion":{"number":2}}}')
+        enqueueRequest('{"data":{"project":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}}')
+        enqueueRequest('{"data":{"addGraphPipelineVersion":{"number":2}}}')
+
+        buildFile << """
+            saagie {
+                server {
+                    url = '${mockServerUrl}'
+                    login = 'login'
+                    password = 'password'
+                    environment = 1
+                }
+
+                project {
+                    id = 'project-id'
+                    has_graph_pipelines = true
                 }
 
                 importArtifacts {

@@ -4,6 +4,8 @@ import io.saagie.plugin.dataops.models.graphPipeline.PipelineGraph
 
 class PipelineVersion implements IMapable {
     String releaseNote
+    // Deprecated since graph pipelines
+    @Deprecated
     List<String> jobs = []
     PipelineGraph graph = new PipelineGraph()
 

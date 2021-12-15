@@ -5,7 +5,6 @@ class Pipeline implements IMapable {
     String name
     String description
     def ids = []
-    Boolean graphPipeline = false
     Boolean include_job = false
     Boolean include_all_versions
     Boolean isScheduled = false
