@@ -366,7 +366,6 @@ class FolderGenerator {
         def urlPipelineIdFolder = "${inputDire}${sl}${name}${sl}Pipeline${sl}${pipelineId}"
         def folder = new File(urlPipelineIdFolder);
 
-
         if (overwrite && folder.exists()) {
             def folderStatus = folder.deleteDir()
             if (!folderStatus) {
@@ -486,8 +485,11 @@ class FolderGenerator {
     }
 
     Map generatePipelineVersion(PipelineVersionDTO pipelineVersionDTO) {
-        def jobForPipeVersionArray = []
-        if (pipelineVersionDTO && pipelineVersionDTO.jobs) {
+        Map pipelineVersionDetailJson = [:]
+
+        if (pipelineVersionDTO?.jobs && !pipelineVersionDTO.jobs.isEmpty()) {
+            def jobForPipeVersionArray = []
+
             pipelineVersionDTO?.jobs?.each { jobId ->
                 jobList.each { job ->
                     if (jobId && job && jobId.id == job.id) {
@@ -498,30 +500,47 @@ class FolderGenerator {
                     }
                 }
             }
+
+            pipelineVersionDetailJson << [*: [
+                jobs: jobForPipeVersionArray
+            ]]
         }
 
-        Map pipelineVersionDetailJson = [
-            jobs: jobForPipeVersionArray
-        ]
+        if (pipelineVersionDTO?.graph?.jobNodes && !pipelineVersionDTO.graph.jobNodes.isEmpty()) {
+            def jobNodesArray = []
+            pipelineVersionDTO.graph.jobNodes.each {
+                jobNodesArray.add(
+                    [
+                        id: it.id,
+                        job: [
+                            id: it.job.id,
+                            name: jobList.find { job -> job.id == it.job.id }
+                        ],
+                        position: it.position,
+                        nextNodes: it.nextNodes
+                    ]
+                )
+            }
+            Map graphMap = [
+                jobNodes: jobNodesArray,
+                conditionNodes:  pipelineVersionDTO.graph.conditionNodes
+            ]
+            pipelineVersionDetailJson.put('graph', graphMap)
+        }
 
-        if (
-        pipelineVersionDTO?.releaseNote
-        ) {
+        if (pipelineVersionDTO?.releaseNote) {
             pipelineVersionDetailJson << [*: [
                 releaseNote: pipelineVersionDTO?.releaseNote
             ]]
         }
 
-        if (
-        pipelineVersionDTO?.number
-        ) {
+        if (pipelineVersionDTO?.number) {
             pipelineVersionDetailJson << [*: [
                 number: pipelineVersionDTO?.number
             ]]
         }
         return pipelineVersionDetailJson
     }
-
 
     boolean checkExistenceOfJobsPipelinesVariablesAndApps() {
         return !exportJobList.length && !exportPipelineList.length && !exportVariableList.length && !exportAppList.length

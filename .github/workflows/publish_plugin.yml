@@ -23,3 +23,18 @@ jobs:
         GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
         GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
       run: ./gradlew publishPlugins -Dgradle.publish.key=$GRADLE_PUBLISH_KEY -Dgradle.publish.secret=$GRADLE_PUBLISH_SECRET
+
+    - uses: actions/checkout@v2
+      with:
+          fetch-depth: '0'
+    - name: Retrieve version in gradle.properties
+      run: |
+        echo "::set-output name=TAG_NAME::$(cat gradle.properties | grep version | cut -d'=' -f2)"
+      id: version
+    - name: Print version retrieved
+      run: echo ${{ steps.version.outputs.TAG_NAME }}
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.36.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CUSTOM_TAG: ${{ steps.version.outputs.TAG_NAME }}

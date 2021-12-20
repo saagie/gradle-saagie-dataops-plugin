@@ -20,6 +20,7 @@ plugins {
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
+    id("maven-publish")
     groovy
     maven
     signing
@@ -105,6 +106,40 @@ pluginBundle {
         "saagiePlugin" {
             id = "io.saagie.gradle-saagie-dataops-plugin"
             displayName = "Gradle Saagie plugin"
+        }
+    }
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+
+    publications {
+        val plugin = create<MavenPublication>("pluginMaven") {
+            groupId = group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+
+            from(components["java"])
+            artifact(tasks["sourcesJar"])
+            artifact(tasks["javadocJar"])
+
+            pom {
+                url.set("https://github.com/saagie/gradle-saagie-dataops-plugin")
+                name.set(project.name)
+                description.set(project.description)
+
+                scm {
+                    url.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
+                    connection.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
+                    developerConnection.set("scm:git@github.com:saagie/gradle-saagie-dataops-plugin.git")
+                }
+            }
+        }
+        signing {
+            isRequired = signatory != null
+            sign(plugin)
         }
     }
 }

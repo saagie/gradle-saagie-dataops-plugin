@@ -15,7 +15,6 @@ import io.saagie.plugin.dataops.models.PipelineVersion
 import io.saagie.plugin.dataops.models.Project
 import io.saagie.plugin.dataops.models.PropertyOverride
 import io.saagie.plugin.dataops.models.Server
-import okio.Pipe
 
 import javax.validation.constraints.NotNull
 

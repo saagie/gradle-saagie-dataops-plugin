@@ -302,7 +302,7 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     Map createdJob = parsedResult.data.createJob
-                    job.id = createdJob.id
+                    job.id = createdJob?.id
                     return JsonOutput.toJson(createdJob)
                 }
             }
@@ -414,7 +414,6 @@ class SaagieClient {
 
     }
 
-
     String addJobVersion(job, jobVersion) {
         // 2. add jobVersion id there is a jobVersion config
         if (jobVersion?.exists()) {
@@ -489,6 +488,30 @@ class SaagieClient {
         }, 'Unknown error in createPipeline')
     }
 
+    String createProjectGraphPipeline(Pipeline pipeline, PipelineVersion graphPipelineVersion, isImportContext) {
+        logger.info('Starting createGraphPipeline task')
+        checkRequiredConfig(!configuration?.project?.id || !pipeline?.name)
+
+        logger.debug('Using config [project={}, pipeline={}, graphPipelineVersion={}]', configuration.project, pipeline, graphPipelineVersion)
+
+        Request createPipelineRequest = saagieUtils.getCreateGraphPipelineRequest(pipeline, graphPipelineVersion, isImportContext)
+        tryCatchClosure({
+            client.newCall(createPipelineRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when creating the graph pipeline: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    Map createdPipeline = parsedResult.data.createGraphPipeline
+                    return JsonOutput.toJson(createdPipeline)
+                }
+            }
+        }, 'Unknown error in createGraphPipeline')
+    }
+
     String getJobInstanceStatus() {
         logger.info('Starting getJobInstanceStatus task')
         checkRequiredConfig(!configuration?.jobinstance?.id)
@@ -529,7 +552,7 @@ class SaagieClient {
         return pipelineResult
     }
 
-    private updatePipelineInfos() {
+    protected updatePipelineInfos() {
         logger.debug('Using config [pipeline={}]', configuration.pipeline)
         Request projectUpdatePipelineRequest = saagieUtils.getProjectUpdatePipelineRequest()
         tryCatchClosure({
@@ -570,6 +593,28 @@ class SaagieClient {
                 }
             }
         }, 'Unknown error in updatePipelineVersion')
+    }
+
+    protected updateGraphPipelineVersion(Pipeline pipeline, PipelineVersion graphPipelineVersion, boolean isImportContext) {
+        logger.debug('Calling updateGraphPipelineVersion')
+        logger.debug('Using config [pipeline={}]', pipeline)
+        logger.debug('Using config [graphPipelineVersion={}]', graphPipelineVersion)
+        Request updatePipelineVersionRequest = saagieUtils.getAddGraphPipelineVersionRequest(pipeline, graphPipelineVersion, isImportContext)
+        tryCatchClosure({
+            client.newCall(updatePipelineVersionRequest).execute().withCloseable { updateResponse ->
+                handleErrors(updateResponse)
+                String updateResponseBody = updateResponse.body().string()
+                def updatedPipelineVersion = slurper.parseText(updateResponseBody)
+                if (updatedPipelineVersion.data == null) {
+                    def message = "Something went wrong when adding new project graph pipeline version: $updateResponseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    String newPipelineVersion = updatedPipelineVersion.data.addGraphPipelineVersion.number
+                    logger.info('Updated pipelineVersion number: {}', newPipelineVersion)
+                }
+            }
+        }, 'Unknown error in updateGraphPipelineVersion')
     }
 
     String getPipelineInstanceStatus() {
@@ -962,7 +1007,6 @@ class SaagieClient {
         }
 
         return export(exportPipelines, exportJobs, exportVariables, exportApps, variablesExportedIsEmpty)
-
     }
 
     def getVariableListIfConfigIsDefined(getVariableListingClosure) {
@@ -1381,7 +1425,7 @@ class SaagieClient {
                             return workflow
                         }
                         mappedListInstancesPipelines.eachWithIndex { item, index ->
-                            exportPipeline.addPipelineVersionDtoToVersions(item.jobs, null, null)
+                            exportPipeline.addPipelineVersionDtoToVersionsFromV1(item.jobs, null, null)
                         }
                         if (exportPipeline.versions.size() > 1) {
                             exportPipeline.versions.withIndex().collect { workflow, index ->
@@ -1457,18 +1501,41 @@ class SaagieClient {
 
     }
 
-    ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {
-
+    ExportPipeline getPipelineAndGraphPipelineVersionDetailToExport(String pipelineId) {
         checkRequiredConfig(!configuration?.project?.id ||
             !configuration?.pipeline?.ids ||
             !configuration?.exportArtifacts?.export_file
         )
 
+        tryCatchClosure({
+            Request getPipelineDetail = saagieUtils.getGraphPipelineRequestFromParam(pipelineId)
+            ExportPipeline exportPipeline
+            client.newCall(getPipelineDetail).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult?.data?.graphPipeline == null) {
+                    def message = "Something went wrong when getting pipeline detail: $responseBody for pipeline id $pipelineId"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    def pipelineDetailResult = parsedResult.data.graphPipeline
+                    exportPipeline = managePipelineDetailResult(pipelineDetailResult)
+                }
+            }
+            return exportPipeline
+        }, 'Unknown error in getPipelineAndGraphPipelineVersionDetailToExport', 'getGraphPipelineRequestFromParam') as ExportPipeline
+    }
+
+    ExportPipeline getPipelineAndPipelineVersionDetailToExport(String pipelineId) {
+        checkRequiredConfig(!configuration?.project?.id ||
+            !configuration?.pipeline?.ids ||
+            !configuration?.exportArtifacts?.export_file
+        )
 
         tryCatchClosure({
             Request getPipelineDetail = saagieUtils.getPipelineRequestFromParam(pipelineId)
-            def pipeline = configuration.pipeline
-            ExportPipeline exportPipeline = new ExportPipeline()
+            ExportPipeline exportPipeline
             client.newCall(getPipelineDetail).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
@@ -1479,42 +1546,55 @@ class SaagieClient {
                     throw new GradleException(message)
                 } else {
                     def pipelineDetailResult = parsedResult.data.pipeline
-                    if (pipelineDetailResult) {
-                        exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
-                        if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
-                            pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
-                            pipelineDetailResult.versions.each {
-                                if (it.isCurrent) {
-                                    exportPipeline.setPipelineVersionFromApiResult(it)
-                                }
-                                if (it.jobs && pipeline.include_job) {
-                                    def jobIds = configuration.job.ids
-                                    configuration.job.ids = [jobIds, it.jobs.id].flatten()
-                                }
-                            }
-                            if (configuration.pipeline?.include_all_versions) {
-                                if (pipelineDetailResult?.versions && pipelineDetailResult?.versions.size() > 1) {
-                                    pipelineDetailResult.versions.each {
-                                        exportPipeline.addPipelineVersionFromV2ApiResult(it)
-                                    }
-                                }
-                            }
-
-                        } else {
-                            def messageEmptyVersions = "No versions for the pipeline $pipelineId"
-                            logger.error(messageEmptyVersions)
-                            throw new GradleException(messageEmptyVersions)
-                        }
-                    }
-
+                    exportPipeline = managePipelineDetailResult(pipelineDetailResult)
                 }
             }
             return exportPipeline
         }, 'Unknown error in getPipelineAndPipelineVersionDetailToExport', 'getPipelineRequestFromParam') as ExportPipeline
     }
 
+    def managePipelineDetailResult(Object pipelineDetailResult) {
+        def pipeline = configuration.pipeline
+        ExportPipeline exportPipeline = new ExportPipeline()
+        if (pipelineDetailResult) {
+            exportPipeline.setPipelineFromApiResult(pipelineDetailResult)
+            if (pipelineDetailResult.versions && !pipelineDetailResult.versions.isEmpty()) {
+                pipelineDetailResult.versions.sort { a, b -> a.creationDate <=> b.creationDate }
+                pipelineDetailResult.versions.each {
+                    if (it.isCurrent) {
+                        exportPipeline.setPipelineVersionFromApiResult(it)
+                    }
+                    if (pipeline.include_job) {
+                        def jobIds = configuration.job.ids
+                        if (it.jobs) {
+                            configuration.job.ids = [jobIds, it.jobs.id].flatten()
+                        } else if (it.graph.jobNodes) {
+                            configuration.job.ids = [jobIds, it.graph.jobNodes.collect { it.job.id }].flatten()
+                        }
+                    }
+                }
+                if (configuration.pipeline?.include_all_versions) {
+                    if (pipelineDetailResult?.versions && pipelineDetailResult?.versions?.size() > 1) {
+                        pipelineDetailResult.versions.each {
+                            exportPipeline.addPipelineVersionFromV2ApiResult(it)
+                        }
+                    }
+                }
+            } else {
+                def messageEmptyVersions = "No versions for the pipeline $pipelineId"
+                logger.error(messageEmptyVersions)
+                throw new GradleException(messageEmptyVersions)
+            }
+        }
+        return exportPipeline
+    }
+
     ExportPipeline[] getListPipelineAndPipelineVersionsFromConfig() {
         return getPipelineAndPipelineVersions(this.&getPipelineAndPipelineVersionDetailToExport)
+    }
+
+    ExportPipeline[] getListPipelineAndGraphPipelineVersionsFromConfig() {
+        return getPipelineAndPipelineVersions(this.&getPipelineAndGraphPipelineVersionDetailToExport)
     }
 
     ExportPipeline[] getListPipelineAndpipelineVersionsFromConfigV1(ArrayList listJobsByNameAndIdFromV1) {
@@ -1922,8 +2002,13 @@ class SaagieClient {
             }
 
             def listPipelines = null
+            boolean hasGraphPipelines = configuration.project.has_graph_pipelines
             def processPipelineToImport = { newMappedPipeline, pipeline, id, versions, newlistJobs ->
-                listPipelines = getPipelineListByNameAndId()
+                if (hasGraphPipelines) {
+                    listPipelines = getGraphPipelineListByNameAndId()
+                } else {
+                    listPipelines = getPipelineListByNameAndId()
+                }
                 def pipelineToImport = newMappedPipeline.pipeline
                 def pipelineVersionToImport = newMappedPipeline.pipelineVersion
                 boolean nameExist = false
@@ -1942,7 +2027,11 @@ class SaagieClient {
                 def parsedNewlyCreatedPipeline = null
 
                 if (listPipelines && nameExist) {
-                    updatePipelineVersion(pipelineToImport, pipelineVersionToImport)
+                    if (hasGraphPipelines) {
+                        updateGraphPipelineVersion(pipelineToImport, pipelineVersionToImport, true)
+                    } else {
+                        updatePipelineVersion(pipelineToImport, pipelineVersionToImport)
+                    }
                 } else {
                     if (versions && versions.size() >= 1) {
                         versions.sort { a, b ->
@@ -1950,11 +2039,17 @@ class SaagieClient {
                         }
                         versions = versions as Queue
                         def firstVersionInV1Format = versions.poll()
-                        PipelineVersion firstVersion = ImportPipelineService.convertFromMapToJsonVersion(firstVersionInV1Format, newlistJobs)
+                        PipelineVersion firstVersion = ImportPipelineService.convertFromMapToJsonVersion(firstVersionInV1Format, newlistJobs, hasGraphPipelines)
                         pipelineVersionToImport = firstVersion
                     }
 
-                    def newlyCreatedPipeline = createProjectPipeline(pipelineToImport, pipelineVersionToImport)
+                    String newlyCreatedPipeline
+                    if (hasGraphPipelines) {
+                        newlyCreatedPipeline = createProjectGraphPipeline(pipelineToImport, pipelineVersionToImport, true)
+                    } else {
+                        newlyCreatedPipeline = createProjectPipeline(pipelineToImport, pipelineVersionToImport)
+                    }
+
                     parsedNewlyCreatedPipeline = slurper.parseText(newlyCreatedPipeline)
                 }
 
@@ -1973,29 +2068,27 @@ class SaagieClient {
                         } else {
                             pipelineToImport.id = pipelineFoundId
                         }
-                        PipelineVersion pipelineVersionFromVersions = ImportPipelineService.convertFromMapToJsonVersion(it, newlistJobs)
-                        updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
-
+                        PipelineVersion pipelineVersionFromVersions = ImportPipelineService.convertFromMapToJsonVersion(it, newlistJobs, hasGraphPipelines)
+                        if (hasGraphPipelines) {
+                            updateGraphPipelineVersion(pipelineToImport, pipelineVersionFromVersions, true)
+                        } else {
+                            updatePipelineVersion(pipelineToImport, pipelineVersionFromVersions)
+                        }
                     }
 
                     response.pipeline.last() << [
                         versions: versions.size() + 1
                     ]
                 }
-
             }
 
             def processVariableToImport = { newMappedVariable, variable, id ->
-
                 def newlyCreatedVariable = saveEnvironmentVariable(newMappedVariable)
-
                 response.variable << [
                     id  : newlyCreatedVariable.id,
                     name: newlyCreatedVariable.name
                 ]
-
             }
-
 
 
             def listApps = null
@@ -2070,7 +2163,6 @@ class SaagieClient {
                         versions: versions.size() + 1
                     ]
                 }
-
             }
 
 
@@ -2088,12 +2180,12 @@ class SaagieClient {
                     pipelinesConfigFromExportedZip.pipelines,
                     configuration,
                     processPipelineToImport,
-                    newlistJobs
+                    newlistJobs,
+                    hasGraphPipelines
                 )
             }
 
             if (variablesConfigFromExportedZip?.variables && response.status == ResponseStatusEnum.success.name) {
-
                 ImportVariableService.importAndCreateVariables(
                     variablesConfigFromExportedZip.variables,
                     configuration,
@@ -2184,6 +2276,24 @@ class SaagieClient {
         }, 'Unknown error in getPipelineListByNameAndId', 'getProjectPipelinesRequestGetNameAndId Request')
     }
 
+    private getGraphPipelineListByNameAndId() {
+        def listPipelines = null
+        tryCatchClosure({
+            Request pipelineListRequest = saagieUtils.getProjectGraphPipelinesRequestGetNameAndId()
+            client.newCall(pipelineListRequest).execute().withCloseable { responsePipelineList ->
+                handleErrors(responsePipelineList)
+                String responseBodyForPipelineList = responsePipelineList.body().string()
+                logger.debug("pipelines with name and id : ")
+                logger.debug(responseBodyForPipelineList)
+                def parsedResultForPipelineList = slurper.parseText(responseBodyForPipelineList)
+                if (parsedResultForPipelineList.data?.project?.pipelines) {
+                    listPipelines = parsedResultForPipelineList.data.project.pipelines
+                }
+                return listPipelines
+            }
+        }, 'Unknown error in getPipelineListByNameAndId', 'getProjectPipelinesRequestGetNameAndId Request')
+    }
+
     private String parseDataAndReturnJsonOutPut(String data) {
         def jsonResult = slurper.parseText(data)
         if (jsonResult.id) {
@@ -2198,7 +2308,7 @@ class SaagieClient {
         }
     }
 
-    private checkRequiredConfig(boolean conditions) {
+    boolean checkRequiredConfig(boolean conditions) {
         logger.info('Checking required pre-conditions...')
         if (conditions) {
             logger.error(BAD_PROJECT_CONFIG.replaceAll('%WIKI%', taskName))
@@ -2226,8 +2336,12 @@ class SaagieClient {
         try {
             closure()
         } catch (InvalidUserDataException invalidUserDataException) {
+            logger.debug(message)
+            logger.debug("${invalidUserDataException.message} ${potentialFunctionName ?: ''}")
             throw invalidUserDataException
         } catch (GradleException stopActionException) {
+            logger.debug(message)
+            logger.debug("${stopActionException.message} ${potentialFunctionName ?: ''}")
             throw stopActionException
         } catch (Exception exception) {
             logger.error(message)
@@ -2238,8 +2352,13 @@ class SaagieClient {
 
     def exportArtifactsFromProjectConfiguration() {
         ExportPipeline[] exportPipelines = []
+
         if (configuration.pipeline.ids) {
-            exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+            if (configuration.project.has_graph_pipelines) {
+                exportPipelines = getListPipelineAndGraphPipelineVersionsFromConfig()
+            } else {
+                exportPipelines = getListPipelineAndPipelineVersionsFromConfig()
+            }
         }
 
         ExportJob[] exportJobs = []
@@ -2263,7 +2382,13 @@ class SaagieClient {
 
     def exportAllArtifactsProject() {
 
-        ExportPipeline[] exportPipelines = getAllProjectPipelinesFromProject()
+        ExportPipeline[] exportPipelines = []
+
+        if (configuration.project.has_graph_pipelines) {
+            exportPipelines = getAllProjectGraphPipelinesFromProject()
+        } else {
+            exportPipelines = getAllProjectPipelinesFromProject()
+        }
 
         ExportJob[] exportJobs = getAllProjectJobsFromProject()
 
@@ -2284,6 +2409,10 @@ class SaagieClient {
         return mapPipelineListForProjectResultFromApiToExportPipeline(this.getListOfAllProjectPipelines())
     }
 
+    ExportPipeline[] getAllProjectGraphPipelinesFromProject() {
+        return mapPipelineListForProjectResultFromApiToExportPipeline(this.getAllGraphPipelines())
+    }
+
     def getListOfAllProjectPipelines() {
         def listPipelines = []
         tryCatchClosure({
@@ -2301,11 +2430,29 @@ class SaagieClient {
                 return listPipelines
             }
         }, 'Unknown error in getListOfAllProjectPipelines', 'getAllProjectPipelines Request')
+    }
 
+    def getAllGraphPipelines() {
+        checkRequiredConfig(!configuration?.project?.id)
+
+        Request platformListRequest = saagieUtils.getListAllProjectGraphPipelinesRequest()
+        tryCatchClosure({
+            client.newCall(platformListRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting graph pipelines list: $responseBody"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    return parsedResult.data.project?.pipelines
+                }
+            }
+        }, 'Unknown error in Task: projectsListAllGraphPipelines', 'Function: listAllGraphPipelines')
     }
 
     private ExportPipeline[] mapPipelineListForProjectResultFromApiToExportPipeline(pipelineList) {
-
 
         def arrayPipelines = []
 
