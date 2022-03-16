@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 val junitVersion = "5.5.1"
 val okthttp = "4.2.2"
 val apacheTika = "1.22"
@@ -17,6 +18,7 @@ plugins {
     id("net.researchgate.release") version "2.8.1"
     id("io.codearte.nexus-staging") version "0.21.1"
     id("com.gradle.plugin-publish") version "0.11.0"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
     id("org.sonarqube") version "2.8"
     id("com.adarshr.test-logger") version "2.0.0"
     id("java-gradle-plugin")
@@ -32,6 +34,7 @@ description = "Gradle plugin to manage Saagie's DataFabric jobs with gradle."
 
 repositories {
     gradlePluginPortal()
+    mavenCentral()
 }
 
 configurations {
@@ -64,6 +67,11 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
     testImplementation("junit:junit:4.12")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine:$junitVersion")
+}
+
+tasks.withType<ShadowJar> {
+    archiveBaseName.set(project.name)
+    mergeServiceFiles()
 }
 
 tasks.withType<Test> {

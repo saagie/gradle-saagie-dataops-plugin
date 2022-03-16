@@ -12,7 +12,7 @@ keys.tar
 # IntelliJ
 *.iml
 .idea
-
+lib/
 # Eclipse
 .project
 .classpath

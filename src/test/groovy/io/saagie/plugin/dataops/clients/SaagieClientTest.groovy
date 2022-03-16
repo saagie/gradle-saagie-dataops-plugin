@@ -226,11 +226,128 @@ class SaagieClientTest extends Specification {
         given:
         enqueueToken()
 
+        def mockedTechnoList = new MockResponse()
+        mockedTechnoList.responseCode = 200
+        mockedTechnoList.body="""
+        {
+          "data": {
+            "project": {
+              "technologiesByCategory": [
+                {
+                  "technologies": [
+                    {
+                      "id": "1d117fb6-0697-438a-b419-a69e0e7406e8"
+                    },
+                    {
+                      "id": "a7f89b17-e078-46ab-ba48-be4fae8dd606"
+                    }
+                  ]
+                },
+                {
+                  "technologies": []
+                },
+                {
+                  "technologies": []
+                }
+              ]
+            }
+          }
+        }
+        """
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
         mockedResponse.body = """
-            {"data":{"technologies":[{"id":"c3cadcad-fjrehf-4f7d-a3a5-frefer","label":"Spark","isAvailable":true,"icon":"spark","features":[]},{"id":"freojfier-c18b-4ecd-b61f-fjerijfiej","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"fkiorjeiofer-c18b-4ecd-b61f-jkfijorjferferf","label":"Python","isAvailable":true,"icon":"python","features":[]},{"id":"frefreferfe-26bd-4f7d-a3a5-frejferiuh","label":"Spark","isAvailable":true,"icon":"spark","features":[]}]}}
-        """
+                    {
+                      "data": {
+                        "technologiesByIds": [
+                          {
+                            "id": "1d117fb6-0697-438a-b419-a69e0e7406e8",
+                            "label": "Spark",
+                            "available": true,
+                            "contexts": [
+                              {
+                                "job": {
+                                  "features": []
+                                }
+                              },
+                              {
+                                "job": {
+                                  "features": []
+                                }
+                              },
+                              {
+                                "job": {
+                                  "features": []
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "a7f89b17-e078-46ab-ba48-be4fae8dd606",
+                            "label": "Bash",
+                            "available": true,
+                            "contexts": [
+                              {
+                                "job": {
+                                  "features": [
+                                    {
+                                      "type": "COMMAND_LINE",
+                                      "label": "Command line",
+                                      "mandatory": true,
+                                      "comment": "Linux shell command",
+                                      "defaultValue": "echo \\"Saagie Bash\\""
+                                    },
+                                    {
+                                      "type": "ARTIFACT",
+                                      "label": "Package",
+                                      "mandatory": true,
+                                      "comment": "All files are accepted.",
+                                      "defaultValue": null
+                                    },
+                                    {
+                                      "type": "SCHEDULER",
+                                      "label": "Scheduled",
+                                      "mandatory": false,
+                                      "comment": null,
+                                      "defaultValue": null
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "job": {
+                                  "features": [
+                                    {
+                                      "type": "COMMAND_LINE",
+                                      "label": "Command line",
+                                      "mandatory": true,
+                                      "comment": "Linux shell command",
+                                      "defaultValue": "# To configure AWS credential don't forget to set:\\n# \\tAWS_ACCESS_KEY_ID\\n# \\tAWS_SECRET_ACCESS_KEY\\n# For other ways to log into aws please refer to aws documentation.\\n# If done right you can issue your AWS commands as usual e.g. :\\n\\naws s3 ls"
+                                    },
+                                    {
+                                      "type": "ARTIFACT",
+                                      "label": "Package",
+                                      "mandatory": true,
+                                      "comment": "All files are accepted.",
+                                      "defaultValue": null
+                                    },
+                                    {
+                                      "type": "SCHEDULER",
+                                      "label": "Scheduled",
+                                      "mandatory": false,
+                                      "comment": null,
+                                      "defaultValue": null
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                    """
+        mockWebServer.enqueue(mockedTechnoList)
         mockWebServer.enqueue(mockedResponse)
         client = new SaagieClient(configuration, 'projectsList')
 
@@ -242,6 +359,7 @@ class SaagieClientTest extends Specification {
         technologies.startsWith('[{"id":')
         technologies.contains('features')
         technologies.contains('isAvailable')
+        technologies.contains('isMandatory')
     }
 
     def "createProjectJob should create a job and return the created job"() {

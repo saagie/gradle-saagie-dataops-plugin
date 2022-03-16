@@ -48,10 +48,22 @@ class TechnologyService {
                 String responseBody = response.body().string()
                 logger.debug("getTechnologies response $responseBody")
                 def parsedTechnologiesData = slurper.parseText(responseBody)
-                if (!parsedTechnologiesData.data || !parsedTechnologiesData.data.technologies) {
+                if (!parsedTechnologiesData.data || !parsedTechnologiesData.data.repositories || !parsedTechnologiesData.data.repositories.technologies) {
                     throwAndLogError("Something went wrong when getting technologies")
                 }
-                technologies = parsedTechnologiesData.data.technologies
+                technologies = parsedTechnologiesData.data
+                    .repositories
+                    .technologies
+                    .flatten()
+                    .findAll { it.__typename != "AppTechnology" }
+                    .collect({
+                        return [
+                            id         : it.id,
+                            label      : it.label,
+                            isAvailable: it.available
+                        ]
+                    })
+
             }
         }
         return technologies
@@ -68,10 +80,27 @@ class TechnologyService {
                 String responseBody = response.body().string()
                 logger.debug("getTechnologyVersions response $responseBody")
                 def parsedTechnologyVersionsData = slurper.parseText(responseBody)
-                if (!parsedTechnologyVersionsData.data || !parsedTechnologyVersionsData.data.technologiesVersions) {
+                if (!parsedTechnologyVersionsData.data || !parsedTechnologyVersionsData.data.technology) {
                     return null
                 }
-                technologiesVersions[technologyId] = parsedTechnologyVersionsData.data.technologiesVersions
+
+                def techno = parsedTechnologyVersionsData?.data?.technology
+                def mappedTechno = techno
+                    ?.contexts
+                    ?.collect({ context ->
+                        return [
+                            versionLabel         : context.label ?: context.id,
+                            technologyLabel      : techno.label ?: "",
+                            secondaryTechnologies: techno.__typename == "SparkTechnology" ? context?.technologyContexts?.collect({ technoContext ->
+                                return [
+                                    label      : technoContext.label ?: technoContext.id,
+                                    isAvailable: technoContext.available,
+                                    versions   : technoContext.jobContexts.collect({ it.label ?: it.id })
+                                ]
+                            }) : []
+                        ]
+                    })
+                technologiesVersions[technologyId] = mappedTechno
             }
         }
         return technologiesVersions[technologyId]
@@ -257,15 +286,15 @@ class TechnologyService {
     }
 
     def checkTechnologyIdExistInAppTechnologyList(String technologyId) {
-        def tech = this.getAppTechnologies().find{it.label?.equals(technologyId)}
+        def tech = this.getAppTechnologies().find { it.label?.equals(technologyId) }
         return tech
     }
 
-    def getTechnologiesFromRepositories(repositories){
-       def technologyList = []
-        repositories.forEach{ repositorie ->
-            def list = repositorie.technologies as List
-            technologyList=(technologyList<<list).flatten()
+    def getTechnologiesFromRepositories(repositories) {
+        def technologyList = []
+        repositories.forEach { repository ->
+            def list = repository.technologies as List
+            technologyList = (technologyList << list).flatten()
         }
         return technologyList
     }

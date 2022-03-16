@@ -13,11 +13,52 @@ class TechnologyListTests extends DataOpsGradleTaskSpecification {
     @Shared
     String taskName = TECHNOLOGY_LIST_TASK
 
+    final DATA_RESPONSE = """
+            {
+              "data": {
+                "repositories": [
+                  {
+                    "technologies": [
+                      {
+                        "__typename": "JobTechnology",
+                        "id": "39510510-7262-459d-83c2-8e5d2e8bbdd8",
+                        "label": "Docker",
+                        "available": true
+                      },
+                      {
+                        "__typename": "AppTechnology",
+                        "id": "39510510-7262-459d-83c2-8e5d2e8bbdd9",
+                        "label": "Docker App",
+                        "available": true
+                      }
+                    ]
+                  },
+                  {
+                    "technologies": [
+                      {
+                        "__typename": "JobTechnology",
+                        "id": "39510510-7262-459d-83c2-8e5d2e8bbdd10",
+                        "label": "Docker 2",
+                        "available": true
+                      },
+                      {
+                        "__typename": "AppTechnology",
+                        "id": "39510510-7262-459d-83c2-8e5d2e8bbdd11",
+                        "label": "Docker App 2",
+                        "available": true
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+            """
+
     def "the task should return a list of all technologies"() {
         given:
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = '{"data":{"technologies":[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]}}'
+        mockedResponse.body = DATA_RESPONSE
         mockWebServer.enqueue(mockedResponse)
 
         buildFile << """
@@ -36,7 +77,7 @@ class TechnologyListTests extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]')
+        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true},{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd10","label":"Docker 2","isAvailable":true}]')
     }
 
     def "the task should be working in jwt mode"() {
@@ -48,7 +89,7 @@ class TechnologyListTests extends DataOpsGradleTaskSpecification {
 
         def mockedResponse = new MockResponse()
         mockedResponse.responseCode = 200
-        mockedResponse.body = '{"data":{"technologies":[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]}}'
+        mockedResponse.body = DATA_RESPONSE
         mockWebServer.enqueue(mockedResponse)
 
         buildFile << """
@@ -68,6 +109,6 @@ class TechnologyListTests extends DataOpsGradleTaskSpecification {
 
         then:
         notThrown(Exception)
-        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true}]')
+        result.output.contains('[{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd8","label":"Docker","isAvailable":true},{"id":"39510510-7262-459d-83c2-8e5d2e8bbdd10","label":"Docker 2","isAvailable":true}]')
     }
 }
