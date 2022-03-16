@@ -181,18 +181,35 @@ class SaagieClient {
 
         logger.debug('Using config [project={}]', configuration.project)
 
-        Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
+        String[] technoIds = getTechnologiesIdByProject()
+
+        Request projectTechnologiesRequest = saagieUtils.getTechnologiesDetailsRequest(technoIds)
         tryCatchClosure({
             client.newCall(projectTechnologiesRequest).execute().withCloseable { response ->
                 handleErrors(response)
                 String responseBody = response.body().string()
                 def parsedResult = slurper.parseText(responseBody)
                 if (parsedResult.data == null) {
-                    def message = "Something went wrong when getting project technologies.\n${responseBody}"
+                    def message = "Something went wrong when getting project technologies details.\n${responseBody}"
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    List technologies = parsedResult.data.technologies
+                    List technologies = parsedResult.data.technologiesByIds.collect({
+                        return [
+                            id: it.id,
+                            label: it.label,
+                            isAvailable: it.available,
+                            features: it?.contexts?.job?.features?.flatten()?.collect({ feature ->
+                                return [
+                                    type: feature.type,
+                                    label: feature.label,
+                                    isMandatory: feature.mandatory,
+                                    comment: feature.comment,
+                                    defautValue: feature.defaultValue
+                                ]
+                            })
+                        ]
+                    })
                     List uniqueTechnologies = technologies.inject([], { uniqueIds, technology ->
                         if (uniqueIds.any { technology.id == it.id }) {
                             return uniqueIds
@@ -201,6 +218,33 @@ class SaagieClient {
                         }
                     })
                     return JsonOutput.toJson(uniqueTechnologies)
+                }
+            }
+        }, 'Unknown error in Task: getProjectTechnologies', 'getProjectTechnologies')
+    }
+
+
+    private String[] getTechnologiesIdByProject() {
+        logger.info('getTechnologiesIdByProject')
+        checkRequiredConfig(!configuration?.project?.id)
+
+        logger.debug('Using config [project={}]', configuration.project)
+
+        Request projectTechnologiesRequest = saagieUtils.getProjectTechnologiesRequest()
+        tryCatchClosure({
+            client.newCall(projectTechnologiesRequest).execute().withCloseable { response ->
+                handleErrors(response)
+                String responseBody = response.body().string()
+                def parsedResult = slurper.parseText(responseBody)
+                if (parsedResult.data == null) {
+                    def message = "Something went wrong when getting technologies by project.\n${responseBody}"
+                    logger.error(message)
+                    throw new GradleException(message)
+                } else {
+                    return parsedResult.data
+                        ?.project
+                        ?.technologiesByCategory
+                        ?.technologies?.flatten { it.id }
                 }
             }
         }, 'Unknown error in Task: getProjectTechnologies', 'getProjectTechnologies')
@@ -903,7 +947,18 @@ class SaagieClient {
                     logger.error(message)
                     throw new GradleException(message)
                 } else {
-                    List technologyList = parsedResult.data.technologies
+                    List technologyList = parsedResult.data
+                        ?.repositories
+                        ?.technologies
+                        ?.flatten()
+                        ?.findAll { it.__typename != "AppTechnology" }
+                        ?.collect({
+                            return [
+                                id         : it.id,
+                                label      : it.label,
+                                isAvailable: it.available
+                            ]
+                        })
                     return JsonOutput.toJson(technologyList)
                 }
             }
@@ -2151,7 +2206,7 @@ class SaagieClient {
                     }
                     if (parsedNewlyCreatedApp?.id) {
                         appToImport.id = parsedNewlyCreatedApp?.id
-                    }else {
+                    } else {
                         appToImport.id = foundNameId
                     }
                     versions.each {

@@ -2,14 +2,10 @@ package io.saagie.plugin.dataops.clients
 
 import groovy.json.JsonOutput
 import io.saagie.plugin.dataops.DataOpsExtension
-import io.saagie.plugin.dataops.models.Pipeline
-import io.saagie.plugin.dataops.models.PipelineVersion
-import okhttp3.Request
-import org.gradle.api.GradleException
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 
-class GraphPipelineClient extends SaagieClient{
+class GraphPipelineClient extends SaagieClient {
     static final Logger logger = Logging.getLogger(GraphPipelineClient.class)
 
     GraphPipelineClient(DataOpsExtension configuration, String taskName) {

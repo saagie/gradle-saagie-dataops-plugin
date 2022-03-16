@@ -144,8 +144,6 @@ class SaagieUtils {
                     category
                     technology {
                         id
-                        label
-                        isAvailable
                     }
                     isScheduled
                     cronScheduling
@@ -234,20 +232,95 @@ class SaagieUtils {
             .excludeNulls()
             .build()
 
-        def gqVariables = jsonGenerator.toJson([technologyId: technologyId])
+        def gqVariables = jsonGenerator.toJson([id: technologyId])
 
         def listTechnologyVersions = gq('''
-            query TechnologiesVersions($technologyId: UUID!) {
-            technologiesVersions(technologyId: $technologyId) {
-              versionLabel
-              technologyLabel
-              secondaryTechnologies {
-                   label     isAvailable      versions
-              }
+            query technology($id : UUID!) {
+                technology(id : $id) {
+                    __typename
+                    label
+                    ... on JobTechnology {
+                        contexts {
+                            id
+                            label
+                            available
+                            recommended
+                            dockerInfo {
+                                image
+                                version
+                            }
+                            job {
+                                features {
+                                    type
+                                    label
+                                    mandatory
+                                    comment
+                                    defaultValue
+                                }
+                            }
+                            lastUpdate
+                        }
+                    }
+                    ... on SparkTechnology {
+                        contexts {
+                            id
+                            label
+                            available
+                            recommended
+                            dockerInfo {
+                                image
+                                version
+                            }
+                            job {
+                                features {
+                                    type
+                                    label
+                                    mandatory
+                                    comment
+                                    defaultValue
+                                }
+                            }
+                            technologyContexts {
+                                id
+                                label
+                                available
+                                recommended
+                                job {
+                                    features {
+                                        type
+                                        label
+                                        mandatory
+                                        comment
+                                        defaultValue
+                                    }
+                                }
+                                jobContexts {
+                                    id
+                                    label
+                                    available
+                                    recommended
+                                    dockerInfo {
+                                        image
+                                        version
+                                    }
+                                    job {
+                                        features {
+                                            type
+                                            label
+                                            mandatory
+                                            comment
+                                            defaultValue
+                                        }
+                                    }
+                                    lastUpdate
+                                }
+                            }
+                        }
+                    }
+                }
             }
-          }
         ''', gqVariables)
-        return buildRequestFromQuery(listTechnologyVersions)
+        return buildRequestFromQuery(listTechnologyVersions, true, true)
     }
 
     Request getProjectJobsRequestBuild(String query) {
@@ -349,6 +422,54 @@ class SaagieUtils {
             .build()
     }
 
+    Request getTechnologiesDetailsRequest(String[] ids) {
+        logger.debug('generating getTechnologiesDetailsRequest [ids={}]', ids)
+
+        def jsonGenerator = getJsonGenerator()
+
+        def gqVariables = jsonGenerator.toJson([ids: ids])
+
+        def listTechnologiesDetails = gq('''
+            query technologiesByIds($ids : [UUID!]!){
+                technologiesByIds(ids : $ids) {
+                    __typename
+                    id
+                    label
+                    available
+                    icon
+                    ... on SparkTechnology {
+                        contexts {
+                            job {
+                                features {
+                                    type
+                                    label
+                                    mandatory
+                                    comment
+                                    defaultValue
+                                }
+                            }
+                        }
+                    }
+                     ... on JobTechnology {
+                        contexts {
+                            job {
+                                features {
+                                    type
+                                    label
+                                    mandatory
+                                    comment
+                                    defaultValue
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ''', gqVariables)
+
+        return buildRequestFromQuery(listTechnologiesDetails, true, true)
+    }
+
     Request getProjectTechnologiesRequest() {
         Project project = configuration.project
         logger.debug('generating getProjectTechnologiesRequest [projectId={}]', project.id)
@@ -358,18 +479,12 @@ class SaagieUtils {
         def gqVariables = jsonGenerator.toJson([projectId: project.id])
 
         def listProjectTechnologies = gq('''
-            query technologiesQuery($projectId: UUID!) {
-                technologies(projectId: $projectId) {
-                    id
-                    label
-                    isAvailable
-                    icon
-                    features {
-                        field
-                        label
-                        isMandatory
-                        comment
-                        defaultValue
+            query getProjectTechnologies($projectId: UUID!) {
+                project(id: $projectId){
+                    technologiesByCategory {
+                        technologies {
+                            id
+                        }
                     }
                 }
             }
@@ -1321,16 +1436,18 @@ class SaagieUtils {
         logger.debug('Generating getListAllTechnologiesRequest ... ')
 
         def listAllPipelineRequest = gq('''
-            query getAllTechnologies {
-                technologies {
-                    id
-                    label
-                    isAvailable
+            query getAllTechnologies{
+                repositories {
+                    technologies {
+                        id
+                        label
+                        available
+                    }
                 }
             }
         ''')
 
-        return buildRequestFromQuery(listAllPipelineRequest)
+        return buildRequestFromQuery(listAllPipelineRequest, true, true)
     }
 
     Request getGroupListRequest() {
@@ -1407,8 +1524,6 @@ class SaagieUtils {
                     category
                     technology {
                         id
-                        label
-                        isAvailable
                     }
                     isScheduled
                     cronScheduling
