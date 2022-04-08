@@ -7,6 +7,7 @@ class JobDTO implements IExists {
     String name
     String id
     String description
+    String alias
     String category
     String technology
     String technologyName
@@ -23,6 +24,7 @@ class JobDTO implements IExists {
         return name ||
             id ||
             description ||
+            alias ||
             category ||
             technology ||
             isScheduled ||
@@ -33,6 +35,7 @@ class JobDTO implements IExists {
         name = jobDetailResult.name //
         id = jobDetailResult.id
         description = jobDetailResult.description //
+        alias = jobDetailResult.alias
         category = jobDetailResult.category //
         technology = jobDetailResult.technology.id
         technologyName = jobDetailResult.technology.label

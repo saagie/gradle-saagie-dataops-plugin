@@ -88,6 +88,7 @@ class JobMapper {
 
         newJobConfig.put('job', [
             name          : mappedJob?.name,
+            alias         : mappedJob?.alias,
             cronScheduling: mappedJob?.cronScheduling,
             isScheduled   : mappedJob?.isScheduled,
             category      : mappedJob?.category,
