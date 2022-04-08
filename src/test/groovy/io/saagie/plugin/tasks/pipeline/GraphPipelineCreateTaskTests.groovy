@@ -41,6 +41,8 @@ class GraphPipelineCreateTaskTests extends DataOpsGradleTaskSpecification {
 
                 pipeline {
                     name = 'Pipeline name'
+                    executionVariables = 'toto=6'
+                    hasExecutionVariablesEnabled = false
                 }
 
                 pipelineVersion {

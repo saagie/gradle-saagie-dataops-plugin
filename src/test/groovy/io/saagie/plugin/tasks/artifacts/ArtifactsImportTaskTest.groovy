@@ -20,7 +20,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
     @Shared
     String exportPipelineWithoutJobZipFilename = './exportedPipelineWithoutJob.zip'
     @Shared
-    String exporGraphtPipelineWithoutJobZipFilename = './exportedGraphPipelineWithoutJob.zip'
+    String exporGraphPipelineWithoutJobZipFilename = './exportedGraphPipelineWithoutJob.zip'
     @Shared
     String exportJobWithoutPipelineZipFilename = './exportedJobWithoutPipeline.zip'
     @Shared
@@ -178,7 +178,7 @@ class ArtifactsImportTaskTest extends DataOpsGradleTaskSpecification {
 
     def "the task should create a new graph pipeline and add new version to another pipeline without job based on the exported config"() {
         given:
-        URL resource = classLoader.getResource(exporGraphtPipelineWithoutJobZipFilename)
+        URL resource = classLoader.getResource(exporGraphPipelineWithoutJobZipFilename)
         File exportedConfig = new File(resource.getFile())
         enqueueRequest('{"data":{"jobs":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"test added job"},{"id":"id-3","name":"name job 3"}]}}')
         enqueueRequest('{"data":{"project":{"pipelines":[{"id":"id-1","name":"Job from import asdas"},{"id":"id-2","name":"name exist"},{"id":"id-3","name":"name job 3"}, {"id": "id-4", "name": "test added job"}, {"id": "id-5", "name": "test pipeline exist"}]}}}')
