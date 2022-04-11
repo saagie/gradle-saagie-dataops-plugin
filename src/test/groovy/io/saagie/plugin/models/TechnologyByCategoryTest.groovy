@@ -22,8 +22,7 @@ class TechnologyByCategoryTest extends Specification {
         technologyByCategory.category = "job-category"
 
         expect:
-        !technologyByCategory.exists()
-        technologyByCategory.category == "job-category"
+        technologyByCategory.exists()
     }
 
     def "the model should return a correct map when the toMap method is called"() {
@@ -35,8 +34,11 @@ class TechnologyByCategoryTest extends Specification {
         Map result = technologyByCategory.toMap()
 
         then:
-        !technologyByCategory.exists()
-        result == null
+        technologyByCategory.exists()
+        result == [
+            jobCategory : "job-category",
+            technologies: []
+        ]
     }
 
     def "the model should return a correct map when the toMap method is called and technologies are provided"() {
