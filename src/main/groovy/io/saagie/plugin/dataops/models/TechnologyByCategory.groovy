@@ -9,12 +9,12 @@ class TechnologyByCategory implements IMapable, IExists {
         if (!exists()) return null
         return [
             jobCategory : category,
-            technologies: technologyid.collect({ [id: it] }),
+            technologies: technologyid.empty ? [] : technologyid.collect({ [id: it] }),
         ]
     }
 
     @Override
     boolean exists() {
-        return category && !technologyid.empty
+        return category
     }
 }

@@ -77,8 +77,8 @@ class ProjectTest extends Specification {
         generatedMap.containsKey('technologiesByCategory')
         generatedMap.technologiesByCategory.size() == 4
         generatedMap.technologiesByCategory[0] == null
-        generatedMap.technologiesByCategory[1] == null
-        generatedMap.technologiesByCategory[2] == null
+        generatedMap.technologiesByCategory[1] == [jobCategory: 'job-category', technologies: []]
+        generatedMap.technologiesByCategory[2] == [jobCategory: 'job-category-2', technologies: []]
         generatedMap.technologiesByCategory[3] == [jobCategory: 'job-category-3', technologies: [[id: '1']]]
 
         generatedMap.containsKey('authorizedGroups')
