@@ -243,6 +243,7 @@ class FolderGenerator {
             if (createFolderForJob) {
                 Map jobDetailObject = [
                     name          : exportJob.jobDTO.name,
+                    alias         : exportJob.jobDTO.alias,
                     category      : exportJob.jobDTO.category,
                     technology    : exportJob.jobDTO.technology,
                     technologyName: exportJob.jobDTO.technologyName,

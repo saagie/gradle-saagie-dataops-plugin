@@ -39,6 +39,8 @@ class GraphPipelineUpgradeTaskTests extends DataOpsGradleTaskSpecification {
                 pipeline {
                     id = 'pipelineId'
                     name = 'Pipeline updated'
+                    executionVariables = 'toto=6'
+                    hasExecutionVariablesEnabled = false
                     description = 'updated description'
                     alerting {
                         emails = ['email@email.com']

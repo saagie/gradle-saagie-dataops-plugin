@@ -4,6 +4,8 @@ class PipelineDTO implements IExists {
     String name
     String id
     String description
+    String executionVariables
+    Boolean hasExecutionVariablesEnabled
     Boolean isScheduled
     String cronScheduling
     AlertingDTO alerting = new AlertingDTO()
@@ -26,6 +28,8 @@ class PipelineDTO implements IExists {
         name = pipelineDetailResult.name
         id = pipelineDetailResult.id
         description = pipelineDetailResult.description
+        executionVariables = pipelineDetailResult.executionVariables
+        hasExecutionVariablesEnabled = pipelineDetailResult.hasExecutionVariablesEnabled
         isScheduled = pipelineDetailResult.isScheduled
         cronScheduling = pipelineDetailResult.cronScheduling
         alerting = pipelineDetailResult.alerting

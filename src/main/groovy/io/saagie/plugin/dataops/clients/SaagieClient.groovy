@@ -424,19 +424,26 @@ class SaagieClient {
 
     String upgradeProjectJobWithGraphQL() {
         logger.info('Starting upgradeProjectJob task')
-        logger.debug('Using config [job={}, jobVersion={}]', configuration.job, configuration.jobVersion)
-        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest()
-        updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest)
-        def updatedJobVersion = addJobVersion(configuration.job, configuration.jobVersion)
+        Job job = configuration.job
+        JobVersion jobVersion = configuration.jobVersion
+        logger.debug('Using config [job={}, jobVersion={}]', job, jobVersion)
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest(job)
+        updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest, job, jobVersion)
+        def updatedJobVersion = addJobVersion(job, jobVersion)
         Map upgradeStatus = [status: 'success', version: updatedJobVersion]
         return JsonOutput.toJson(upgradeStatus)
     }
 
-    String updateProjectJobWithGraphQLFromRequest(Request request) {
+    String updateProjectJob(Job job, JobVersion jobVersion) {
+        Request projectsUpdateJobRequest = saagieUtils.getProjectUpdateJobFromDataRequest(job)
+        updateProjectJobWithGraphQLFromRequest(projectsUpdateJobRequest, job, jobVersion)
+    }
+
+    String updateProjectJobWithGraphQLFromRequest(Request request, Job job, JobVersion jobVersion) {
         checkRequiredConfig(
-            !configuration?.job?.id ||
-                (configuration?.job?.isScheduled && !configuration?.job?.cronScheduling) ||
-                (configuration?.jobVersion?.exists() && !configuration?.jobVersion?.runtimeVersion)
+            !job?.id ||
+                (job?.isScheduled && !job?.cronScheduling) ||
+                (jobVersion?.exists() && !jobVersion?.runtimeVersion)
         )
         String updateProjectJobWithGraphQLFromRequestResult = null
         tryCatchClosure({
@@ -455,7 +462,6 @@ class SaagieClient {
             }
             return updateProjectJobWithGraphQLFromRequestResult
         }, 'Unknown error in updateProjectJobWithGraphQLFromRequest')
-
     }
 
     String addJobVersion(job, jobVersion) {
@@ -2000,6 +2006,7 @@ class SaagieClient {
                 listJobs = getJobListByNameAndId()
                 boolean nameExist = false
                 def foundNameId = null
+                def currentAlias = jobToImport.alias
                 if (listJobs) {
                     listJobs.each {
                         if (it.name == newMappedJobData.job.name) {
@@ -2007,12 +2014,19 @@ class SaagieClient {
                             foundNameId = it.id
                         }
                     }
+                    def i = 2
+                    while (listJobs.any { it.alias == currentAlias && it.name != newMappedJobData.job.name}) {
+                        currentAlias = "${newMappedJobData.job.alias}_$i"
+                        ++i
+                    }
                 }
+                jobToImport.alias = currentAlias
                 def parsedNewlyCreatedJob = null
                 // change the job to Queue so we can remove the first
                 if (listJobs && nameExist) {
                     jobToImport.id = foundNameId
                     addJobVersion(jobToImport, jobVersionToImport)
+                    updateProjectJob(jobToImport, jobVersionToImport)
 
                 } else {
                     if (versions) {
@@ -2032,7 +2046,8 @@ class SaagieClient {
 
                 response.job << [
                     id  : job.key,
-                    name: newMappedJobData.job.name
+                    name: newMappedJobData.job.name,
+                    alias: currentAlias
                 ]
 
                 if (versions && versions.size() >= 1) {

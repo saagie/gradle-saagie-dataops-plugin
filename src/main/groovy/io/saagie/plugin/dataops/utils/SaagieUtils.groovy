@@ -119,6 +119,7 @@ class SaagieUtils {
                 jobs(projectId: $projectId) {
                     id
                     name
+                    alias
                     description
                     countJobInstance
                     versions {
@@ -172,6 +173,7 @@ class SaagieUtils {
                 jobs(projectId: $projectId) {
                     id
                     name
+                    alias
                 }
             }
         ''')
@@ -741,6 +743,7 @@ class SaagieUtils {
                 createJob(job: $job, jobVersion: $jobVersion) {
                     id
                     name
+                    alias
                 }
             }
         ''', gqVariables)
@@ -792,8 +795,7 @@ class SaagieUtils {
         getProjectUpdateJobRequestFormat(gqVariables)
     }
 
-    Request getProjectUpdateJobFromDataRequest() {
-        Job job = configuration.job
+    Request getProjectUpdateJobFromDataRequest(Job job) {
         Map mappedJob = JobMapper.mapJobWithoutMail(job, configuration.project.id)
         getProjectUpdateJobFromDataRequestFromParams(mappedJob.job)
     }
@@ -1498,6 +1500,7 @@ class SaagieUtils {
                 job(id: $jobId) {
                     id
                     name
+                    alias
                     description
                     countJobInstance
                     versions {

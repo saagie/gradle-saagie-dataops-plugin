@@ -4,6 +4,8 @@ class Pipeline implements IMapable {
     String id
     String name
     String description
+    String executionVariables = null
+    Boolean hasExecutionVariablesEnabled = false
     def ids = []
     Boolean include_job = false
     Boolean include_all_versions
@@ -18,10 +20,12 @@ class Pipeline implements IMapable {
     @Override
     Map toMap() {
         def pipelineMap = [
-            id            : id,
-            description   : description,
-            isScheduled   : isScheduled,
-            cronScheduling: cronScheduling
+            id                             : id,
+            description                    : description,
+            executionVariables             : executionVariables,
+            hasExecutionVariablesEnabled   : hasExecutionVariablesEnabled,
+            isScheduled                    : isScheduled,
+            cronScheduling                 : cronScheduling
         ]
         if (name) {
             pipelineMap.put('name', name)

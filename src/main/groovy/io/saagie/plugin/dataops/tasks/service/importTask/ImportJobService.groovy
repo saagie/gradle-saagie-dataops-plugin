@@ -50,6 +50,7 @@ class ImportJobService {
 
             newMappedJobData.job {
                 name = newJobConfigWithOverride.name
+                alias = newJobConfigWithOverride.alias
                 technology = newJobConfigWithOverride.technology
                 cronScheduling = newJobConfigWithOverride.cronScheduling
                 isScheduled = newJobConfigWithOverride.isScheduled

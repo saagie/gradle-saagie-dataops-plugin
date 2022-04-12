@@ -6,6 +6,7 @@ class Job implements IMapable {
     def ids = []
     String projectId
     String description
+    String alias
     String category
     String technology
     Boolean include_all_versions
@@ -26,6 +27,7 @@ class Job implements IMapable {
                 id            : id,
                 projectId     : projectId,
                 description   : description,
+                alias         : alias,
                 category      : category,
                 technology    : [id: technology],
                 cronScheduling: cronScheduling,
@@ -39,6 +41,7 @@ class Job implements IMapable {
                 id            : id,
                 projectId     : projectId,
                 description   : description,
+                alias         : alias,
                 category      : category,
                 cronScheduling: cronScheduling,
                 isScheduled   : isScheduled,
